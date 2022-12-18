@@ -1,5 +1,5 @@
 {
-  "private": true,
+  "private": false,
   "name": "homebridge-alphaess",
   "version": "0.0.3-beta.0",
   "description": "Node JS Alpha Ess Plugin",
@@ -23,7 +23,7 @@
     "lint": "eslint src/**.ts --max-warnings=0",
     "watch": "npm run build && npm link && nodemon",
     "build": "rimraf ./dist && tsc",
-    "prepublishOnly": "npm run lint && npm run build"
+    "prepublishOnly": "npm run build"
   },
   "devDependencies": {
     "@types/node": "^16.10.9",

@@ -1,17 +1,17 @@
 
-import { API, DynamicPlatformPlugin, Logger, PlatformAccessory, PlatformConfig, Service, Characteristic } from 'homebridge';
+import { API, AccessoryConfig, AccessoryPlugin, DynamicPlatformPlugin, Logger, PlatformAccessory, PlatformConfig, Service, Characteristic } from 'homebridge';
 import { AlphaEssApi } from "alphaess-api-js"
 
 "use strict";
 
-export class AlphaService {
+export class AlphaService implements AccessoryPlugin {
 
     private informationService: Service;
-    private batteryService: Service;
+    private service: Service;
     private api: API; 
     private log: Logger; 
 
-    constructor(log, config, api) {
+    constructor(log, config: AccessoryConfig, api: API ) {
       this.api = api;
       this.log = log;
       log.debug('Alpha ESS Accessory Loaded');
@@ -22,16 +22,21 @@ export class AlphaService {
       .setCharacteristic(this.api.hap.Characteristic.Model, "Alpha Ess ");
       
       
-      this.batteryService = new this.api.hap.Service.Battery();
+      //this.service = new this.api.hap.Service.Switch(config.name);
 
-      this.batteryService.getCharacteristic(this.api.hap.Characteristic.StatusLowBattery)
+      this.service = new this.api.hap.Service.BatteryService(config.name, "hvBatteryLevel")
+
+      this.service.getCharacteristic(this.api.hap.Characteristic.StatusLowBattery)
         .onGet(this.handleStatusLowBatteryGet.bind(this));
 
 
-      this.batteryService.getCharacteristic(this.api.hap.Characteristic.BatteryLevel)
+      this.service.getCharacteristic(this.api.hap.Characteristic.BatteryLevel)
       .onGet(this.handleStatusBattery.bind(this));
-
     
+      this.service.getCharacteristic(this.api.hap.Characteristic.On)
+      .onGet(this.getOnStatus.bind(this))
+      .onSet(this.setOnStatus.bind(this));
+
     } 
   
     /**
@@ -40,14 +45,32 @@ export class AlphaService {
      */
   
 
+
     getServices() {
         return [
           this.informationService,
-          this.batteryService
+          this.service
         ];
       }
 
 
+      getOnStatus(someObject:object) {
+        this.log.debug('Triggered GET ON Status');
+        return 1;
+      }
+
+      /*
+   * This method is optional to implement. It is called when HomeKit ask to identify the accessory.
+   * Typical this only ever happens at the pairing process.
+     */
+      identify(): void {
+        this.log.debug('Identify');
+    }
+
+      setOnStatus(value) {
+        this.log.debug('Triggered SET ON Status');
+        return;
+      }
       handleStatusLowBatteryGet() {
         this.log.debug('Triggered GET StatusLowBattery');
   

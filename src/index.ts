@@ -9,7 +9,7 @@ import { AlphaService } from './AlphaService';
  */
 export = (api: API) => {
   
-  api.registerPlatform(PLATFORM_NAME, ExampleHomebridgePlatform);
+  //api.registerPlatform(PLATFORM_NAME, ExampleHomebridgePlatform);
 
         
   api.registerAccessory(PLUGIN_NAME, ACCESSORY_NAME, AlphaService);
