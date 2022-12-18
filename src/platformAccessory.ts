@@ -184,7 +184,6 @@ export class ExamplePlatformAccessory {
     this.platform.log.debug('Triggered GET Charging State');
     // set this to a valid value for StatusLowBattery
     return  this.platform.Characteristic.ChargingState.NOT_CHARGING;
-    ;
   }
     /**
    * Handle "SET" requests from HomeKit
@@ -233,7 +232,7 @@ export class ExamplePlatformAccessory {
     this.platform.log.debug('Set Characteristic Brightness -> ', value);
   }
 
-  async getBatteryLevel(): Promise<Number>  {
+  async getBatteryLevel(): Promise<number>  {
     // get battry level
     const value = 42;
     this.platform.log.debug('Get Battery Level -> ', value);
