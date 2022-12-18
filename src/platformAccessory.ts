@@ -1,4 +1,4 @@
-import { Service, PlatformAccessory, CharacteristicValue } from 'homebridge';
+import { Service, PlatformAccessory, CharacteristicValue, HapStatusError } from 'homebridge';
 
 import { ExampleHomebridgePlatform } from './platform';
 
@@ -24,15 +24,23 @@ export class ExamplePlatformAccessory {
     private readonly accessory: PlatformAccessory,
   ) {
 
+    const useBattery = false ;
+
     // set accessory information
     this.accessory.getService(this.platform.Service.AccessoryInformation)!
-      .setCharacteristic(this.platform.Characteristic.Manufacturer, 'Default-Manufacturer')
-      .setCharacteristic(this.platform.Characteristic.Model, 'Default-Model')
+      .setCharacteristic(this.platform.Characteristic.Manufacturer, 'Alpha Ess')
+      .setCharacteristic(this.platform.Characteristic.Model, 'Alpha Ess Energy Storage')
       .setCharacteristic(this.platform.Characteristic.SerialNumber, 'Default-Serial');
 
     // get the LightBulb service if it exists, otherwise create a new LightBulb service
     // you can create multiple services for each accessory
-    this.service = this.accessory.getService(this.platform.Service.Lightbulb) || this.accessory.addService(this.platform.Service.Lightbulb);
+    
+    if (useBattery){
+      this.service = this.accessory.getService(this.platform.Service.PowerManagement) ||   this.accessory.addService(this.platform.Service.PowerManagement);
+    }
+    else{
+      this.service = this.accessory.getService(this.platform.Service.Switch) || this.accessory.addService(this.platform.Service.Switch);
+    }      
 
     // set the service name, this is what is displayed as the default name on the Home app
     // in this example we are using the name we stored in the `accessory.context` in the `discoverDevices` method.
@@ -42,6 +50,7 @@ export class ExamplePlatformAccessory {
     // see https://developers.homebridge.io/#/service/Lightbulb
 
     // register handlers for the On/Off Characteristic
+    /** 
     this.service.getCharacteristic(this.platform.Characteristic.On)
       .onSet(this.setOn.bind(this))                // SET - bind to the `setOn` method below
       .onGet(this.getOn.bind(this));               // GET - bind to the `getOn` method below
@@ -49,6 +58,34 @@ export class ExamplePlatformAccessory {
     // register handlers for the Brightness Characteristic
     this.service.getCharacteristic(this.platform.Characteristic.Brightness)
       .onSet(this.setBrightness.bind(this));       // SET - bind to the 'setBrightness` method below
+   **/
+  
+      //if (useBattery ) {
+       
+        this.service.getCharacteristic(this.platform.Characteristic.StatusLowBattery)
+       .onGet(this.getStatusBattery.bind(this));             // GET Battery Status -
+
+       this.service.getCharacteristic(this.platform.Characteristic.BatteryLevel)
+       .onGet(this.getPercentageBattery.bind(this));             // GET Battery Level -
+
+       this.service.getCharacteristic(this.platform.Characteristic.ChargingState)
+       .onGet(this.getChargingState.bind(this));             // Get charging state
+    
+       this.service.getCharacteristic(this.platform.Characteristic.On)
+       .onGet(this.getOnStatus.bind(this));             // Get charging state
+
+       this.service.getCharacteristic(this.platform.Characteristic.On)
+       .onSet(this.setOn.bind(this));             // Get charging state
+
+
+
+
+    //  }
+//      else {
+  //      this.service.getCharacteristic(this.platform.Characteristic.CurrentTemperature)
+    //    .onGet(this.handleCurrentTemperatureGet.bind(this));
+//
+  //    }
 
     /**
      * Creating multiple services of the same type.
@@ -62,12 +99,13 @@ export class ExamplePlatformAccessory {
      */
 
     // Example: add two "motion sensor" services to the accessory
+    /** 
     const motionSensorOneService = this.accessory.getService('Motion Sensor One Name') ||
       this.accessory.addService(this.platform.Service.MotionSensor, 'Motion Sensor One Name', 'YourUniqueIdentifier-1');
 
     const motionSensorTwoService = this.accessory.getService('Motion Sensor Two Name') ||
       this.accessory.addService(this.platform.Service.MotionSensor, 'Motion Sensor Two Name', 'YourUniqueIdentifier-2');
-
+    **/ 
     /**
      * Updating characteristics values asynchronously.
      *
@@ -77,21 +115,78 @@ export class ExamplePlatformAccessory {
      * the `updateCharacteristic` method.
      *
      */
-    let motionDetected = false;
-    setInterval(() => {
-      // EXAMPLE - inverse the trigger
-      motionDetected = !motionDetected;
 
+    
+    let batteryLevel = 1;
+    setInterval(() => {
+     //  Do something in the interval 
+      // EXAMPLE - inverse the trigger
+      //motionDetected = !motionDetected;
+      if (batteryLevel<100){
+        batteryLevel = batteryLevel + 1;
+      } 
+      else {
+        batteryLevel = 1 ;
+      }
+
+      //this.service.updateCharacteristic(this.platform.Characteristic.BatteryLevel, batteryLevel);
+     //s this.platform.log.debug('Update battry level:', batteryLevel);
+
+      /** 
       // push the new value to HomeKit
       motionSensorOneService.updateCharacteristic(this.platform.Characteristic.MotionDetected, motionDetected);
       motionSensorTwoService.updateCharacteristic(this.platform.Characteristic.MotionDetected, !motionDetected);
-
+      
       this.platform.log.debug('Triggering motionSensorOneService:', motionDetected);
       this.platform.log.debug('Triggering motionSensorTwoService:', !motionDetected);
+       **/
+
     }, 10000);
+    
   }
 
-  /**
+
+  handleCurrentTemperatureGet() {
+    this.platform.log.debug('Triggered GET CurrentTemperature');
+
+    // set this to a valid value for CurrentTemperature
+    const currentValue = 42;
+
+    return currentValue;
+  }
+
+  setOnStatus(someObject:object) {
+    this.platform.log.debug('Triggered SET ON Status');
+    // set this to a valid value for StatusLowBattery
+
+  }
+
+  getOnStatus(someObject:object) {
+    this.platform.log.debug('Triggered GET ON Status');
+    // set this to a valid value for StatusLowBattery
+    return 1;
+  }
+  getStatusBattery(someObject:object) {
+    this.platform.log.debug('Triggered GET Battery Status');
+
+    // set this to a valid value for StatusLowBattery
+    return this.platform.Characteristic.StatusLowBattery.BATTERY_LEVEL_NORMAL;
+  }
+
+  getPercentageBattery(someObject:object) {
+    this.platform.log.debug('Triggered GET Battery Level');
+
+    // set this to a valid value for StatusLowBattery
+    return 42;
+  }
+
+  getChargingState(someObject:object) {
+    this.platform.log.debug('Triggered GET Charging State');
+    // set this to a valid value for StatusLowBattery
+    return  this.platform.Characteristic.ChargingState.NOT_CHARGING;
+    ;
+  }
+    /**
    * Handle "SET" requests from HomeKit
    * These are sent when the user changes the state of an accessory, for example, turning on a Light bulb.
    */
@@ -138,4 +233,11 @@ export class ExamplePlatformAccessory {
     this.platform.log.debug('Set Characteristic Brightness -> ', value);
   }
 
+  async getBatteryLevel(): Promise<Number>  {
+    // get battry level
+    const value = 42;
+    this.platform.log.debug('Get Battery Level -> ', value);
+
+    return value;
+  }
 }

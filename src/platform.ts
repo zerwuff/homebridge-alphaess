@@ -3,6 +3,8 @@ import { API, DynamicPlatformPlugin, Logger, PlatformAccessory, PlatformConfig, 
 import { PLATFORM_NAME, PLUGIN_NAME } from './settings';
 import { ExamplePlatformAccessory } from './platformAccessory';
 
+import { AlphaService } from './AlphaService';
+
 /**
  * HomebridgePlatform
  * This class is the main constructor for your plugin, this is where you should
@@ -20,6 +22,7 @@ export class ExampleHomebridgePlatform implements DynamicPlatformPlugin {
     public readonly config: PlatformConfig,
     public readonly api: API,
   ) {
+    
     this.log.debug('Finished initializing platform:', this.config.name);
 
     // When this event is fired it means Homebridge has restored all cached accessories from disk.
@@ -54,6 +57,8 @@ export class ExampleHomebridgePlatform implements DynamicPlatformPlugin {
     // EXAMPLE ONLY
     // A real plugin you would discover accessories from the local network, cloud services
     // or a user-defined array in the platform config.
+    
+    /** 
     const exampleDevices = [
       {
         exampleUniqueId: 'ABCD',
@@ -62,6 +67,13 @@ export class ExampleHomebridgePlatform implements DynamicPlatformPlugin {
       {
         exampleUniqueId: 'EFGH',
         exampleDisplayName: 'Kitchen',
+      },
+    ];
+    **/ 
+    const exampleDevices = [ 
+    {
+        exampleUniqueId: 'ALPHAESS',
+        exampleDisplayName: 'Alpha ESS Battery',
       },
     ];
 
@@ -77,6 +89,7 @@ export class ExampleHomebridgePlatform implements DynamicPlatformPlugin {
       // the cached devices we stored in the `configureAccessory` method above
       const existingAccessory = this.accessories.find(accessory => accessory.UUID === uuid);
 
+
       if (existingAccessory) {
         // the accessory already exists
         this.log.info('Restoring existing accessory from cache:', existingAccessory.displayName);
@@ -91,9 +104,13 @@ export class ExampleHomebridgePlatform implements DynamicPlatformPlugin {
 
         // it is possible to remove platform accessories at any time using `api.unregisterPlatformAccessories`, eg.:
         // remove platform accessories when no longer present
-        // this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [existingAccessory]);
-        // this.log.info('Removing existing accessory from cache:', existingAccessory.displayName);
-      } else {
+        this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [existingAccessory]);
+       this.log.info('Removing existing accessory from cache:', existingAccessory.displayName);
+      
+      } 
+      
+      
+    //else {
         // the accessory does not yet exist, so we need to create it
         this.log.info('Adding new accessory:', device.exampleDisplayName);
 
@@ -110,7 +127,8 @@ export class ExampleHomebridgePlatform implements DynamicPlatformPlugin {
 
         // link the accessory to your platform
         this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
-      }
+        
+      //}
     }
   }
 }
