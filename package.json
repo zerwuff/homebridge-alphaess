@@ -1,7 +1,7 @@
 {
   "private": true,
   "name": "homebridge-alphaess",
-  "version": "0.0.2-beta.0",
+  "version": "0.0.3-beta.0",
   "description": "Node JS Alpha Ess Plugin",
   "license": "the most strict license",
   "keywords": [
