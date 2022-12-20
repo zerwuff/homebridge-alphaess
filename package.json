@@ -8,6 +8,7 @@
   "keywords": [
     "homebridge-plugin"
   ],
+  "type": "module",
   "repository": {
     "type": "git",
     "url": "https://github.com/2rw0lff/homebridge-alphaess.git"

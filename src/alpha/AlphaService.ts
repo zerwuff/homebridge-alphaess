@@ -3,12 +3,8 @@ import { API, AccessoryConfig, AccessoryPlugin, DynamicPlatformPlugin, Logger, P
 import { off } from 'process';
 import { json } from 'stream/consumers';
 import { AlphaDetailRespose } from './response/AlphaDetailResponse';
-const fetch = require('node-fetch');
-//import  fetch  from "node-fetch";
-
-
-const crypto = require('crypto');
-//import  crypto from "crypto";
+import  fetch  from "node-fetch";
+import  crypto from "crypto";
 
 const AUTHPREFIX = "al8e4s"
 const AUTHCONSTANT = "LS885ZYDA95JVFQKUIUUUV7PQNODZRDZIS4ERREDS0EED8BCWSS"
