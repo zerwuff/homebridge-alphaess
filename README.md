@@ -7,14 +7,20 @@ This plugin connects the alpha ess cloud to homebridge.
 
 # Features 
 
- - Show Battery Percentage  (currently as light bulb)
+ - Show Battery Percentage  (currently as light bulb to enable percentage view)
+
 
 # Installation in Homebridge:
 
-- 
- 
+Install via plugins in the Homebridge Ui, search for :
+```
+ homebridge-alphaess
+```
+
+Click install and do the following configuration:
 
  # Configuration
+```js
 
    "accessories": [
         {
@@ -26,3 +32,4 @@ This plugin connects the alpha ess cloud to homebridge.
             "serialnumber": "<YourAlphaEesCloudSerialNumberOfDevice>"
         }
     ],
+```
