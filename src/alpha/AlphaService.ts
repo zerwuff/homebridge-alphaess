@@ -1,11 +1,10 @@
 
 import { API, AccessoryConfig, AccessoryPlugin, DynamicPlatformPlugin, Logger, PlatformAccessory, PlatformConfig, Service, Characteristic } from 'homebridge';
-//import { AlphaService } from "./AlphaService.js"
 import { off } from 'process';
 import { json } from 'stream/consumers';
 import { AlphaDetailRespose } from './response/AlphaDetailResponse';
-import fetch from "node-fetch";
-import crypto from "crypto";
+import  fetch  from "node-fetch";
+import  crypto from "crypto";
 
 const AUTHPREFIX = "al8e4s"
 const AUTHCONSTANT = "LS885ZYDA95JVFQKUIUUUV7PQNODZRDZIS4ERREDS0EED8BCWSS"
