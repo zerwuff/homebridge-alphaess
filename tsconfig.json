@@ -8,6 +8,7 @@
       "es2017",
       "es2018"
     ],
+    "strictNullChecks": false,  // required for alpha-js
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
