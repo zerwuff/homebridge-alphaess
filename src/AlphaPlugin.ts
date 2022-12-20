@@ -32,13 +32,7 @@ export class AlphaPlugin implements AccessoryPlugin {
       .setCharacteristic(this.api.hap.Characteristic.Manufacturer, "Alpha Ess Plugin by Jens Zeidler")
       .setCharacteristic(this.api.hap.Characteristic.Model, "Alpha Ess ");
       
-      
-      //this.service = new this.api.hap.Service.Switch(config.name);
-
-      //this.service = new this.api.hap.Service.BatteryService(config.name, "hvBatteryLevel")
-//      this.service = new this.api.hap.Service.Battery(config.name, "hvBatteryLevel")
-
-      //this.service = new this.api.hap.Service.Battery(config.name)
+    
       this.service = new this.api.hap.Service.Lightbulb(config.name)
 
       this.service.getCharacteristic(this.api.hap.Characteristic.StatusLowBattery)
@@ -60,7 +54,9 @@ export class AlphaPlugin implements AccessoryPlugin {
       this.alphaService =  new AlphaService(this.log, config.username, config.password, config.logrequestdata);
 
   
-      if (!this.serialnumber || !this.username || !this.password){
+      this.log.debug(config.serialnumber);
+      this.log.debug(config.username);
+      if (!config.serialnumber || !config.username || !config.password){
         this.log.error("Configuration was missing: either serialnumber, password or username not present")
       }
      

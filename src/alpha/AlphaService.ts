@@ -5,7 +5,7 @@ import { off } from 'process';
 import { json } from 'stream/consumers';
 import { AlphaDetailRespose } from './response/AlphaDetailResponse';
 import fetch from "node-fetch";
-var crypto = require('crypto');
+import crypto from "crypto";
 
 const AUTHPREFIX = "al8e4s"
 const AUTHCONSTANT = "LS885ZYDA95JVFQKUIUUUV7PQNODZRDZIS4ERREDS0EED8BCWSS"
@@ -35,7 +35,7 @@ export class AlphaService{
         const url = BASEURL+'/ESS/GetLastPowerDataBySN?noLoading=true&sys_sn=' + serialNumber;
 
         if (this.logRequestDetails){
-            this.logRequestData(authsignature, authtimestamp, gen_hash, url, data, token, serialNumber);
+            this.logRequestData(authsignature, authtimestamp, gen_hash, url, "", token, serialNumber);
         }
         
         const response = await fetch(url, {
@@ -83,9 +83,8 @@ export class AlphaService{
                                   "authtimestamp": authtimestamp, 
                                   "authsignature" :authsignature 
                                 },
-                  })//.then(response => response.json()).then(data => { return data.AccessToken});
-                  //.then(response => response.text()).then(data => console.log(data))
-        
+                  }) 
+
         let jsonResponse = await response.json();
         if (jsonResponse!=null){                
             return jsonResponse.data.AccessToken;
