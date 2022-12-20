@@ -4,7 +4,7 @@ import { API, AccessoryConfig, AccessoryPlugin, DynamicPlatformPlugin, Logger, P
 import { off } from 'process';
 import { json } from 'stream/consumers';
 import { AlphaDetailRespose } from './response/AlphaDetailResponse';
-const fetch = require("node-fetch");
+import fetch from "node-fetch";
 var crypto = require('crypto');
 
 const AUTHPREFIX = "al8e4s"
@@ -18,7 +18,7 @@ export class AlphaService{
     private password;
     private logRequestDetails : boolean;
     
-    constructor(logger: Logger | undefined, username: String | undefined, password: String | undefined, logRequestDetails: boolean ) {
+    constructor(logger: Logger | undefined, username: String | undefined, password: String, logRequestDetails: boolean ) {
         this.logger = logger;
         this.password = password;
         this.username = username;
