@@ -62,7 +62,7 @@ export class AlphaPlugin implements AccessoryPlugin {
     var response = await this.alphaService.login().then(loginResponse => {
 
       if (loginResponse.data != undefined && loginResponse.data.AccessToken != undefined) {
-        this.log.error("Logged in to alpha cloud, trying to fetch detail data")      
+        this.log.debug("Logged in to alpha cloud, trying to fetch detail data")      
       
         this.alphaService.getDetailData(loginResponse.data.AccessToken, serialNumber).then(
           detailData => {      
