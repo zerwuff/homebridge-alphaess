@@ -1,9 +1,6 @@
 
 import { API, AccessoryConfig, AccessoryPlugin, DynamicPlatformPlugin, Logger, PlatformAccessory, PlatformConfig, Service, Characteristic } from 'homebridge';
 import { AlphaService } from "./alpha/AlphaService.js"
-import { off, report } from 'process';
-import { json } from 'stream/consumers';
-
 
 export class AlphaPlugin implements AccessoryPlugin {
 
@@ -19,7 +16,9 @@ export class AlphaPlugin implements AccessoryPlugin {
   private serialnumber: string;
   private bearer: string;
 
+  // alpha ess status variables 
   private batteryLevel: number;
+  private batteryPower: number;
 
   constructor(log, config: AccessoryConfig, api: API) {
     this.api = api;
@@ -28,14 +27,13 @@ export class AlphaPlugin implements AccessoryPlugin {
     log.debug('Alpha ESS Accessory Loaded');
 
     this.informationService = new this.api.hap.Service.AccessoryInformation()
-      .setCharacteristic(this.api.hap.Characteristic.Manufacturer, "Alpha Ess Plugin by Jens Zeidler")
-      .setCharacteristic(this.api.hap.Characteristic.Model, "Alpha Ess ");
+      .setCharacteristic(this.api.hap.Characteristic.Manufacturer, "Alpha Ess Homebridge Plugin by Jens Zeidler")
+      .setCharacteristic(this.api.hap.Characteristic.SerialNumber, config.serialnumber)
+      .setCharacteristic(this.api.hap.Characteristic.Model, "Alpha ESS Battery Storage ");
+    
+     this.service = new this.api.hap.Service.Lightbulb(config.name)
 
-
-    this.service = new this.api.hap.Service.Lightbulb(config.name)
-
-    this.service.getCharacteristic(this.api.hap.Characteristic.BatteryLevel)
-      .onGet(this.handleStatusBattery.bind(this));
+    // this.service = new this.api.hap.Service.Battery(config.name)
 
     this.service.getCharacteristic(this.api.hap.Characteristic.On)
       .onGet(this.getOnStatus.bind(this))
@@ -68,6 +66,7 @@ export class AlphaPlugin implements AccessoryPlugin {
           detailData => {      
             this.log.debug("SOC: " + detailData.data.soc);
             this.batteryLevel = detailData.data.soc;
+            this.batteryPower = detailData.data.pbat;
           }
         )
       }else {
@@ -85,25 +84,29 @@ export class AlphaPlugin implements AccessoryPlugin {
   }
 
 
-  getOnStatus(someObject: object) {
-    this.log.debug('Triggered GET ON Status');
-    return 1;
+  handleSerialNumberGet() {
+    return this.serialnumber;
   }
-
 
   identify(): void {
     this.log.debug('Its me, Alpha cloud plugin');
   }
 
+  getOnStatus() {
+    let isCharging  = (this.batteryLevel > 0 );
+    this.log.debug('Alpha Ess Charging state: ' + isCharging);
+    return isCharging ;
+  }
+
   setOnStatus(value) {
-    this.log.debug('Triggered SET ON Status');
-    return 1;
+    let isCharging  = (this.batteryLevel > 0 );
+    this.log.debug('Alpha Ess Charging state: ' + isCharging);
+    return isCharging;
   }
  
-  handleStatusBattery() {
+  handleStatusBattery(): number {
     this.fetchAlphaEssData(this.serialnumber);
-    this.log.debug('Triggered GET Battery Level');
-    // set this to a valid value for StatusLowBattery
+    this.log.debug('Alpha Ess battery level');
     return this.batteryLevel;
   }
 
