@@ -2,7 +2,7 @@
   "private": false,
   "strictNullChecks": false,
   "name": "homebridge-alphaess",
-  "version": "2.8.0",
+  "version": "2.9.0",
   "description": "Homebridge Alpha Ess plugin",
   "license": "Apache License",
   "keywords": [
@@ -29,7 +29,7 @@
     "test:watch": "jest --watch"
   },
   "dependencies": {
-    "request":"^2.88.2"
+    "request": "^2.88.2"
   },
   "devDependencies": {
     "@types/jest": "^29.2.4",
@@ -46,6 +46,6 @@
     "ts-jest": "^29.0.3",
     "ts-node": "^10.3.0",
     "typescript": "^4.8.4",
-    "request":"^2.88.2"
+    "request": "^2.88.2"
   }
 }
