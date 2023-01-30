@@ -29,7 +29,9 @@ Click install and do the following configuration:
             "username": "<YourAlphaEssCloudUsername>", 
             "password": "<YourAlphaEssCloudPassword>",
             "logrequestdata": "false",
-            "serialnumber": "<YourAlphaEesCloudSerialNumberOfDevice>"
-        }
+            "serialnumber": "<YourAlphaEesCloudSerialNumberOfDevice>",   
+            "powerLoadingThreshold" : 1500, // minimum power to load, e.g 1500 watts  
+            "socLoadingThreshold": 49 // minimum soc to load, e.g. 49%  
+    }
     ],
 ```
