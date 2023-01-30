@@ -5,6 +5,14 @@
 This plugin connects the alpha ess cloud to homebridge.
 
 
+# Building 
+
+ -  npm build && npm test
+
+# Releasing
+
+ - npm version minor 
+
 # Features 
 
  - Show Battery Percentage  (currently as light bulb to enable percentage view)

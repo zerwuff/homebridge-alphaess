@@ -112,14 +112,14 @@ export class AlphaService {
         var trigger:boolean = false;
         var soc = detailData.data.soc;
          // power to the network: negative -> producing, positive -> consuming  
-        var pMeterTotal = (detailData.data.pmeter_l1 + detailData.data.pmeter_l2 + detailData.data.pmeter_l3) * -1 ;
+        var pMeterTotal = detailData.data.pmeter_l1 + detailData.data.pmeter_l2 + detailData.data.pmeter_l3;
 
         var pvTrigger = false;
         var socTrigger = false;
 
         this.logMsg('pmeterTotal :' +pMeterTotal + ' soc: ' + soc);
 
-        if (pMeterTotal >= powerLoadingThreshold){
+        if (pMeterTotal < (powerLoadingThreshold * -1)){
             this.logMsg('Power total back into the net:' + pMeterTotal + ' is over threshold:' + powerLoadingThreshold + ' lets put that into the car');
             pvTrigger  = true;
         }
