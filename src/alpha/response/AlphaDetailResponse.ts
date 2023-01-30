@@ -6,7 +6,7 @@ export class AlphaDetailRespose {
     data: AlphaData;
 }
 
-class AlphaData {
+export class AlphaData {
 
     ppv1: number; // string power
     ppv2: number;
@@ -14,7 +14,7 @@ class AlphaData {
     ppv4: number;
 
 
-    pmeter_l1: number; // phase power (produced enegery) 
+    pmeter_l1: number; // phase power (produced energy) 
     pmeter_l2: number;
     pmeter_l3: number;
 

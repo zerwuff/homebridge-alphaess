@@ -4,6 +4,7 @@ import crypto from "crypto";
 import { JsonUtil } from '../util/JsonUtil';
 import { AlphaLoginResponse } from './response/AlphaLoginResponse';
 import { AlphaDetailRespose } from './response/AlphaDetailResponse';
+import { triggerAsyncId } from 'async_hooks';
 const request = require('request');
 
 
@@ -101,6 +102,40 @@ export class AlphaService {
         });
     }
 
+
+    
+    // calculate the trigger depending on power and socLoading
+    calculateTrigger(detailData:AlphaDetailRespose, powerLoadingThreshold:number , socLoadingThreshold: number): boolean
+    {
+        this.logMsg('Calculating trigger for respone:' + detailData + ' powerLoadingThreshold: ' + powerLoadingThreshold + ' socLoadingThreshold:' +socLoadingThreshold + ' trigger:'+ trigger);
+
+        var trigger:boolean = false;
+        var soc = detailData.data.soc;
+         // power to the network: negative -> producing, positive -> consuming  
+        var pMeterTotal = (detailData.data.pmeter_l1 + detailData.data.pmeter_l2 + detailData.data.pmeter_l3) * -1 ;
+
+        var pvTrigger = false;
+        var socTrigger = false;
+
+        this.logMsg('pmeterTotal :' +pMeterTotal + ' soc: ' + soc);
+
+        if (pMeterTotal >= powerLoadingThreshold){
+            this.logMsg('Power total back into the net:' + pMeterTotal + ' is over threshold:' + powerLoadingThreshold + ' lets put that into the car');
+            pvTrigger  = true;
+        }
+        if (soc >= socLoadingThreshold){
+            this.logMsg('Battery SOC:' + soc + ' is over threshold:' +socLoadingThreshold + ' we can charge the car');
+            socTrigger  = true;
+        }
+        
+        if (socTrigger==true && pvTrigger==true){
+            trigger = true ;
+        }
+
+        this.logMsg('Calculating trigger ->  powerLoadingThreshold: ' + powerLoadingThreshold + ' socLoadingThreshold:' +socLoadingThreshold + ' resulting in trigger:'+ trigger);
+
+        return trigger;
+    }
 
     createSignature(authtimestamp){
         var hash = crypto.createHash('sha512');

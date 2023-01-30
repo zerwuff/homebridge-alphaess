@@ -1,5 +1,6 @@
 
-import { API, AccessoryConfig, AccessoryPlugin, DynamicPlatformPlugin, Logger, PlatformAccessory, PlatformConfig, Service, Characteristic } from 'homebridge';
+import { timeStamp } from 'console';
+import { API, AccessoryConfig, AccessoryPlugin, DynamicPlatformPlugin, Logger, PlatformAccessory, PlatformConfig, Service, Characteristic, BridgeConfiguration } from 'homebridge';
 import { AlphaService } from "./alpha/AlphaService.js"
 
 export class AlphaPlugin implements AccessoryPlugin {
@@ -7,23 +8,36 @@ export class AlphaPlugin implements AccessoryPlugin {
   private alphaService: AlphaService;
   private informationService: Service;
   private service: Service;
+  private contactSensorService: Service;
+
   private api: API;
   private log: Logger;
-
+  private config: AccessoryConfig;
 
   private username: string;
   private password: string;
   private serialnumber: string;
   private bearer: string;
+  private refreshTimerInterval: number; // timer milliseconds to check timer 
 
   // alpha ess status variables 
   private batteryLevel: number;
   private batteryPower: number;
 
+  // threshold for triggering the loading trigger
+  private powerLoadingThreshold: number; // minimum power to load 
+  private socLoadingThreshold: number; // minimum soc to load 
+
+  // true / false trigger 
+  private trigger: boolean;
+
+
   constructor(log, config: AccessoryConfig, api: API) {
     this.api = api;
     this.log = log;
     this.batteryLevel = 0;
+    this.refreshTimerInterval = 10000;
+    this.config = config;
     log.debug('Alpha ESS Accessory Loaded');
 
     this.informationService = new this.api.hap.Service.AccessoryInformation()
@@ -43,6 +57,9 @@ export class AlphaPlugin implements AccessoryPlugin {
       .onGet(this.handleStatusBattery.bind(this))
 
 
+    this.contactSensorService =  new this.api.hap.Service.ContactSensor("loadingSensor");
+
+
     this.serialnumber = config.serialnumber;
     this.alphaService = new AlphaService(this.log, config.username, config.password, config.logrequestdata);
 
@@ -52,6 +69,16 @@ export class AlphaPlugin implements AccessoryPlugin {
     if (!config.serialnumber || !config.username || !config.password) {
       this.log.error("Configuration was missing: either serialnumber, password or username not present")
     }
+
+    
+
+    // auto refresh statistics
+    setInterval(() => {
+    
+      this.log.debug("Running Timer to check trigger "); 
+      this.fetchAlphaEssData(config.serialnumber); 
+  
+    }, this.refreshTimerInterval);
 
   }
 
@@ -67,6 +94,11 @@ export class AlphaPlugin implements AccessoryPlugin {
             this.log.debug("SOC: " + detailData.data.soc);
             this.batteryLevel = detailData.data.soc;
             this.batteryPower = detailData.data.pbat;
+            
+            this.trigger = this.alphaService.calculateTrigger(detailData, this.config.powerLoadingThreshold, this.config.socLoadingThreshold); 
+
+            this.log.debug("Trigger value:"+ this.trigger); 
+
           }
         )
       }else {
@@ -76,12 +108,26 @@ export class AlphaPlugin implements AccessoryPlugin {
 
   }
 
+
   getServices() {
     return [
       this.informationService,
       this.service
     ];
   }
+
+  handleContactSensorStateGet() {
+    this.log.debug('Triggered GET ContactSensorState');
+
+    // set this to a valid value for ContactSensorState
+    if (this.trigger == false){
+      this.log.debug('CONTACT DETECTED');
+      return this.api.hap.Characteristic.ContactSensorState.CONTACT_DETECTED;
+    }
+    this.log.debug('CONTACT _NOT_ DETECTED');
+    return this.api.hap.Characteristic.ContactSensorState.CONTACT_NOT_DETECTED;
+  }
+
 
 
   handleSerialNumberGet() {
