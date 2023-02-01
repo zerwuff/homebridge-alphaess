@@ -11,7 +11,7 @@ This plugin connects the alpha ess cloud to homebridge.
 
 # Releasing
 
- - npm version minor 
+ - npm version minor && npm publish
 
 # Features 
 

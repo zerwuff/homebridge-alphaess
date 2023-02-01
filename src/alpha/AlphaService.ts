@@ -107,24 +107,23 @@ export class AlphaService {
     // calculate the trigger depending on power and socLoading
     calculateTrigger(detailData:AlphaDetailRespose, powerLoadingThreshold:number , socLoadingThreshold: number): boolean
     {
-        this.logMsg('Calculating trigger for respone:' + detailData + ' powerLoadingThreshold: ' + powerLoadingThreshold + ' socLoadingThreshold:' +socLoadingThreshold + ' trigger:'+ trigger);
-
         var trigger:boolean = false;
         var soc = detailData.data.soc;
-         // power to the network: negative -> producing, positive -> consuming  
-        var pMeterTotal = detailData.data.pmeter_l1 + detailData.data.pmeter_l2 + detailData.data.pmeter_l3;
+         // power of all strings plus dc power = total energy from the sun into the system
+        var stringPowerTotal = detailData.data.ppv1 + detailData.data.ppv2 + detailData.data.ppv3 +  detailData.data.ppv4 + detailData.data.pmeter_dc ;
 
         var pvTrigger = false;
         var socTrigger = false;
+        this.logMsg('soc: ' + soc  );
+        this.logMsg('pBatt :'  + detailData.data.pbat);
+        this.logMsg('stringPowerTotal :' +stringPowerTotal );
 
-        this.logMsg('pmeterTotal :' +pMeterTotal + ' soc: ' + soc);
-
-        if (pMeterTotal < (powerLoadingThreshold * -1)){
-            this.logMsg('Power total back into the net:' + pMeterTotal + ' is over threshold:' + powerLoadingThreshold + ' lets put that into the car');
+        if (stringPowerTotal > powerLoadingThreshold){
+            this.logMsg('Power total on the strings :' + stringPowerTotal + ' is over threshold:' + powerLoadingThreshold + ' power trigger: true');
             pvTrigger  = true;
         }
         if (soc >= socLoadingThreshold){
-            this.logMsg('Battery SOC:' + soc + ' is over threshold:' +socLoadingThreshold + ' we can charge the car');
+            this.logMsg('Battery SOC:' + soc + ' is over threshold:' +socLoadingThreshold + 'soc trigger:true ');
             socTrigger  = true;
         }
         
@@ -156,7 +155,7 @@ export class AlphaService {
     private logMsg(message) {
         if (this.logger != undefined) {
             this.logger.debug(message);
-        } else {
+        } else {            
             console.log(message);
         }
     }

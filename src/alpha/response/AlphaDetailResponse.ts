@@ -17,7 +17,7 @@ export class AlphaData {
     pmeter_l1: number; // phase power (produced energy) 
     pmeter_l2: number;
     pmeter_l3: number;
-
+    pmeter_dc: number; 
     
     preal_l1: number; // phase power (produced enegery) of the generator 
     preal_l2: number;

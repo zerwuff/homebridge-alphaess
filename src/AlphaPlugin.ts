@@ -71,14 +71,18 @@ export class AlphaPlugin implements AccessoryPlugin {
     }
 
     
-
-    // auto refresh statistics
-    setInterval(() => {
+    if (!config.refreshTimerInterval ) {
+      this.log.error("refreshTimerInterval is not set, not refreshing trigger data ")
+    }
+    else {
+      this.refreshTimerInterval = config.refreshTimerInterval
+       // auto refresh statistics
+        setInterval(() => {
     
-      this.log.debug("Running Timer to check trigger "); 
-      this.fetchAlphaEssData(config.serialnumber); 
-  
-    }, this.refreshTimerInterval);
+             this.log.debug("Running Timer to check trigger every  " + config.refreshTimerInterval + " ms "); 
+              this.fetchAlphaEssData(config.serialnumber); 
+          }, config.refreshTimerInterval);
+    }
 
   }
 
@@ -96,9 +100,7 @@ export class AlphaPlugin implements AccessoryPlugin {
             this.batteryPower = detailData.data.pbat;
             
             this.trigger = this.alphaService.calculateTrigger(detailData, this.config.powerLoadingThreshold, this.config.socLoadingThreshold); 
-
             this.log.debug("Trigger value:"+ this.trigger); 
-
           }
         )
       }else {
