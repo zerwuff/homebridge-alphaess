@@ -1,5 +1,5 @@
 
-import { Logger } from 'homebridge';
+import { Logging } from 'homebridge';
 import crypto from "crypto";
 import { JsonUtil } from '../util/JsonUtil';
 import { AlphaLoginResponse } from './response/AlphaLoginResponse';
@@ -15,12 +15,12 @@ const BASEURL = "https://cloud.alphaess.com/api"
 
 
 export class AlphaService {
-    private logger: Logger;
+    private logger: Logging;
     private username;
     private password;
     private logRequestDetails: boolean;
 
-    constructor(logger: Logger | undefined, username: String | undefined, password: String, logRequestDetails: boolean) {
+    constructor(logger: Logging | undefined, username: String | undefined, password: String, logRequestDetails: boolean) {
         this.logger = logger;
         this.password = password;
         this.username = username;

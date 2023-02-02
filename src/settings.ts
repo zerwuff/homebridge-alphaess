@@ -6,8 +6,11 @@ export const PLATFORM_NAME = 'AlphaESS HomeBridge Platform';
 /**
  * This must match the name of your plugin as defined the package.json
  */
+
+// the percentage plugin
 export const PLUGIN_NAME = 'homebridge-alphaess';
-
-
 export const ACCESSORY_NAME = 'homebridge-alphaess-accessory';
 
+// the tigger accessory
+export const PLUGIN_NAME_TRIGGER = 'homebridge-alphaess-trigger';
+export const ACCESSORY_NAME_TRIGGER = 'homebridge-alphaess-accessory-trigger';

@@ -1,6 +1,6 @@
 
 import { timeStamp } from 'console';
-import { API, AccessoryConfig, AccessoryPlugin, DynamicPlatformPlugin, Logger, PlatformAccessory, PlatformConfig, Service, Characteristic, BridgeConfiguration } from 'homebridge';
+import { HAP, API, AccessoryConfig, AccessoryPlugin, DynamicPlatformPlugin, PlatformAccessory, PlatformConfig, Service, Characteristic, BridgeConfiguration, Logging } from 'homebridge';
 import { AlphaService } from "./alpha/AlphaService.js"
 
 export class AlphaPlugin implements AccessoryPlugin {
@@ -8,69 +8,47 @@ export class AlphaPlugin implements AccessoryPlugin {
   private alphaService: AlphaService;
   private informationService: Service;
   private service: Service;
-  private contactSensorService: Service;
 
-  private api: API;
-  private log: Logger;
-  private config: AccessoryConfig;
+  private hap: HAP ;
+  private log: Logging;
+  private name: string; // this attribute is required for registreing the accessoryplugin 
 
-  private username: string;
-  private password: string;
   private serialnumber: string;
-  private bearer: string;
   private refreshTimerInterval: number; // timer milliseconds to check timer 
 
   // alpha ess status variables 
   private batteryLevel: number;
-  private batteryPower: number;
-
-  // threshold for triggering the loading trigger
-  private powerLoadingThreshold: number; // minimum power to load 
-  private socLoadingThreshold: number; // minimum soc to load 
-
-  // true / false trigger 
-  private trigger: boolean;
 
 
-  constructor(log, config: AccessoryConfig, api: API) {
-    this.api = api;
+  constructor (log: Logging, config: PlatformConfig, api: API) {
+    this.hap = api.hap;
     this.log = log;
     this.batteryLevel = 0;
     this.refreshTimerInterval = 10000;
-    this.config = config;
+    this.name= "AlphaEssBattery";
+    
     log.debug('Alpha ESS Accessory Loaded');
 
-    this.informationService = new this.api.hap.Service.AccessoryInformation()
-      .setCharacteristic(this.api.hap.Characteristic.Manufacturer, "Alpha Ess Homebridge Plugin by Jens Zeidler")
-      .setCharacteristic(this.api.hap.Characteristic.SerialNumber, config.serialnumber)
-      .setCharacteristic(this.api.hap.Characteristic.Model, "Alpha ESS Battery Storage ");
+    this.informationService = new this.hap.Service.AccessoryInformation()
+      .setCharacteristic(this.hap.Characteristic.Manufacturer, "Alpha Ess Homebridge Plugin by Jens Zeidler")
+      .setCharacteristic(this.hap.Characteristic.SerialNumber, config.serialnumber)
+      .setCharacteristic(this.hap.Characteristic.Model, "Alpha ESS Battery Storage ");
     
-     this.service = new this.api.hap.Service.Lightbulb(config.name)
-
-    // this.service = new this.api.hap.Service.Battery(config.name)
-
-    this.service.getCharacteristic(this.api.hap.Characteristic.On)
-      .onGet(this.getOnStatus.bind(this))
-      .onSet(this.setOnStatus.bind(this));
-
-    this.service.getCharacteristic(this.api.hap.Characteristic.Brightness)
-      .onGet(this.handleStatusBattery.bind(this))
+     this.service = new this.hap.Service.HumiditySensor(this.name)
 
 
-    this.contactSensorService =  new this.api.hap.Service.ContactSensor("loadingSensor");
+         // create handlers for required characteristics
+    this.service.getCharacteristic(this.hap.Characteristic.CurrentRelativeHumidity)
+         .onGet(this.handleCurrentRelativeHumidityGet.bind(this));
 
 
-    this.serialnumber = config.serialnumber;
-    this.alphaService = new AlphaService(this.log, config.username, config.password, config.logrequestdata);
-
-
-    this.log.debug(config.serialnumber);
-    this.log.debug(config.username);
+    this.serialnumber = config.serialnumber
+    this.alphaService = new AlphaService(this.log, config.username, config.password, config.logrequestdata); 
+  
     if (!config.serialnumber || !config.username || !config.password) {
       this.log.error("Configuration was missing: either serialnumber, password or username not present")
     }
 
-    
     if (!config.refreshTimerInterval ) {
       this.log.error("refreshTimerInterval is not set, not refreshing trigger data ")
     }
@@ -81,9 +59,8 @@ export class AlphaPlugin implements AccessoryPlugin {
     
              this.log.debug("Running Timer to check trigger every  " + config.refreshTimerInterval + " ms "); 
               this.fetchAlphaEssData(config.serialnumber); 
-          }, config.refreshTimerInterval);
+          }, this.refreshTimerInterval);
     }
-
   }
 
   async fetchAlphaEssData(serialNumber: string) {
@@ -96,11 +73,7 @@ export class AlphaPlugin implements AccessoryPlugin {
         this.alphaService.getDetailData(loginResponse.data.AccessToken, serialNumber).then(
           detailData => {      
             this.log.debug("SOC: " + detailData.data.soc);
-            this.batteryLevel = detailData.data.soc;
-            this.batteryPower = detailData.data.pbat;
-            
-            this.trigger = this.alphaService.calculateTrigger(detailData, this.config.powerLoadingThreshold, this.config.socLoadingThreshold); 
-            this.log.debug("Trigger value:"+ this.trigger); 
+            this.batteryLevel = detailData.data.soc;                  
           }
         )
       }else {
@@ -118,19 +91,6 @@ export class AlphaPlugin implements AccessoryPlugin {
     ];
   }
 
-  handleContactSensorStateGet() {
-    this.log.debug('Triggered GET ContactSensorState');
-
-    // set this to a valid value for ContactSensorState
-    if (this.trigger == false){
-      this.log.debug('CONTACT DETECTED');
-      return this.api.hap.Characteristic.ContactSensorState.CONTACT_DETECTED;
-    }
-    this.log.debug('CONTACT _NOT_ DETECTED');
-    return this.api.hap.Characteristic.ContactSensorState.CONTACT_NOT_DETECTED;
-  }
-
-
 
   handleSerialNumberGet() {
     return this.serialnumber;
@@ -139,22 +99,11 @@ export class AlphaPlugin implements AccessoryPlugin {
   identify(): void {
     this.log.debug('Its me, Alpha cloud plugin');
   }
-
-  getOnStatus() {
-    let isCharging  = (this.batteryLevel > 0 );
-    this.log.debug('Alpha Ess Charging state: ' + isCharging);
-    return isCharging ;
-  }
-
-  setOnStatus(value) {
-    let isCharging  = (this.batteryLevel > 0 );
-    this.log.debug('Alpha Ess Charging state: ' + isCharging);
-    return isCharging;
-  }
  
-  handleStatusBattery(): number {
-    this.fetchAlphaEssData(this.serialnumber);
+
+  handleCurrentRelativeHumidityGet() {
     this.log.debug('Alpha Ess battery level');
+    this.fetchAlphaEssData(this.serialnumber);
     return this.batteryLevel;
   }
 
