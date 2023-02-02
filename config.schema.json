@@ -1,5 +1,85 @@
 {
-  "pluginAlias": "AlphaEssHomeBridgePlugin",
-  "pluginType": "accessory",
-  "singular": true
+  "pluginAlias": "AlphaEssPlatform",
+  "pluginType": "platform",
+  "singular": true,
+  "schema": {
+    "properties": {
+      "username": {
+        "title": "Username",
+        "type": "string",
+        "required": true,
+        "description" :  "the alpha ess username"
+      },
+      "password": {
+        "title": "password",
+        "type": "string",
+        "required": true,
+        "description" : "the alpa ess password"
+      },
+      "serialnumber": {
+        "title": "serialnumber",
+        "type": "string",
+        "required": true,
+        "description" : "the alpa ess serial number, eg. AE...."
+      },
+      "powerLoadingThreshold": {
+        "title": "powerLoadingThreshold",
+        "type": "integer",
+        "required": false,
+        "default":1500,
+        "description" : "the power threshold to enable the trigger"
+      },
+      "socLoadingThreshold": {
+        "title": "socLoadingThreshold",
+        "type": "integer",
+        "required": false,
+        "default":50,
+        "description" : "the soc threshold to enable the trigger"
+      },
+      "refreshTimerInterval": {
+        "title": "refreshTimerInterval",
+        "type": "integer",
+        "required": false,
+        "default":60000,
+        "description" : "the refresh timer interval in ms "
+      },
+      "mqtt_url": {
+        "title": "mqtt_url",
+        "type": "string",
+        "required": false,
+        "description" :  "the mqtt url, e.g mqt://bla.fasel"
+      },
+      "mqtt_trigger_topic_true": {
+        "title": "mqtt_trigger_topic_true",
+        "type": "string",
+        "required": false,      
+        "description" : "the mqtt topic to use when trigger is true"
+      },
+      "mqtt_trigger_topic_false": {
+        "title": "mqtt_trigger_topic_false",
+        "type": "string",
+        "required": false,      
+        "description" : "the mqtt topic to use when trigger is false"
+      },
+      "mqtt_trigger_message_true": {
+        "title": "mqtt_trigger_message_true",
+        "type": "string",
+        "required": false,      
+        "description" : "the mqtt message to use when trigger is true"
+      },
+      "mqtt_trigger_message_false": {
+        "title": "mqtt_trigger_message_false",
+        "type": "string",
+        "required": false,      
+        "description" : "the mqtt message to use when trigger is false"
+      },    
+     "logrequestdata": {
+        "title": "logrequestdata",
+        "type": "boolean",
+        "required": false,
+        "default": false, 
+        "description":"log request data yes / no"
+      }
+    }
+  }
 }
