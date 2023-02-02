@@ -1,8 +1,15 @@
 
 
-# Alpha - ESS Hombridge Plugin
+# Alpha - ESS Homebridge Plugin
 
-This plugin connects the alpha ess cloud to homebridge.
+This plugin connects the alpha ess cloud to homebridge and provides 2 accessories:
+ 
+ - the alpha ess battery percentage as humidity sensor (0-100)% 
+ - a contact sensor that is triggered, when the following thresholds are met:
+   - power poading threshold (the generated sun power), eg. 1500w 
+   - soc threshold , eg. 10% 
+   this enables smart loading of ev batteries depending on the sun. thresholds are configurable
+   
 
 
 # Building 
