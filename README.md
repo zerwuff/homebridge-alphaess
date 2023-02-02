@@ -30,16 +30,23 @@ Click install and do the following configuration:
  # Configuration
 ```js
 
-   "accessories": [
-        {
-            "accessory": "homebridge-alphaess-accessory",
-            "name": "Battery",
-            "username": "<YourAlphaEssCloudUsername>", 
-            "password": "<YourAlphaEssCloudPassword>",
-            "logrequestdata": "false",
-            "serialnumber": "<YourAlphaEesCloudSerialNumberOfDevice>",   
-            "powerLoadingThreshold" : 1500, // minimum power to load, e.g 1500 watts  
-            "socLoadingThreshold": 49 // minimum soc to load, e.g. 49%  
-    }
+    plattforms: [
+     {
+            "name": "AlphaEssPlatform",
+            "platform": "AlphaEssPlatform",
+            "username": "XXXX",
+            "password": "XXXX",
+            "serialnumber": "AE3100520050057",        
+            "logrequestdata": "false",        
+            "powerLoadingThreshold": 1500, # generated sun power in watts to enable trigger
+            "socLoadingThreshold": 10,    # lower threshold of soc to enable trigger
+            "refreshTimerInterval": 60000,  # refresh time intervall in ms       
+            "mqtt_url": "http://localhost:bla"
+            "mqtt_trigger_topic_true": "/topic/to/on",
+            "mqtt_trigger_topic_false": "/topic/to/off)",
+            "mqtt_trigger_message_true": "ON",
+            "mqtt_trigger_message_false": "OFF"
+        }
     ],
+
 ```
