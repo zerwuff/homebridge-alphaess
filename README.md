@@ -22,7 +22,7 @@ This plugin connects the alpha ess cloud to homebridge and provides 2 accessorie
 
 # Features 
 
- - Show Battery Percentage  (currently as light bulb to enable percentage view)
+ - Show Battery Percentage  (currently as as humidity sensor to enable percentage view)
 
 
 # Installation in Homebridge:
@@ -57,3 +57,5 @@ Click install and do the following configuration:
     ],
 
 ```
+
+Note: all mqtt_* parameters are optional if you do not want to use an mqtt broker.

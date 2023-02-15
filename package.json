@@ -30,6 +30,7 @@
   },
   "dependencies": {
     "request": "^2.88.2",
+    "mqtt": "^4.3.7",
     "@homebridge/plugin-ui-utils": "0.0.18"
   },
   "devDependencies": {
