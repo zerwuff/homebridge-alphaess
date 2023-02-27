@@ -98,7 +98,7 @@ following parameters are ignored.
   
   { 
     "Time": "2023-02-27T15:08:20.818", 
-    "AlphaESS": 
+    "ALPHA": 
     {
      "soc" : 33 ,        #  % of battery soc
      "totalPower": 5000  # total power of watts from the alpha ess system (ac & dc combined)
