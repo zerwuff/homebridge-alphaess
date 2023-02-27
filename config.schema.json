@@ -73,6 +73,12 @@
         "required": false,      
         "description" : "the mqtt message to use when trigger is false"
       },    
+      "mqtt_status_topic": {
+        "title": "mqtt_status_topic",
+        "type": "string",
+        "required": false,
+        "description" :  "the mqtt status topic name to send alpha ess status data (soc, power) "
+      },
      "logrequestdata": {
         "title": "logrequestdata",
         "type": "boolean",
