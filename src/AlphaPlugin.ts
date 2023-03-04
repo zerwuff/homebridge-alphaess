@@ -63,7 +63,7 @@ export class AlphaPlugin implements AccessoryPlugin {
     }
 
     if (config.mqtt_url===undefined ){
-      this.log.error('mqtt_url is not set, not pushing anywhere');
+      this.log.debug('mqtt_url is not set, not pushing anywhere');
     } else{
       const topics = new MqttTopics();
       topics.mqtt_status_topic = config.mqtt_status_topic;
@@ -84,7 +84,9 @@ export class AlphaPlugin implements AccessoryPlugin {
             this.log.debug('SOC: ' + detailData.data.soc);
             this.batteryLevel = detailData.data.soc;
             const totalPower = this.alphaService.getTotalPower(detailData);
-            this.mqtt.pushStatusMsg(totalPower, detailData.data.soc);
+            if (this.mqtt !== undefined) {
+              this.mqtt.pushStatusMsg(totalPower, detailData.data.soc);
+            }
           },
         );
       }else {

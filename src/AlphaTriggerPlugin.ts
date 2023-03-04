@@ -67,7 +67,7 @@ export class AlphaTriggerPlugin implements AccessoryPlugin {
     }
 
     if (this.config.mqtt_url===undefined ){
-      this.log.error('mqtt_url is not set, not pushing anywhere');
+      this.log.debug('mqtt_url is not set, not pushing anywhere');
     } else{
       const topics = new MqttTopics();
       topics.mqtt_status_topic = config.mqtt_status_topic;
@@ -117,7 +117,9 @@ export class AlphaTriggerPlugin implements AccessoryPlugin {
     this.log.debug('Triggered GET ContactSensorState');
 
     // set this to a valid value for ContactSensorState
-    this.mqtt.pushTriggerMessage(this.trigger);
+    if (this.mqtt !== undefined) {
+      this.mqtt.pushTriggerMessage(this.trigger);
+    }
 
     if (this.trigger === false){
       this.log.debug('trigger not fired -> status CONTACT_DETECTED');
