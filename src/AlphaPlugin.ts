@@ -1,7 +1,7 @@
 
-import { HAP, API, AccessoryPlugin, PlatformConfig, Service, Logging } from 'homebridge';
+import { HAP, API, AccessoryPlugin, PlatformConfig, Service, Logging, Topics } from 'homebridge';
 import { AlphaService } from './alpha/AlphaService.js';
-import { connect } from 'mqtt';
+import { AlphaMqttService, MqttTopics } from './alpha/mqtt/AlphaMqttService';
 
 export class AlphaPlugin implements AccessoryPlugin {
 
@@ -19,9 +19,8 @@ export class AlphaPlugin implements AccessoryPlugin {
   // alpha ess status variables
   private batteryLevel: number;
 
-  // mqtt connection
-  private mqtt_url: string ;
-  private mqtt_status_topic: string; // status topic
+  // alpha mqtt service
+  private mqtt: AlphaMqttService;
 
   // Alpha ESS Battery Percentage Plugin
   constructor (log: Logging, config: PlatformConfig, api: API) {
@@ -66,8 +65,9 @@ export class AlphaPlugin implements AccessoryPlugin {
     if (config.mqtt_url===undefined ){
       this.log.error('mqtt_url is not set, not pushing anywhere');
     } else{
-      this.mqtt_url = config.mqtt_url;
-      this.mqtt_status_topic = config.mqtt_status_topic;
+      const topics = new MqttTopics();
+      topics.mqtt_status_topic = config.mqtt_status_topic;
+      this.mqtt = new AlphaMqttService(log, config.mqtt_url, topics);
     }
 
   }
@@ -84,7 +84,7 @@ export class AlphaPlugin implements AccessoryPlugin {
             this.log.debug('SOC: ' + detailData.data.soc);
             this.batteryLevel = detailData.data.soc;
             const totalPower = this.alphaService.getTotalPower(detailData);
-            this.pushToExchange(totalPower, detailData.data.soc);
+            this.mqtt.pushStatusMsg(totalPower, detailData.data.soc);
           },
         );
       }else {
@@ -93,19 +93,6 @@ export class AlphaPlugin implements AccessoryPlugin {
     });
   }
 
-
-  async pushToExchange(totalPower: number, soc: number){
-    this.log.debug('trying to connect to mqtt to sent power data');
-    const client = connect(this.mqtt_url, {clientId:this.name});
-    const topic = this.mqtt_status_topic;
-    client.on('connect', ()=> {
-      const time = new Date().toISOString();
-      const msg = '{ "Time":"' + time.substring(0, time.length-1) +
-                   '", "ALPHA": { "soc": '+ soc + ' ,  "totalPower" : ' + totalPower + ' } } ';
-      this.log.debug(msg);
-      client.publish(topic, msg);
-    });
-  }
 
 
   getServices() {

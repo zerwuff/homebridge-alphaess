@@ -1,9 +1,10 @@
 
 import { Logging } from 'homebridge';
 import crypto from 'crypto';
-import { JsonUtil } from '../util/JsonUtil';
 import { AlphaLoginResponse } from './response/AlphaLoginResponse';
 import { AlphaDetailResponse } from './response/AlphaDetailResponse';
+import { ObjectMapper } from 'jackson-js';
+
 const request = require('request');
 
 
@@ -53,7 +54,7 @@ export class AlphaService {
     return new Promise((resolve, reject) => {
       request(req, (error, response, body) => {
         if (!error && response.statusCode == 200) {
-          const detailResponse = JsonUtil.deserialize(JSON.parse(JSON.stringify(body)), AlphaDetailResponse);
+          const detailResponse = new ObjectMapper().parse<AlphaDetailResponse>(JSON.stringify(body));
           return resolve(detailResponse);
         }
         return reject(body);
@@ -92,7 +93,7 @@ export class AlphaService {
     return new Promise((resolve, reject) => {
       request(req, (error, response, body) => {
         if (!error && response.statusCode == 200) {
-          const loginResponse = JsonUtil.deserialize(JSON.parse(JSON.stringify(body)), AlphaLoginResponse);
+          const loginResponse = new ObjectMapper().parse<AlphaLoginResponse>(JSON.stringify(body));
           return resolve(loginResponse);
         }
         return reject(body);

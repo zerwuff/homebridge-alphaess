@@ -1,30 +1,58 @@
 
+import { JsonProperty, JsonClassType } from 'jackson-js';
+
 export class AlphaDetailResponse {
 
-  code: number;
-  data: AlphaData;
+  @JsonProperty() @JsonClassType({type: () => [Number]})
+    code: number;
+
+  @JsonProperty() @JsonClassType({type: () => [AlphaData]})
+    data: AlphaData;
 }
 
 export class AlphaData {
 
-  ppv1: number; // string power
-  ppv2: number;
-  ppv3: number;
-  ppv4: number;
+  @JsonProperty() @JsonClassType({type: () => [Number]})
+    code: number;
 
+  @JsonProperty() @JsonClassType({type: () => [Number]})
+    ppv1: number; // string power
 
-  pmeter_l1: number; // phase power (produced energy)
-  pmeter_l2: number;
-  pmeter_l3: number;
-  pmeter_dc: number;
+  @JsonProperty() @JsonClassType({type: () => [Number]})
+    ppv2: number;
 
-  preal_l1: number; // phase power (produced enegery) of the generator
-  preal_l2: number;
-  preal_l3: number;
+  @JsonProperty() @JsonClassType({type: () => [Number]})
+    ppv3: number;
 
-  pbat: number; // charging (-) or discharing (-)
+  @JsonProperty() @JsonClassType({type: () => [Number]})
+    ppv4: number;
 
-  soc: number; // battery soc
+  @JsonProperty() @JsonClassType({type: () => [Number]})
+    pmeter_l1: number; // phase power (produced energy)
+
+  @JsonProperty() @JsonClassType({type: () => [Number]})
+    pmeter_l2: number;
+
+  @JsonProperty() @JsonClassType({type: () => [Number]})
+    pmeter_l3: number;
+
+  @JsonProperty() @JsonClassType({type: () => [Number]})
+    pmeter_dc: number;
+
+  @JsonProperty() @JsonClassType({type: () => [Number]})
+    preal_l1: number; // phase power (produced enegery) of the generator
+
+  @JsonProperty() @JsonClassType({type: () => [Number]})
+    preal_l2: number;
+
+  @JsonProperty() @JsonClassType({type: () => [Number]})
+    preal_l3: number;
+
+  @JsonProperty() @JsonClassType({type: () => [Number]})
+    pbat: number; // charging (-) or discharing (-)
+
+  @JsonProperty() @JsonClassType({type: () => [Number]})
+    soc: number; // battery soc
 
 
   // {"code":200,"info":"Success"

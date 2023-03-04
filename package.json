@@ -29,9 +29,11 @@
     "test:watch": "jest --watch"
   },
   "dependencies": {
-    "request": "^2.88.2",
+    "@homebridge/plugin-ui-utils": "0.0.18",
+    "jackson-js": "^1.1.0",
     "mqtt": "^4.3.7",
-    "@homebridge/plugin-ui-utils": "0.0.18"
+    "request": "^2.88.2",
+    "ts-jackson": "^1.5.0"
   },
   "devDependencies": {
     "@types/jest": "^29.2.4",

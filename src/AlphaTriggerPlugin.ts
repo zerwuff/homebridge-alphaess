@@ -1,7 +1,8 @@
 
 import { HAP, API, AccessoryPlugin, Logging, PlatformConfig, Service } from 'homebridge';
 import { AlphaService } from './alpha/AlphaService.js';
-import { connect } from 'mqtt';
+import { AlphaMqttService, MqttTopics } from './alpha/mqtt/AlphaMqttService';
+
 
 /**
  * This Plugin provides a homebridge trigger logic that can be used to control external devices.
@@ -22,13 +23,9 @@ export class AlphaTriggerPlugin implements AccessoryPlugin {
   // true / false trigger
   private trigger: boolean;
 
-  // mqtt connection
-  private mqtt_url: string ;
-  private mqtt_trigger_topic_true: string;
-  private mqtt_trigger_topic_false: string;
 
-  private mqtt_trigger_message_true: string;
-  private mqtt_trigger_message_false: string;
+  // alpha mqtt service
+  private mqtt: AlphaMqttService;
 
   // Alpha ESS Trigger Plugin
   constructor (log: Logging, config: PlatformConfig, api: API) {
@@ -72,11 +69,13 @@ export class AlphaTriggerPlugin implements AccessoryPlugin {
     if (this.config.mqtt_url===undefined ){
       this.log.error('mqtt_url is not set, not pushing anywhere');
     } else{
-      this.mqtt_url = this.config.mqtt_url;
-      this.mqtt_trigger_topic_true = this.config.mqtt_trigger_topic_true;
-      this.mqtt_trigger_topic_false= this.config.mqtt_trigger_topic_false;
-      this.mqtt_trigger_message_true = this.config.mqtt_trigger_message_true;
-      this.mqtt_trigger_message_false = this.config.mqtt_trigger_message_false;
+      const topics = new MqttTopics();
+      topics.mqtt_status_topic = config.mqtt_status_topic;
+      topics.mqtt_trigger_topic_true = this.config.mqtt_trigger_topic_true;
+      topics.mqtt_trigger_topic_false= this.config.mqtt_trigger_topic_false;
+      topics.mqtt_trigger_message_true = this.config.mqtt_trigger_message_true;
+      topics.mqtt_trigger_message_false = this.config.mqtt_trigger_message_false;
+      this.mqtt = new AlphaMqttService(log, config.mqtt_url, topics);
     }
   }
 
@@ -118,7 +117,7 @@ export class AlphaTriggerPlugin implements AccessoryPlugin {
     this.log.debug('Triggered GET ContactSensorState');
 
     // set this to a valid value for ContactSensorState
-    this.pushToExchange(this.trigger);
+    this.mqtt.pushTriggerMessage(this.trigger);
 
     if (this.trigger === false){
       this.log.debug('trigger not fired -> status CONTACT_DETECTED');
@@ -126,18 +125,6 @@ export class AlphaTriggerPlugin implements AccessoryPlugin {
     }
     this.log.debug('trigger fired -> status CONTACT_NOT_DETECTED');
     return this.hap.Characteristic.ContactSensorState.CONTACT_NOT_DETECTED;
-  }
-
-  async pushToExchange(trigger: boolean){
-    this.log.debug('trying to connect to mqtt to send trigger data');
-    const client = connect(this.mqtt_url, {clientId:this.name});
-    client.on('connect', function(this : AlphaTriggerPlugin){
-      if (trigger===true){
-        client.publish(this.mqtt_trigger_topic_true, this.mqtt_trigger_message_true);
-      }else{
-        client.publish(this.mqtt_trigger_topic_false, this.mqtt_trigger_message_false);
-      }
-    });
   }
 
 
