@@ -48,8 +48,9 @@ export class AlphaMqttService {
       alphaMsg.Time = timeStr;
       alphaMsg.ALPHA = as;
       const alphaMsgString = new ObjectMapper().stringify<AlphaMessage>(alphaMsg);
-      client.publish(topic, alphaMsgString);
+      client.publish(topic, alphaMsgString, { qos: 0, retain: false });
       this.log.debug('sent power data object' + alphaMsgString);
+      client.end();
     });
   }
 
@@ -62,6 +63,7 @@ export class AlphaMqttService {
       }else{
         client.publish(this.topics.mqtt_trigger_topic_false, this.topics.mqtt_trigger_message_false);
       }
+      client.end();
     });
   }
 
