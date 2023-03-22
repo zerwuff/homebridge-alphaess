@@ -1,11 +1,22 @@
 import 'jest';
 import { AlphaService } from '../../src/alpha/AlphaService';
 import { AlphaDetailResponse, AlphaData } from '../../src/alpha/response/AlphaDetailResponse';
+import { AlphaImageService } from '../../src/alpha/AlphaImageService';
 
 const username = undefined;
 const password = undefined;
 const serialNumber = undefined;
 const logRequestData = true;
+
+
+test('test image rendering', async () => {
+
+  const imageService = new AlphaImageService();
+  const PowerData = {1:12, 2:11, 3:14, 4:15};
+  const imageUrl = await imageService.renderImage('graph.png', PowerData);
+  expect(imageUrl).toBeDefined();
+});
+
 
 test('test login method', async () => {
   if (!username || !password) {
