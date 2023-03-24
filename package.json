@@ -2,7 +2,7 @@
   "private": false,
   "strictNullChecks": false,
   "name": "homebridge-alphaess",
-  "version": "2.20.0",
+  "version": "2.19.0",
   "description": "Homebridge Alpha Ess plugin",
   "license": "Apache License",
   "keywords": [
@@ -31,6 +31,7 @@
   "dependencies": {
     "@homebridge/plugin-ui-utils": "0.0.18",
     "cairo": "^0.1.0-alpha.3",
+    "canvas": "^2.11.0",
     "chart.js": "^3.9.1",
     "chartjs-node-canvas": "^4.1.6",
     "g": "^2.0.1",
