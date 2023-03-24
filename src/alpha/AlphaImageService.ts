@@ -1,47 +1,68 @@
+import { AlphaStatisticsByDayResponse } from './response/AlphaStatisticsByDayResponse';
+
 const { ChartJSNodeCanvas } = require('chartjs-node-canvas');
 const fs = require('fs');
 
-const width = 600;   // define width and height of canvas
+const width = 600;   // define width and height of the power image
 const height = 600;
-const backgroundColour = 'white'; // Uses https://www.w3schools.com/tags/canvas_fillstyle.asp
-
+const backgroundColour = 'white';
 
 //https://github.com/SeanSobey/ChartjsNodeCanvas
 
 export class AlphaImageService{
 
+  private power_image_filename: string ;
 
-  async renderImage(fileName: string, powerData: object ) {
+  constructor(power_image_filename: string ) {
+    this.power_image_filename = power_image_filename;
+  }
 
+  async renderImage(statistics:AlphaStatisticsByDayResponse){
+    const powerData = {};
+    const batteryData = {};
+    let cnt = 0;
+    // make 2 object maps out of response, key is timeStamp
+    statistics.data.Time.forEach(timeStamp => {
+      const ppv = statistics.data.Ppv[cnt] * 100;
+      const soc = statistics.data.Cbat[cnt];
+      powerData[timeStamp]= ppv*10;
+      batteryData[timeStamp]= soc;
+      cnt++;
+    });
+    return this.renderPowerImage(this.power_image_filename, powerData, batteryData);
+  }
+
+  // renders the power Image and save it to file
+  async renderPowerImage(fileName: string, powerData: object, batteryData:object ) {
     const configuration= {
-      type: 'line',
+      type: 'bar',
       data: {
-        datasets: [ {
-          label: 'Power line',
-          labels: ['a', 'b'],
-          dataOLD: {
-            January: 10,
-            February: 20,
+        datasets: [
+          {// pv
+            label: 'PV (W)',
+            data: powerData,
+            backgroundColor: [
+              'rgba(235, 95, 52, 0.5)',
+            ],
+            borderColor: [
+              'rgba(235,95,52,1)',
+            ],
+            borderWidth: 1,
+            yAxisID: 'yAxisPower',
           },
-          data: powerData,
-          backgroundColor: [
-            'rgba(255, 99, 132, 0.2)',
-            'rgba(54, 162, 235, 0.2)',
-            'rgba(255, 206, 86, 0.2)',
-            'rgba(75, 192, 192, 0.2)',
-            'rgba(153, 102, 255, 0.2)',
-            'rgba(255, 159, 64, 0.2)',
-          ],
-          borderColor: [
-            'rgba(255,99,132,1)',
-            'rgba(54, 162, 235, 1)',
-            'rgba(255, 206, 86, 1)',
-            'rgba(75, 192, 192, 1)',
-            'rgba(153, 102, 255, 1)',
-            'rgba(255, 159, 64, 1)',
-          ],
-          borderWidth: 4,
-        } ],
+          { // battery
+            label: 'SOC (%)',
+            data: batteryData,
+            backgroundColor: [
+              'rgba(52, 131, 235, 0.5)',
+            ],
+            borderColor: [
+              'rgba(52,131,235,1)',
+            ],
+            borderWidth: 1,
+            yAxisID: 'yAxisSOC',
+          },
+        ],
       },
       options: {
         animation: {
@@ -51,12 +72,26 @@ export class AlphaImageService{
           animationDuration: 0, // duration of animations when hovering an item
         },
         responsiveAnimationDuration: 0, // animation duration after a resize
-        scalesXXX: {
-          x: {
+        scales: {
+          yAxisPower: {
             type: 'linear',
+            position: 'left',
+            title: {
+              display: true,
+              text: 'Power (W)',
+              color:  'rgba(235,95,52,1)',
+            },
           },
-          y: {
+          yAxisSOC: {
             type: 'linear',
+            min:0,
+            max:100,
+            title: {
+              display: true,
+              text:'SOC %',
+              color: 'rgba(52,131,235,1)',
+            },
+            position: 'right',
           },
         },
       },

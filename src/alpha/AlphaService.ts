@@ -3,8 +3,8 @@ import { Logging } from 'homebridge';
 import crypto from 'crypto';
 import { AlphaLoginResponse } from './response/AlphaLoginResponse';
 import { AlphaDetailResponse } from './response/AlphaDetailResponse';
+import { AlphaStatisticsByDayResponse } from './response/AlphaStatisticsByDayResponse';
 import { ObjectMapper } from 'jackson-js';
-
 const request = require('request');
 
 
@@ -20,7 +20,7 @@ export class AlphaService {
   private password;
   private logRequestDetails: boolean;
 
-  constructor(logger: Logging | undefined, username: string | undefined, password: string, logRequestDetails: boolean) {
+  constructor(logger: Logging | undefined, username: string | undefined, password: string, logRequestDetails: boolean ) {
     this.logger = logger;
     this.password = password;
     this.username = username;
@@ -63,6 +63,48 @@ export class AlphaService {
     });
   }
 
+
+  async getStatisticsData(token:string, serialNumber:string): Promise<AlphaStatisticsByDayResponse> {
+    const authtimestamp = Math.round(new Date().getTime() / 1000).toString();
+    const authsignature = this.getSignature(authtimestamp);
+    const url = BASEURL + '/Power/SticsByDay';
+
+    const dateString = new Date().toDateString();
+
+    if (this.logRequestDetails) {
+      this.logRequestData(authsignature, authtimestamp, url, '', token, serialNumber);
+    }
+
+    const req = {
+      method: 'POST',
+      url: url,
+      json: true,
+      gzip: false,
+      headers: {
+        'Content-Type': 'application/json',
+        'Connection': 'keep-alive',
+        'authtimestamp': authtimestamp,
+        'authsignature': authsignature,
+        'Authorization': 'Bearer ' + token,
+      },
+      body:
+      {
+        sn: serialNumber,
+        szDay: dateString,
+      },
+    };
+
+    return new Promise((resolve, reject) => {
+      request(req, (error, response, body) => {
+        if (!error && response.statusCode == 200) {
+          const response = new ObjectMapper().parse<AlphaStatisticsByDayResponse>(JSON.stringify(body));
+          return resolve(response);
+        }
+        return reject(body);
+      },
+      );
+    });
+  }
 
   async login(): Promise<AlphaLoginResponse> {
     const authtimestamp = Math.round(new Date().getTime() / 1000).toString();

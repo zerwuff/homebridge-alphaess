@@ -7,13 +7,13 @@ const username = undefined;
 const password = undefined;
 const serialNumber = undefined;
 const logRequestData = true;
-
+const power_image_filename='power_image_test.png' ;
 
 test('test image rendering', async () => {
 
-  const imageService = new AlphaImageService();
+  const imageService = new AlphaImageService('testgraph.png');
   const PowerData = {1:12, 2:11, 3:14, 4:15};
-  const imageUrl = await imageService.renderImage('graph.png', PowerData);
+  const imageUrl = await imageService.renderPowerImage('testgraph.png', PowerData, {} );
   expect(imageUrl).toBeDefined();
 });
 
@@ -50,8 +50,27 @@ test('test get detail data ', async () => {
   expect(details.data).toBeDefined();
   expect(details.data.ppv1).toBeDefined();
 
+
 } );
 
+
+test('test get statistics by day data ', async () => {
+  if (!username || !password) {
+    fail('username or password not defined for this int test');
+  }
+
+  const alphaImageService = new AlphaImageService('test_rendered.png');
+  const alphaService = new AlphaService(undefined, username, password, logRequestData);
+  const alphaLoginResponse = await alphaService.login();
+  expect(alphaLoginResponse).toBeDefined();
+  expect(alphaLoginResponse.data.AccessToken).toBeDefined();
+  const statistics = await alphaService.getStatisticsData(alphaLoginResponse.data.AccessToken, serialNumber);
+
+  expect(statistics.data).toBeDefined();
+  expect(statistics.data.Cbat).toBeDefined();
+  expect(statistics.data.HomePower).toBeDefined();
+  await alphaImageService.renderImage(statistics);
+} );
 
 
 test('positive test: threshold of Detail Response exceeds config -> trigger value: true ', () => {

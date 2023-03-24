@@ -79,6 +79,13 @@
         "required": false,
         "description" :  "the mqtt status topic name to send alpha ess status data (soc, power) "
       },
+      "power_image_filename": {
+        "title": "power_image_filename",
+        "type": "string",
+        "required": false,
+        "default":"/tmp/alpha_power_image.png",
+        "description" :  "the filename where power image is rendered to "
+      },
      "logrequestdata": {
         "title": "logrequestdata",
         "type": "boolean",

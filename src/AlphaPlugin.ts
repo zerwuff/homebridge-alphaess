@@ -2,12 +2,14 @@
 import { HAP, API, AccessoryPlugin, PlatformConfig, Service, Logging, Topics } from 'homebridge';
 import { AlphaService } from './alpha/AlphaService.js';
 import { AlphaMqttService, MqttTopics } from './alpha/mqtt/AlphaMqttService';
+import { AlphaImageService } from './alpha/AlphaImageService.js';
 
 export class AlphaPlugin implements AccessoryPlugin {
 
   private alphaService: AlphaService;
   private informationService: Service;
   private service: Service;
+  private alphaImageService: AlphaImageService;
 
   private hap: HAP ;
   private log: Logging;
@@ -31,7 +33,7 @@ export class AlphaPlugin implements AccessoryPlugin {
     this.name= 'AlphaEssBattery';
 
     log.debug('Alpha ESS Accessory Loaded');
-
+    this.alphaImageService = new AlphaImageService(config.power_image_filename);
     this.informationService = new this.hap.Service.AccessoryInformation()
       .setCharacteristic(this.hap.Characteristic.Manufacturer, 'Alpha Ess Homebridge Percentage Plugin by Jens Zeidler')
       .setCharacteristic(this.hap.Characteristic.SerialNumber, config.serialnumber)
@@ -89,6 +91,14 @@ export class AlphaPlugin implements AccessoryPlugin {
             }
           },
         );
+
+        this.alphaService.getStatisticsData(loginResponse.data.AccessToken, serialNumber).then(
+          statisticData => {
+            this.log.debug('Rendering image from statistics data: ');
+            this.alphaImageService.renderImage(statisticData);
+          },
+        );
+
       }else {
         this.log.error('Could not login to Alpha Cloud, please check username or password');
       }
