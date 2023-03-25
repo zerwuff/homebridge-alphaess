@@ -1,4 +1,5 @@
 import { AlphaStatisticsByDayResponse } from './response/AlphaStatisticsByDayResponse';
+import { Logging } from 'homebridge';
 
 const { ChartJSNodeCanvas } = require('chartjs-node-canvas');
 const fs = require('fs');
@@ -13,11 +14,15 @@ export class AlphaImageService{
 
   private power_image_filename: string ;
 
-  constructor(power_image_filename: string ) {
+  private log: Logging;
+
+  constructor(power_image_filename: string, log: Logging) {
     this.power_image_filename = power_image_filename;
+    this.log = log;
   }
 
   async renderImage(statistics:AlphaStatisticsByDayResponse){
+    this.log.debug('renderImage called');
     const powerData = {};
     const batteryData = {};
     let cnt = 0;
@@ -29,7 +34,8 @@ export class AlphaImageService{
       batteryData[timeStamp]= soc;
       cnt++;
     });
-    return this.renderPowerImage(this.power_image_filename, powerData, batteryData);
+    this.log.debug('renderPowerImage called');
+    this.renderPowerImage(this.power_image_filename, powerData, batteryData);
   }
 
   // renders the power Image and save it to file
@@ -97,9 +103,23 @@ export class AlphaImageService{
       },
     };
 
+    this.log.debug('canvas create');
     const chartJSNodeCanvas = new ChartJSNodeCanvas({ width, height, backgroundColour});
-    const imageBuffer= chartJSNodeCanvas.renderToBufferSync(configuration, 'image/png');
-    fs.writeFileSync(fileName, imageBuffer);
+    this.log.debug('canvas created');
+    chartJSNodeCanvas.renderToBuffer(configuration, 'image/png').then(
+      imageBuffer => {
+        this.log.debug('writeFileSync');
+        fs.writeFile(fileName, imageBuffer, (err) => {
+          if (err) {
+            this.log(err);
+          } else {
+            this.log('Image file written to %s', fileName);
+          }
+        });
+      },
+    );
+
+
 
     return fileName;
   }
