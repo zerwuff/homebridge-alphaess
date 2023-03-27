@@ -1,127 +1,131 @@
 import { AlphaStatisticsByDayResponse } from './response/AlphaStatisticsByDayResponse';
-import { Logging } from 'homebridge';
-
-const { ChartJSNodeCanvas } = require('chartjs-node-canvas');
 const fs = require('fs');
+const sharp = require('sharp');
+const vega = require('vega');
+const lite = require('vega-lite');
 
 const width = 600;   // define width and height of the power image
 const height = 600;
 const backgroundColour = 'white';
 
-//https://github.com/SeanSobey/ChartjsNodeCanvas
+
 
 export class AlphaImageService{
-
   private power_image_filename: string ;
 
-  private log: Logging;
-
-  constructor(power_image_filename: string, log: Logging) {
+  constructor(power_image_filename: string) {
     this.power_image_filename = power_image_filename;
-    this.log = log;
+  }
+
+
+  async graphToImage (fileName: string, values: object) {
+    const vlSpec = {
+      $schema: 'https://vega.github.io/schema/vega-lite/v3.json',
+      width: width,
+      height: height,
+      background: backgroundColour,
+      padding: 2,
+      data : {
+        values: values,
+      },
+      layer: [
+        {
+          mark: {
+            type: 'line',
+            color: 'orangered',
+          },
+          title:'Power / SOC',
+          encoding: {
+            x: {
+              field: 'time',
+              type: 'nominal',
+              title: '24 hrs',
+              axis: {
+                labels: false,
+                tickSize: 0,
+                labelAlign: 'left',
+
+              },
+            },
+            y: {
+              sort:'descending',
+              field: 'ppv',
+              title: 'Power (Watts)',
+              type: 'nominal',
+              axis: {
+                labelOverlap: 'parity',
+                orient:'left',
+                format:'~s',
+              },
+
+            },
+          },
+        },
+        {
+          title:'SOC',
+          mark: {
+            type: 'bar',
+            color: '#85C5A6',
+            opacity: 0.7,
+          },
+          encoding: {
+            x: {
+              field: 'time',
+              type: 'nominal',
+              title: '24 hrs',
+              axis: {
+                labels: false,
+                tickCount: 10,
+                tickSize: 0,
+              },
+            },
+            y: {
+              sort:'ascending',
+              field: 'soc',
+              axis: {'orient':'right', 'format':'~s', 'grid': true, 'ticks': false},
+              title: 'SOC %',
+              type: 'quantitative',
+            },
+          },
+        },
+      ],
+    };
+
+    const vegaspec = lite.compile(vlSpec).spec;
+    //console.log(JSON.stringify(vlSpec));
+    const view = new vega.View(vega.parse(vegaspec), {renderer: 'none'});
+
+    // Generate an SVG string
+    view.resize(width, height).toSVG().then(async (svg) => {
+      // console.log(svg);
+      // Working SVG string
+      await sharp(Buffer.from(svg))
+        .toFormat('png')
+        .toFile(this.power_image_filename);
+    }).catch((err) => {
+      console.error(err);
+    });
+
+    return view;
   }
 
   async renderImage(statistics:AlphaStatisticsByDayResponse){
-    this.log.debug('renderImage called');
     const powerData = {};
     const batteryData = {};
     let cnt = 0;
-    // make 2 object maps out of response, key is timeStamp
+
+    const values = [];
     statistics.data.Time.forEach(timeStamp => {
       const ppv = statistics.data.Ppv[cnt] * 100;
       const soc = statistics.data.Cbat[cnt];
       powerData[timeStamp]= ppv*10;
       batteryData[timeStamp]= soc;
       cnt++;
+      const entry = {timeStamp: timeStamp, time:cnt, ppv: ppv*10, soc:soc};
+      values.push(entry);
     });
-    this.log.debug('renderPowerImage called');
-    this.renderPowerImage(this.power_image_filename, powerData, batteryData);
-  }
 
-  // renders the power Image and save it to file
-  async renderPowerImage(fileName: string, powerData: object, batteryData:object ) {
-    const configuration= {
-      type: 'bar',
-      data: {
-        datasets: [
-          {// pv
-            label: 'PV (W)',
-            data: powerData,
-            backgroundColor: [
-              'rgba(235, 95, 52, 0.5)',
-            ],
-            borderColor: [
-              'rgba(235,95,52,1)',
-            ],
-            borderWidth: 1,
-            yAxisID: 'yAxisPower',
-          },
-          { // battery
-            label: 'SOC (%)',
-            data: batteryData,
-            backgroundColor: [
-              'rgba(52, 131, 235, 0.5)',
-            ],
-            borderColor: [
-              'rgba(52,131,235,1)',
-            ],
-            borderWidth: 1,
-            yAxisID: 'yAxisSOC',
-          },
-        ],
-      },
-      options: {
-        animation: {
-          duration: 0, // general animation time
-        },
-        hover: {
-          animationDuration: 0, // duration of animations when hovering an item
-        },
-        responsiveAnimationDuration: 0, // animation duration after a resize
-        scales: {
-          yAxisPower: {
-            type: 'linear',
-            position: 'left',
-            title: {
-              display: true,
-              text: 'Power (W)',
-              color:  'rgba(235,95,52,1)',
-            },
-          },
-          yAxisSOC: {
-            type: 'linear',
-            min:0,
-            max:100,
-            title: {
-              display: true,
-              text:'SOC %',
-              color: 'rgba(52,131,235,1)',
-            },
-            position: 'right',
-          },
-        },
-      },
-    };
-
-    this.log.debug('canvas create');
-    const chartJSNodeCanvas = new ChartJSNodeCanvas({ width, height, backgroundColour});
-    this.log.debug('canvas created');
-    chartJSNodeCanvas.renderToBuffer(configuration, 'image/png').then(
-      imageBuffer => {
-        this.log.debug('writeFileSync');
-        fs.writeFile(fileName, imageBuffer, (err) => {
-          if (err) {
-            this.log(err);
-          } else {
-            this.log('Image file written to %s', fileName);
-          }
-        });
-      },
-    );
-
-
-
-    return fileName;
+    this.graphToImage(this.power_image_filename, values);
   }
 
 }

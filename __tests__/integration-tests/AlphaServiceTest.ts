@@ -3,19 +3,18 @@ import { AlphaService } from '../../src/alpha/AlphaService';
 import { AlphaDetailResponse, AlphaData } from '../../src/alpha/response/AlphaDetailResponse';
 import { AlphaImageService } from '../../src/alpha/AlphaImageService';
 
-const Logger = require('homebridge');
-
 const username = undefined;
 const password = undefined;
 const serialNumber = undefined;
 const logRequestData = true;
+
 const power_image_filename='power_image_test.png' ;
 
 test('test image rendering', async () => {
 
-  const imageService = new AlphaImageService('testgraph.png', Logger);
-  const PowerData = {1:12, 2:11, 3:14, 4:15};
-  const imageUrl = await imageService.renderPowerImage('testgraph.png', PowerData, {} );
+  const imageService = new AlphaImageService('testgraph.png');
+  const PowerData = [{1:12, 2:11, 3:14, 4:15}];
+  const imageUrl = await imageService.graphToImage('testgraph.png', PowerData );
   expect(imageUrl).toBeDefined();
 });
 
@@ -61,7 +60,7 @@ test('test get statistics by day data ', async () => {
     fail('username or password not defined for this int test');
   }
 
-  const alphaImageService = new AlphaImageService('test_rendered.png', Logger);
+  const alphaImageService = new AlphaImageService('test_rendered_today.png');
   const alphaService = new AlphaService(undefined, username, password, logRequestData);
   const alphaLoginResponse = await alphaService.login();
   expect(alphaLoginResponse).toBeDefined();

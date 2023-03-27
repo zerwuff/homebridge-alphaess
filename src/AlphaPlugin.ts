@@ -33,7 +33,7 @@ export class AlphaPlugin implements AccessoryPlugin {
     this.name= 'AlphaEssBattery';
 
     log.debug('Alpha ESS Accessory Loaded');
-    this.alphaImageService = new AlphaImageService(config.power_image_filename, this.log);
+    this.alphaImageService = new AlphaImageService(config.power_image_filename);
     this.informationService = new this.hap.Service.AccessoryInformation()
       .setCharacteristic(this.hap.Characteristic.Manufacturer, 'Alpha Ess Homebridge Percentage Plugin by Jens Zeidler')
       .setCharacteristic(this.hap.Characteristic.SerialNumber, config.serialnumber)
