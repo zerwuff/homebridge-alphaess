@@ -7,8 +7,11 @@ const lite = require('vega-lite');
 const width = 600;   // define width and height of the power image
 const height = 600;
 const backgroundColour = 'white';
+const pading = 45;
 
 
+const colorPower = '#ff6a2fb1';
+const colorBattery = '#85C5A6';
 
 export class AlphaImageService{
   private power_image_filename: string ;
@@ -24,7 +27,7 @@ export class AlphaImageService{
       width: width,
       height: height,
       background: backgroundColour,
-      padding: 2,
+      padding: pading,
       data : {
         values: values,
       },
@@ -32,7 +35,7 @@ export class AlphaImageService{
         {
           mark: {
             type: 'line',
-            color: 'orangered',
+            color:  colorPower,
           },
           title:'Power / SOC',
           encoding: {
@@ -44,7 +47,6 @@ export class AlphaImageService{
                 labels: false,
                 tickSize: 0,
                 labelAlign: 'left',
-
               },
             },
             y: {
@@ -57,7 +59,6 @@ export class AlphaImageService{
                 orient:'left',
                 format:'~s',
               },
-
             },
           },
         },
@@ -65,7 +66,7 @@ export class AlphaImageService{
           title:'SOC',
           mark: {
             type: 'bar',
-            color: '#85C5A6',
+            color: colorBattery,
             opacity: 0.7,
           },
           encoding: {
@@ -75,7 +76,6 @@ export class AlphaImageService{
               title: '24 hrs',
               axis: {
                 labels: false,
-                tickCount: 10,
                 tickSize: 0,
               },
             },
@@ -84,7 +84,9 @@ export class AlphaImageService{
               field: 'soc',
               axis: {'orient':'right', 'format':'~s', 'grid': true, 'ticks': false},
               title: 'SOC %',
+              values: [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100],
               type: 'quantitative',
+              scale: {'domain': [0, 100]},
             },
           },
         },
@@ -92,13 +94,10 @@ export class AlphaImageService{
     };
 
     const vegaspec = lite.compile(vlSpec).spec;
-    //console.log(JSON.stringify(vlSpec));
     const view = new vega.View(vega.parse(vegaspec), {renderer: 'none'});
 
     // Generate an SVG string
     view.resize(width, height).toSVG().then(async (svg) => {
-      // console.log(svg);
-      // Working SVG string
       await sharp(Buffer.from(svg))
         .toFormat('png')
         .toFile(this.power_image_filename);
@@ -110,10 +109,12 @@ export class AlphaImageService{
   }
 
   async renderImage(statistics:AlphaStatisticsByDayResponse){
+    if (this.power_image_filename === undefined){
+      return ;
+    }
     const powerData = {};
     const batteryData = {};
     let cnt = 0;
-
     const values = [];
     statistics.data.Time.forEach(timeStamp => {
       const ppv = statistics.data.Ppv[cnt] * 100;

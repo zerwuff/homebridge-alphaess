@@ -1,6 +1,6 @@
 
 import { HAP, API, AccessoryPlugin, Logging, PlatformConfig, Service } from 'homebridge';
-import { AlphaService } from './alpha/AlphaService.js';
+import { AlphaService, BASE_URL } from './alpha/AlphaService.js';
 import { AlphaMqttService, MqttTopics } from './alpha/mqtt/AlphaMqttService';
 
 
@@ -46,7 +46,7 @@ export class AlphaTriggerPlugin implements AccessoryPlugin {
     this.service.getCharacteristic(this.hap.Characteristic.ContactSensorState)
       .onGet(this.handleContactSensorStateGet.bind(this));
 
-    this.alphaService = new AlphaService(this.log, config.username, config.password, config.logrequestdata);
+    this.alphaService = new AlphaService(this.log, config.username, config.password, config.logrequestdata, BASE_URL);
 
     this.log.debug(config.serialnumber);
     this.log.debug(config.username);

@@ -1,6 +1,6 @@
 
 import { HAP, API, AccessoryPlugin, PlatformConfig, Service, Logging, Topics } from 'homebridge';
-import { AlphaService } from './alpha/AlphaService.js';
+import { AlphaService, BASE_URL } from './alpha/AlphaService.js';
 import { AlphaMqttService, MqttTopics } from './alpha/mqtt/AlphaMqttService';
 import { AlphaImageService } from './alpha/AlphaImageService.js';
 
@@ -47,7 +47,7 @@ export class AlphaPlugin implements AccessoryPlugin {
 
 
     this.serialnumber = config.serialnumber;
-    this.alphaService = new AlphaService(this.log, config.username, config.password, config.logrequestdata);
+    this.alphaService = new AlphaService(this.log, config.username, config.password, config.logrequestdata, BASE_URL);
 
     if (!config.serialnumber || !config.username || !config.password) {
       this.log.error('Configuration was missing: either serialnumber, password or username not present');

@@ -11,8 +11,8 @@ const request = require('request');
 const AUTHPREFIX = 'al8e4s';
 const AUTHCONSTANT = 'LS885ZYDA95JVFQKUIUUUV7PQNODZRDZIS4ERREDS0EED8BCWSS';
 const AUTHSUFFIX = 'ui893ed';
-const BASEURL = 'https://cloud.alphaess.com/api';
 
+export const BASE_URL= 'https://cloud.alphaess.com/api';
 
 export class AlphaService {
   private logger: Logging;
@@ -20,18 +20,21 @@ export class AlphaService {
   private password;
   private logRequestDetails: boolean;
 
-  constructor(logger: Logging | undefined, username: string | undefined, password: string, logRequestDetails: boolean ) {
+  private baseUrl: string;
+
+  constructor(logger: Logging | undefined, username: string | undefined, password: string, logRequestDetails: boolean, url: string ) {
     this.logger = logger;
     this.password = password;
     this.username = username;
     this.logRequestDetails = logRequestDetails;
+    this.baseUrl = url;
   }
 
 
   async getDetailData(token, serialNumber): Promise<AlphaDetailResponse> {
     const authtimestamp = Math.round(new Date().getTime() / 1000).toString();
     const authsignature = this.getSignature(authtimestamp);
-    const url = BASEURL + '/ESS/GetLastPowerDataBySN?noLoading=true&sys_sn=' + serialNumber;
+    const url = this.baseUrl + '/ESS/GetLastPowerDataBySN?noLoading=true&sys_sn=' + serialNumber;
 
     if (this.logRequestDetails) {
       this.logRequestData(authsignature, authtimestamp, url, '', token, serialNumber);
@@ -67,7 +70,7 @@ export class AlphaService {
   async getStatisticsData(token:string, serialNumber:string): Promise<AlphaStatisticsByDayResponse> {
     const authtimestamp = Math.round(new Date().getTime() / 1000).toString();
     const authsignature = this.getSignature(authtimestamp);
-    const url = BASEURL + '/Power/SticsByDay';
+    const url = this.baseUrl + '/Power/SticsByDay';
 
     const dateString = new Date().toDateString();
 
@@ -109,7 +112,7 @@ export class AlphaService {
   async login(): Promise<AlphaLoginResponse> {
     const authtimestamp = Math.round(new Date().getTime() / 1000).toString();
     const authsignature = this.getSignature(authtimestamp);
-    const url = BASEURL + '/Account/Login';
+    const url = this.baseUrl + '/Account/Login';
     if (this.logRequestDetails) {
       this.logRequestData(authsignature, authtimestamp, url, '', '', '');
     }

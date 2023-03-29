@@ -1,17 +1,126 @@
 import 'jest';
+import { MockServer } from 'jest-mock-server';
+
 import { AlphaService } from '../../src/alpha/AlphaService';
 import { AlphaDetailResponse, AlphaData } from '../../src/alpha/response/AlphaDetailResponse';
 import { AlphaImageService } from '../../src/alpha/AlphaImageService';
+import { AlphaLoginResponse, LoginReponse } from '../../src/alpha/response/AlphaLoginResponse';
+import { AlphaStatisticsByDayResponse, AlphaStatisticsData } from '../../src/alpha/response/AlphaStatisticsByDayResponse';
 
-const username = undefined;
-const password = undefined;
-const serialNumber = undefined;
-const logRequestData = true;
+const username = 'fasel';
+const password = 'bla';
+const serialNumber = 'AE1234';
+const logRequestData = false;
 
-const power_image_filename='power_image_test.png' ;
+describe('Integration Test with Mock Server', () => {
+  const server = new MockServer();
+
+  afterAll(() => server.stop());
+
+  beforeAll(() => server.start());
+
+  beforeEach(() => server.reset());
+
+  const loginResponse = new LoginReponse();
+  loginResponse.AccessToken = 'SomeAccessToken';
+  const accessTokenResponse = new AlphaLoginResponse();
+  accessTokenResponse.data = loginResponse;
+
+
+  it('Test login ', async () => {
+    const mockServerUrl ='http://localhost:' + server.getURL().port;
+
+    const loginRoute = server.post('/Account/Login').mockImplementationOnce((ctx) => {
+      ctx.response.body = JSON.stringify(accessTokenResponse);
+      ctx.status = 200;
+    });
+
+    const alphaService = new AlphaService(undefined, username, password, logRequestData, mockServerUrl );
+    const alphaLoginResponse = await alphaService.login();
+
+    expect(alphaLoginResponse).toBeDefined();
+    expect(alphaLoginResponse.data).toBeDefined();
+    expect(alphaLoginResponse.data.AccessToken).toBeDefined();
+
+    expect(loginRoute).toHaveBeenCalledTimes(1);
+  });
+
+  it('Test Get Alpha Data ', async () => {
+    const mockServerUrl ='http://localhost:' + server.getURL().port;
+
+    const loginRoute = server.post('/Account/Login').mockImplementationOnce((ctx) => {
+      ctx.response.body = JSON.stringify(accessTokenResponse);
+      ctx.status = 200;
+    });
+
+
+    const detailRoute = server.get('/ESS/GetLastPowerDataBySN').mockImplementationOnce((ctx) => {
+      const alphaData = new AlphaData();
+      alphaData.ppv1 = 10;
+      alphaData.ppv2 = 20;
+      alphaData.ppv3 = 30;
+      alphaData.soc = 44;
+      const detailResponse = new AlphaDetailResponse();
+      detailResponse.data = alphaData;
+      ctx.response.body = JSON.stringify(detailResponse);
+      ctx.status = 200;
+    });
+
+    const alphaService = new AlphaService(undefined, username, password, logRequestData, mockServerUrl );
+    const alphaLoginResponse = await alphaService.login();
+    const details = await alphaService.getDetailData(alphaLoginResponse.data.AccessToken, serialNumber);
+    expect(details.data).toBeDefined();
+    expect(details.data.soc).toBeDefined();
+
+    expect(details.data).toBeDefined();
+    expect(details.data.ppv1).toEqual(10);
+    expect(details.data.ppv2).toEqual(20);
+    expect(details.data.ppv3).toEqual(30);
+    expect(details.data.soc).toEqual(44);
+    expect(loginRoute).toHaveBeenCalledTimes(1);
+    expect(detailRoute).toHaveBeenCalledTimes(1);
+  });
+
+
+  it('Test Get Statistics by Day data ', async () => {
+    const mockServerUrl ='http://localhost:' + server.getURL().port;
+
+    const loginRoute = server.post('/Account/Login').mockImplementationOnce((ctx) => {
+      ctx.response.body = JSON.stringify(accessTokenResponse);
+      ctx.status = 200;
+    });
+
+
+    const statisticsRoute = server.post('/Power/SticsByDay').mockImplementationOnce((ctx) => {
+      const alphaData = new AlphaStatisticsData();
+      alphaData.Ppv = [1, 2, 3];
+      alphaData.Cbat = [4, 5, 6];
+      alphaData.Time = [7, 8, 9 ];
+      const detailResponse = new AlphaStatisticsByDayResponse();
+      detailResponse.data = alphaData;
+      ctx.response.body = JSON.stringify(detailResponse);
+      ctx.status = 200;
+    });
+
+    const alphaService = new AlphaService(undefined, username, password, logRequestData, mockServerUrl );
+    const alphaLoginResponse = await alphaService.login();
+    const details = await alphaService.getStatisticsData(alphaLoginResponse.data.AccessToken, serialNumber);
+    expect(details.data).toBeDefined();
+
+    expect(details.data).toBeDefined();
+    expect(details.data.Ppv).toEqual([1, 2, 3]);
+    expect(details.data.Time).toEqual([7, 8, 9]);
+    expect(details.data.Cbat).toEqual([4, 5, 6]);
+
+    expect(loginRoute).toHaveBeenCalledTimes(1);
+    expect(statisticsRoute).toHaveBeenCalledTimes(1);
+  });
+
+});
+
+
 
 test('test image rendering', async () => {
-
   const imageService = new AlphaImageService('testgraph.png');
   const PowerData = [{1:12, 2:11, 3:14, 4:15}];
   const imageUrl = await imageService.graphToImage('testgraph.png', PowerData );
@@ -19,64 +128,11 @@ test('test image rendering', async () => {
 });
 
 
-test('test login method', async () => {
-  if (!username || !password) {
-    fail('username or password not defined for this int test');
-  }
-  const alphaService = new AlphaService(undefined, username, password, logRequestData);
-  const alphaLoginResponse = await alphaService.login();
-
-  expect(alphaLoginResponse).toBeDefined();
-  expect(alphaLoginResponse.data).toBeDefined();
-  expect(alphaLoginResponse.data.AccessToken).toBeDefined();
-
-});
-
-
-test('test get detail data ', async () => {
-  if (!username || !password) {
-    fail('username or password not defined for this int test');
-  }
-
-  const alphaService = new AlphaService(undefined, username, password, logRequestData);
-  const alphaLoginResponse = await alphaService.login();
-  console.log ('access token -> %s ', alphaLoginResponse.data.AccessToken);
-  expect(alphaLoginResponse).toBeDefined();
-  expect(alphaLoginResponse.data.AccessToken).toBeDefined();
-
-  const details = await alphaService.getDetailData(alphaLoginResponse.data.AccessToken, serialNumber);
-  expect(details.data).toBeDefined();
-  expect(details.data.soc).toBeDefined();
-
-  expect(details.data).toBeDefined();
-  expect(details.data.ppv1).toBeDefined();
-
-
-} );
-
-
-test('test get statistics by day data ', async () => {
-  if (!username || !password) {
-    fail('username or password not defined for this int test');
-  }
-
-  const alphaImageService = new AlphaImageService('test_rendered_today.png');
-  const alphaService = new AlphaService(undefined, username, password, logRequestData);
-  const alphaLoginResponse = await alphaService.login();
-  expect(alphaLoginResponse).toBeDefined();
-  expect(alphaLoginResponse.data.AccessToken).toBeDefined();
-  const statistics = await alphaService.getStatisticsData(alphaLoginResponse.data.AccessToken, serialNumber);
-
-  expect(statistics.data).toBeDefined();
-  expect(statistics.data.Cbat).toBeDefined();
-  expect(statistics.data.HomePower).toBeDefined();
-  await alphaImageService.renderImage(statistics);
-} );
 
 
 test('positive test: threshold of Detail Response exceeds config -> trigger value: true ', () => {
 
-  const alphaService = new AlphaService(undefined, '123', 'password', true);
+  const alphaService = new AlphaService(undefined, '123', 'password', true, 'http://localhost:8080');
   const response = new AlphaDetailResponse();
   const data = new AlphaData();
   data.ppv1 = 100;
@@ -93,7 +149,7 @@ test('positive test: threshold of Detail Response exceeds config -> trigger valu
 
 test('negative test: threshold of Detail Response exceeds config -> trigger value: false  (due to battery) ', () => {
 
-  const alphaService = new AlphaService(undefined, '123', 'password', true);
+  const alphaService = new AlphaService(undefined, '123', 'password', true, 'http://localhost:8080');
   const response = new AlphaDetailResponse();
   const data = new AlphaData();
   data.ppv1 = 100;
@@ -110,7 +166,7 @@ test('negative test: threshold of Detail Response exceeds config -> trigger valu
 
 test('negative test: threshold of Detail Response exceeds config -> trigger value: false  (due to power) ', () => {
 
-  const alphaService = new AlphaService(undefined, '123', 'password', true);
+  const alphaService = new AlphaService(undefined, '123', 'password', true, 'http://localhost:8080');
   const response = new AlphaDetailResponse();
   const data = new AlphaData();
   data.ppv1 = 100;
@@ -127,7 +183,7 @@ test('negative test: threshold of Detail Response exceeds config -> trigger valu
 
 test('negative test: threshold of Detail Response exceeds config -> trigger value: false  (due to battery && power) ', () => {
 
-  const alphaService = new AlphaService(undefined, '123', 'password', true);
+  const alphaService = new AlphaService(undefined, '123', 'password', true, 'http://localhost:8080');
   const response = new AlphaDetailResponse();
   const data = new AlphaData();
   data.ppv1 = 100;
