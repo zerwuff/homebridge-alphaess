@@ -99,6 +99,17 @@ export class AlphaPlugin implements AccessoryPlugin {
           },
         );
 
+        this.alphaService.getSettingsData(loginResponse.data.AccessToken, serialNumber).then(
+          settings => {
+            this.log.debug('Settings Data : ');
+            this.log.debug('' + JSON.stringify(settings));
+            this.log.debug('' + JSON.stringify(settings['data']));
+
+            this.alphaService.setBatteryCharge(loginResponse.data.AccessToken, serialNumber, settings.data);
+
+          },
+        );
+
       }else {
         this.log.error('Could not login to Alpha Cloud, please check username or password');
       }

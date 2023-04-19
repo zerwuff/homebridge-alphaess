@@ -23,6 +23,8 @@ export class AlphaTriggerPlugin implements AccessoryPlugin {
   // true / false trigger
   private trigger: boolean;
 
+  private tibberApiKey: string;
+  private tibberQueryUrl: string;
 
   // alpha mqtt service
   private mqtt: AlphaMqttService;

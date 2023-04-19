@@ -4,11 +4,10 @@ const sharp = require('sharp');
 const vega = require('vega');
 const lite = require('vega-lite');
 
-const width = 600;   // define width and height of the power image
-const height = 600;
+const width = 640;   // define width and height of the power image
+const height = 320;
 const backgroundColour = 'white';
 const pading = 45;
-
 
 const colorPower = '#ff6a2fb1';
 const colorBattery = '#85C5A6';

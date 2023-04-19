@@ -6,6 +6,7 @@ import { AlphaDetailResponse, AlphaData } from '../../src/alpha/response/AlphaDe
 import { AlphaImageService } from '../../src/alpha/AlphaImageService';
 import { AlphaLoginResponse, LoginReponse } from '../../src/alpha/response/AlphaLoginResponse';
 import { AlphaStatisticsByDayResponse, AlphaStatisticsData } from '../../src/alpha/response/AlphaStatisticsByDayResponse';
+import { TibberService } from '../../src/tibber/TibberService';
 
 const username = 'fasel';
 const password = 'bla';
@@ -119,7 +120,6 @@ describe('Integration Test with Mock Server', () => {
 });
 
 
-
 test('test image rendering', async () => {
   const imageService = new AlphaImageService('testgraph.png');
   const PowerData = [{1:12, 2:11, 3:14, 4:15}];
@@ -129,9 +129,7 @@ test('test image rendering', async () => {
 
 
 
-
 test('positive test: threshold of Detail Response exceeds config -> trigger value: true ', () => {
-
   const alphaService = new AlphaService(undefined, '123', 'password', true, 'http://localhost:8080');
   const response = new AlphaDetailResponse();
   const data = new AlphaData();

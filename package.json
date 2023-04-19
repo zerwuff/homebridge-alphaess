@@ -38,6 +38,7 @@
     "node-pre-gyp": "^0.17.0",
     "request": "^2.88.2",
     "sharp": "^0.32.0",
+    "tibber-api": "^5.1.8",
     "ts-jackson": "^1.5.0",
     "vega": "^5.24.0",
     "vega-lite": "^5.6.1"

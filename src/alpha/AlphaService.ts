@@ -5,6 +5,7 @@ import { AlphaLoginResponse } from './response/AlphaLoginResponse';
 import { AlphaDetailResponse } from './response/AlphaDetailResponse';
 import { AlphaStatisticsByDayResponse } from './response/AlphaStatisticsByDayResponse';
 import { ObjectMapper } from 'jackson-js';
+import { AlphaSettingsResponse } from './response/AlphaSettingsResponse';
 const request = require('request');
 
 
@@ -12,8 +13,8 @@ const AUTHPREFIX = 'al8e4s';
 const AUTHCONSTANT = 'LS885ZYDA95JVFQKUIUUUV7PQNODZRDZIS4ERREDS0EED8BCWSS';
 const AUTHSUFFIX = 'ui893ed';
 
+// see https://github.com/CharlesGillanders/alphaess
 export const BASE_URL= 'https://cloud.alphaess.com/api';
-
 export class AlphaService {
   private logger: Logging;
   private username;
@@ -65,7 +66,90 @@ export class AlphaService {
       );
     });
   }
+  //await client.setbatterycharge(serial, False, "00:00", "00:00", "00:00", "00:00", 100)
+  //await client.setbatterydischarge(serial, True, "08:00", "23:00", "00:00", "00:00", 15)
 
+  async setBatteryCharge(token:string, serialNumber:string, alphaSettingsData:Map<string, unknown> ): Promise<boolean>{
+    const authtimestamp = Math.round(new Date().getTime() / 1000).toString();
+    const authsignature = this.getSignature(authtimestamp);
+    const url = this.baseUrl + '/Account/CustomUseESSSetting';
+
+    const grid_charge = 1; // 1... charge, 0..discharge
+    const cp2start = '00:00';
+    const cp2end = '00:00';
+    /**
+ * "grid_charge":1,
+ "time_chaf1a":"19:00",
+ "time_chae1a":"20:00",
+ */
+    alphaSettingsData['grid_charge'] = 1;
+    alphaSettingsData['time_chaf1a'] = '22:00';
+    alphaSettingsData['time_chae1a'] = '22:30';
+
+    const req = {
+      method: 'POST',
+      url: url,
+      json: true,
+      gzip: false,
+      headers: {
+        'Content-Type': 'application/json',
+        'Connection': 'keep-alive',
+        'authtimestamp': authtimestamp,
+        'authsignature': authsignature,
+        'Authorization': 'Bearer ' + token,
+      },
+      body: alphaSettingsData,
+
+    };
+
+    return new Promise((resolve, reject) => {
+      request(req, (error, response, body) => {
+        if (!error && response.statusCode == 200) {
+          console.log('ok ' + response);
+          return resolve(true);
+        }
+        console.log('failed: ' + response);
+        return reject(false);
+      },
+      );
+    });
+  }
+
+
+  async getSettingsData(token:string, serialNumber:string): Promise<AlphaSettingsResponse> {
+    const authtimestamp = Math.round(new Date().getTime() / 1000).toString();
+    const authsignature = this.getSignature(authtimestamp);
+    const url = this.baseUrl + '/Account/GetCustomUseESSSetting';
+
+    if (this.logRequestDetails) {
+      this.logRequestData(authsignature, authtimestamp, url, '', token, serialNumber);
+    }
+
+    const req = {
+      method: 'GET',
+      url: url,
+      json: true,
+      gzip: false,
+      headers: {
+        'Content-Type': 'application/json',
+        'Connection': 'keep-alive',
+        'authtimestamp': authtimestamp,
+        'authsignature': authsignature,
+        'Authorization': 'Bearer ' + token,
+      },
+    };
+
+    return new Promise((resolve, reject) => {
+      request(req, (error, response, body) => {
+        if (!error && response.statusCode == 200) {
+          const response = new ObjectMapper().parse<AlphaSettingsResponse>(JSON.stringify(body));
+          return resolve(response);
+        }
+        return reject(body);
+      },
+      );
+    });
+  }
 
   async getStatisticsData(token:string, serialNumber:string): Promise<AlphaStatisticsByDayResponse> {
     const authtimestamp = Math.round(new Date().getTime() / 1000).toString();
