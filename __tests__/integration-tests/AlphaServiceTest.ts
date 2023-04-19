@@ -127,6 +127,19 @@ test('test image rendering', async () => {
   expect(imageUrl).toBeDefined();
 });
 
+test('test image rendering', async () => {
+  const imageService = new AlphaImageService('testgraph.png');
+  let badResponse = new AlphaStatisticsByDayResponse();
+  expect(await imageService.renderImage(badResponse)).toBeFalsy();
+
+  badResponse = new AlphaStatisticsByDayResponse();
+  const statistics = new AlphaStatisticsData();
+  badResponse.data = statistics;
+  expect(await imageService.renderImage(badResponse)).toBeFalsy();
+
+});
+
+
 
 
 

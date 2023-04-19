@@ -108,9 +108,13 @@ export class AlphaImageService{
     return view;
   }
 
-  async renderImage(statistics:AlphaStatisticsByDayResponse){
+  async renderImage(statistics:AlphaStatisticsByDayResponse): Promise<boolean>{
     if (this.power_image_filename === undefined){
-      return ;
+      return false;
+    }
+    if (statistics === undefined || statistics.data === undefined || statistics.data.Time === undefined){
+      console.warn('Could not fetch time series from alpha services - response from alpha server is empty');
+      return false;
     }
     const powerData = {};
     const batteryData = {};
@@ -127,6 +131,7 @@ export class AlphaImageService{
     });
 
     this.graphToImage(this.power_image_filename, values);
+    return true;
   }
 
 }
