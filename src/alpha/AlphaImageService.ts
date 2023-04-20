@@ -1,3 +1,4 @@
+import { stat } from 'fs';
 import { AlphaStatisticsByDayResponse } from './response/AlphaStatisticsByDayResponse';
 const fs = require('fs');
 const sharp = require('sharp');
@@ -28,6 +29,7 @@ export class AlphaImageService{
       height: height,
       background: backgroundColour,
       padding: pading,
+      config: {'font':'Tahoma'},
       data : {
         values: values,
       },
@@ -112,9 +114,11 @@ export class AlphaImageService{
     if (this.power_image_filename === undefined){
       return false;
     }
-    if (statistics === null || (statistics!==null && statistics.data === null) || (statistics.data!==null && statistics.data.Time===null) ){
+    if (statistics === null || (statistics!==null && statistics.data === null) || (statistics.data === undefined) || (statistics.data!= undefined && statistics.data.Time === undefined) ){
+      console.log('statistics resposnse is empty ');
       return false;
     }
+
     const powerData = {};
     const batteryData = {};
     let cnt = 0;
