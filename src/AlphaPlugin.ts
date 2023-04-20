@@ -95,7 +95,11 @@ export class AlphaPlugin implements AccessoryPlugin {
         this.alphaService.getStatisticsData(loginResponse.data.AccessToken, serialNumber).then(
           statisticData => {
             this.log.debug('Rendering image from statistics data: ');
-            this.alphaImageService.renderImage(statisticData);
+            try {
+              this.alphaImageService.renderImage(statisticData);
+            } catch (ex) {
+              this.log.error('Could not render from statistics data: ' + ex);
+            }
           },
         );
 
