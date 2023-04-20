@@ -78,7 +78,7 @@ export class AlphaPlugin implements AccessoryPlugin {
     this.log.debug('fetch Alpha ESS Data -> fetch token');
     await this.alphaService.login().then(loginResponse => {
 
-      if (loginResponse.data != undefined && loginResponse.data.AccessToken != undefined) {
+      if (loginResponse.data != undefined && loginResponse.data.AccessToken !== undefined) {
         this.log.debug('Logged in to alpha cloud, trying to fetch detail data');
 
         this.alphaService.getDetailData(loginResponse.data.AccessToken, serialNumber).then(
@@ -91,11 +91,12 @@ export class AlphaPlugin implements AccessoryPlugin {
             }
           },
         );
-
+        this.log.debug('Getting statistics Data from Alpha Ess ');
         this.alphaService.getStatisticsData(loginResponse.data.AccessToken, serialNumber).then(
           statisticData => {
             this.log.debug('Rendering image from statistics data: ');
             try {
+              this.log.debug('Response from statistics data : ' + JSON.stringify(statisticData));
               this.alphaImageService.renderImage(statisticData);
             } catch (ex) {
               this.log.error('Could not render from statistics data: ' + ex);

@@ -112,8 +112,7 @@ export class AlphaImageService{
     if (this.power_image_filename === undefined){
       return false;
     }
-    if (statistics === undefined || statistics.data === undefined || statistics.data.Time === undefined){
-      console.warn('Could not fetch time series from alpha services - response from alpha server is empty');
+    if (statistics === null || (statistics!==null && statistics.data === null) || (statistics.data!==null && statistics.data.Time===null) ){
       return false;
     }
     const powerData = {};
