@@ -83,7 +83,7 @@ export class AlphaTriggerPlugin implements AccessoryPlugin {
     this.log.debug('fetch Alpha ESS Data -> fetch token');
     await this.alphaService.login().then(loginResponse => {
 
-      if (loginResponse.data != undefined && loginResponse.data.AccessToken != undefined) {
+      if (loginResponse.data !== undefined && loginResponse.data.AccessToken !== undefined) {
         this.log.debug('Logged in to alpha cloud, trying to fetch detail data');
 
         this.alphaService.getDetailData(loginResponse.data.AccessToken, serialNumber).then(
@@ -94,14 +94,20 @@ export class AlphaTriggerPlugin implements AccessoryPlugin {
               detailData,
               this.config.powerLoadingThreshold,
               this.config.socLoadingThreshold);
-            this.log.debug('Trigger value:'+ this.trigger);
+            this.log.debug('Trigger value: '+ this.trigger);
 
             this.handleContactSensorStateGet();
           },
-        );
+        ).catch(error => {
+          this.log.error('Getting Statistics Data from Alpha Ess failed ');
+          return;
+        });
       }else {
         this.log.error('Could not login to Alpha Cloud, please check username or password');
       }
+    }).catch(error => {
+      this.log.error('Login to Alpha Ess failed');
+      return;
     });
   }
 

@@ -90,8 +90,13 @@ export class AlphaPlugin implements AccessoryPlugin {
               this.mqtt.pushStatusMsg(totalPower, detailData.data.soc);
             }
           },
-        );
+        ).catch(error => {
+          this.log.error('Getting Detail Data from Alpha Ess failed ');
+          return;
+        });
+
         this.log.debug('Getting statistics Data from Alpha Ess ');
+
         this.alphaService.getStatisticsData(loginResponse.data.AccessToken, serialNumber).then(
           statisticData => {
             this.log.debug('Rendering image from statistics data: ');
@@ -102,12 +107,19 @@ export class AlphaPlugin implements AccessoryPlugin {
               this.log.error('Could not render from statistics data: ' + ex);
             }
           },
-        );
+        ).catch(error => {
+          this.log.error('Getting Statistics Data from Alpha Ess failed ');
+          return;
+        });
 
       }else {
         this.log.error('Could not login to Alpha Cloud, please check username or password');
       }
+    }).catch(error => {
+      this.log.error('Login to Alpha Ess failed');
+      return;
     });
+
   }
 
 
