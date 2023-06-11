@@ -6,6 +6,9 @@ import { AlphaDetailResponse, AlphaData } from '../../src/alpha/response/AlphaDe
 import { AlphaImageService } from '../../src/alpha/AlphaImageService';
 import { AlphaLoginResponse, LoginReponse } from '../../src/alpha/response/AlphaLoginResponse';
 import { AlphaStatisticsByDayResponse, AlphaStatisticsData } from '../../src/alpha/response/AlphaStatisticsByDayResponse';
+import fs from 'fs';
+import { exec } from 'child_process';
+const path = require('path');
 import { TibberService } from '../../src/tibber/TibberService';
 
 const username = 'fasel';
@@ -118,6 +121,17 @@ describe('Integration Test with Mock Server', () => {
   });
 
 });
+
+
+test('test image rendering from test data json', async () => {
+  const imageService = new AlphaImageService('testgraph_static.png');
+  const dir = process.cwd();
+  const data = JSON.parse(fs.readFileSync(dir+'/__tests__/testdata/response_detaildata.json', 'utf-8'));
+  const imageUrl = await imageService.renderImage(data);
+  expect(imageUrl).toBeDefined();
+});
+
+
 
 
 test('test image rendering', async () => {

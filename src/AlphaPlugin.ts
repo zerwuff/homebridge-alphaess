@@ -78,7 +78,7 @@ export class AlphaPlugin implements AccessoryPlugin {
     this.log.debug('fetch Alpha ESS Data -> fetch token');
     await this.alphaService.login().then(loginResponse => {
 
-      if (loginResponse.data != undefined && loginResponse.data.AccessToken != undefined) {
+      if (loginResponse.data != undefined && loginResponse.data.AccessToken !== undefined) {
         this.log.debug('Logged in to alpha cloud, trying to fetch detail data');
 
         this.alphaService.getDetailData(loginResponse.data.AccessToken, serialNumber).then(
@@ -90,14 +90,27 @@ export class AlphaPlugin implements AccessoryPlugin {
               this.mqtt.pushStatusMsg(totalPower, detailData.data.soc);
             }
           },
-        );
+        ).catch(error => {
+          this.log.error('Getting Detail Data from Alpha Ess failed ');
+          return;
+        });
+
+        this.log.debug('Getting statistics Data from Alpha Ess ');
 
         this.alphaService.getStatisticsData(loginResponse.data.AccessToken, serialNumber).then(
           statisticData => {
             this.log.debug('Rendering image from statistics data: ');
-            this.alphaImageService.renderImage(statisticData);
+            try {
+              this.log.debug('Response from statistics data : ' + JSON.stringify(statisticData));
+              this.alphaImageService.renderImage(statisticData);
+            } catch (ex) {
+              this.log.error('Could not render from statistics data: ' + ex);
+            }
           },
-        );
+        ).catch(error => {
+          this.log.error('Getting Statistics Data from Alpha Ess failed ');
+          return;
+        });
 
         this.alphaService.getSettingsData(loginResponse.data.AccessToken, serialNumber).then(
           settings => {
@@ -113,7 +126,11 @@ export class AlphaPlugin implements AccessoryPlugin {
       }else {
         this.log.error('Could not login to Alpha Cloud, please check username or password');
       }
+    }).catch(error => {
+      this.log.error('Login to Alpha Ess failed');
+      return;
     });
+
   }
 
 
