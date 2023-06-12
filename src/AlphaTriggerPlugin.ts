@@ -2,6 +2,7 @@
 import { HAP, API, AccessoryPlugin, Logging, PlatformConfig, Service } from 'homebridge';
 import { AlphaService, BASE_URL } from './alpha/AlphaService.js';
 import { AlphaMqttService, MqttTopics } from './alpha/mqtt/AlphaMqttService';
+import { TibberService } from './tibber/TibberService.js';
 
 
 /**
@@ -28,6 +29,8 @@ export class AlphaTriggerPlugin implements AccessoryPlugin {
 
   // alpha mqtt service
   private mqtt: AlphaMqttService;
+
+  private tibber: TibberService;
 
   // Alpha ESS Trigger Plugin
   constructor (log: Logging, config: PlatformConfig, api: API) {
@@ -56,6 +59,12 @@ export class AlphaTriggerPlugin implements AccessoryPlugin {
       this.log.error('Configuration was missing: either serialnumber, password or username not present');
     }
 
+    if (!config.tibberEnabled ) {
+      this.log.debug('tibber trigger is disabled');
+    } else {
+      this.log.debug('tibber trigger is enabled');
+      this.tibber = new TibberService(config.tibberAPIKey, config.tibberUrl, config.tibberThresholdCnts, config.tibberHomeId);
+    }
 
     if (!config.refreshTimerInterval ) {
       this.log.error('refreshTimerInterval is not set, not refreshing trigger data ');
@@ -76,7 +85,7 @@ export class AlphaTriggerPlugin implements AccessoryPlugin {
       topics.mqtt_trigger_topic_true = this.config.mqtt_trigger_topic_true;
       topics.mqtt_trigger_topic_false= this.config.mqtt_trigger_topic_false;
       topics.mqtt_trigger_message_true = this.config.mqtt_trigger_message_true;
-      topics.mqtt_trigger_message_false = this.config.mqtt_trigger_message_false;
+      topics.mqtt_trigger_message_false = this.config.mqtt_trigger_messge_false;
       this.mqtt = new AlphaMqttService(log, config.mqtt_url, topics);
     }
   }

@@ -49,7 +49,7 @@ Click install and do the following configuration:
             "mqtt_url": "http://localhost:bla"
             "mqtt_status_topic": "/topic_for_alpha_ess_status_information",  # 
             "mqtt_trigger_topic_true": "/topic/to/on",
-            "mqtt_trigger_topic_false": "/topic/to/off)",
+            "mqtt_trigger_topic_false": "/topic/to/off)",q
             "mqtt_trigger_message_true": "ON",
             "mqtt_trigger_message_false": "OFF",
             "power_image_filename":"/tmp/somefilename.png", # rendered output of todays statistics (PV & battery) - for camera / image exposing  
