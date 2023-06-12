@@ -1,4 +1,5 @@
 import { TibberQuery, IConfig } from 'tibber-api';
+import { IPrice } from 'tibber-api/lib/src/models/IPrice';
 
 export class TibberService {
 
@@ -21,14 +22,15 @@ export class TibberService {
     this.thresholdCnts = thresholdCnts;
   }
 
-  // determine lowest next price for the curent day
-  async findLowestPrice(): Promise<number> {
-
+  async getTodaysEnergyPrices(): Promise<IPrice[]> {
     const tibberQuery = new TibberQuery(this.config);
-    const prices = await tibberQuery.getTodaysEnergyPrices(this.config.homeId);
+    return tibberQuery.getTodaysEnergyPrices(this.config.homeId);
+  }
+
+  // determine lowest next price for the curent day
+  findLowestPrice(prices: IPrice[]): number {
     let lowest = undefined;
     prices.forEach(price => {
-      console.log(price);
       price.total;
       if (lowest===undefined){
         lowest = price.total;
@@ -41,6 +43,7 @@ export class TibberService {
     return lowest;
   }
 
+
   // determine lowest next price for the curent day
   async findCurrentPrice(): Promise<number> {
     const tibberQuery = new TibberQuery(this.config);
@@ -50,7 +53,7 @@ export class TibberService {
 
   // check if we are in the lowest price for today - if yes, pull the trigger
   //
-  getTrigger(todaysLowestPrice: number, currentPrice: number, socBattery: number, socLowerThreshold: number ): boolean {
+  _getTrigger(todaysLowestPrice: number, currentPrice: number, socBattery: number, socLowerThreshold: number ): boolean {
     const diffToLowest = currentPrice - todaysLowestPrice;
     // diffToLowest is in acceptable range
     console.log('lowest today: ' + todaysLowestPrice + ' current: ' + currentPrice + ' diffToLowest ' + diffToLowest );
@@ -60,6 +63,12 @@ export class TibberService {
     }
     console.log('trigger false');
     return false;
+  }
+
+  async getTrigger(socBattery: number, socLowerThreshold: number ): Promise<boolean> {
+    const currentPrice = await this.findCurrentPrice();
+    const todaysLowestPrice = this.findLowestPrice(await this.getTodaysEnergyPrices());
+    return this._getTrigger(todaysLowestPrice, currentPrice, socBattery, socLowerThreshold);
   }
 
 }

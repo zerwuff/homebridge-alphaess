@@ -9,7 +9,6 @@ import { AlphaStatisticsByDayResponse, AlphaStatisticsData } from '../../src/alp
 import fs from 'fs';
 import { exec } from 'child_process';
 const path = require('path');
-import { TibberService } from '../../src/tibber/TibberService';
 
 const username = 'fasel';
 const password = 'bla';

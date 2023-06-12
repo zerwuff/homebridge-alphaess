@@ -92,6 +92,48 @@
         "required": false,
         "default": false, 
         "description":"log request data yes / no"
+      },
+      "tibberEnabled": {
+        "title": "Enable Tibber Trigger",
+        "type": "boolean",
+        "required": false,
+        "default": false, 
+        "description":"Enable Tibber Trigger yes / no"
+      },
+      "tibberUrl": {
+        "title": "Tibber API URL",
+        "type": "string",
+        "default":"",
+        "required": false,
+        "description" :  "the tibber API Url"
+      },
+      "tibberAPIKey": {
+        "title": "Tibber API Key",
+        "type": "string",
+        "required": false,
+        "default":"",
+        "description" : "the the tibber api key "
+      },
+      "tibberHomeId": {
+        "title": "Tibber API Home Id",
+        "type": "string",
+        "required": false,
+        "default":"",
+        "description" : "the the tibber home id "
+      },
+      "tibberThresholdSOC": {
+        "title": "Tibber SOC Threshold",
+        "type": "integer",
+        "default": 60,
+        "required": false,
+        "description" :  "the tibber soc threshold required to trigger loading"
+      },
+      "tibberThresholdCnts": {
+        "title": "Tibber Threshold in cents ",
+        "type": "integer",
+        "default":10,
+        "required": false,
+        "description" :  "the tibber threshold in cents "
       }
     }
   }

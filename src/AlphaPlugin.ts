@@ -83,14 +83,17 @@ export class AlphaPlugin implements AccessoryPlugin {
 
         this.alphaService.getDetailData(loginResponse.data.AccessToken, serialNumber).then(
           detailData => {
-            this.log.debug('SOC: ' + detailData.data.soc);
-            this.batteryLevel = detailData.data.soc;
-            const totalPower = this.alphaService.getTotalPower(detailData);
-            if (this.mqtt !== undefined) {
-              this.mqtt.pushStatusMsg(totalPower, detailData.data.soc);
+            if (detailData!=null && detailData.data!=null){
+              this.log.debug('SOC: ' + detailData.data.soc);
+              this.batteryLevel = detailData.data.soc;
+              const totalPower = this.alphaService.getTotalPower(detailData);
+              if (this.mqtt !== undefined) {
+                this.mqtt.pushStatusMsg(totalPower, detailData.data.soc);
+              }
             }
           },
         ).catch(error => {
+          this.log.error(error);
           this.log.error('Getting Detail Data from Alpha Ess failed ');
           return;
         });
@@ -108,6 +111,7 @@ export class AlphaPlugin implements AccessoryPlugin {
             }
           },
         ).catch(error => {
+          this.log.error(error);
           this.log.error('Getting Statistics Data from Alpha Ess failed ');
           return;
         });
