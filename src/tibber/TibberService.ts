@@ -14,13 +14,13 @@ export class PriceTrigger {
 
 export class TibberService {
   private IMAGE_INDEX_LENGHT = 96;
-
   private config: IConfig;
   private thresholdCnts: number; // threshold to lowest in cents
   private dailyMap: Map<number, PriceTrigger>;
   private alphaImageService: AlphaImageService;
   private imageUrl ='tibber_image.png';
-
+  private tibberHomeId: string ;
+  private tibberImageFilename;
   constructor(tibberApiKey:string, tibberQueryUrl:string, thresholdCnts: number, tibberHomeId?: string){
     this.config = {
       // Endpoint configuration.
@@ -35,8 +35,9 @@ export class TibberService {
       active: true,
     };
     this.thresholdCnts = thresholdCnts;
+    this.dailyMap = new Map();
+    this.tibberHomeId= tibberHomeId;
     this.alphaImageService = new AlphaImageService(this.imageUrl);
-
   }
 
   getDailyMap(): Map<number, PriceTrigger>{
@@ -45,7 +46,17 @@ export class TibberService {
 
   async getTodaysEnergyPrices(): Promise<IPrice[]> {
     const tibberQuery = new TibberQuery(this.config);
-    return tibberQuery.getTodaysEnergyPrices(this.config.homeId);
+
+    return new Promise((resolve, reject) => {
+      tibberQuery.getHomes().then( homes => {
+        const homeId = this.tibberHomeId !== undefined ? this.tibberHomeId : homes[0].id;
+        return Promise.resolve(tibberQuery.getTodaysEnergyPrices(homeId));
+      }).catch( () => {
+        return Promise.reject();
+      },
+      );
+    });
+
   }
 
   // determine lowest next price for the curent day
@@ -68,8 +79,20 @@ export class TibberService {
   // determine lowest next price for the curent day
   async findCurrentPrice(): Promise<number> {
     const tibberQuery = new TibberQuery(this.config);
-    const current = await tibberQuery.getCurrentEnergyPrice(this.config.homeId);
-    return current.total;
+    return new Promise((resolve, reject) => {
+
+      tibberQuery.getHomes().then( homes => {
+        const homeId = this.tibberHomeId !== undefined ? this.tibberHomeId : homes[0].id;
+        tibberQuery.getCurrentEnergyPrice(homeId).then(current => {
+          return Promise.resolve(current.total);
+        } ).
+          catch(error => {
+            console.error('Tibber: Could not fetch prices: statusMessage:' + error.statusMessage + ' errorCode:' +error.statusCode);
+            return Promise.reject();
+          },
+          );
+      });
+    });
   }
 
   // check if we have the lowest energy price for today - if yes, raise the trigger
@@ -87,15 +110,25 @@ export class TibberService {
 
   async isTriggered(socCurrent: number /** Current SOC of battery */,
     socLowerThreshold: number /** SOC of battery to be trigger */ ): Promise<boolean> {
-    const currentPrice = await this.findCurrentPrice();
-    const todaysLowestPrice = this.findLowestPrice(await this.getTodaysEnergyPrices());
-    const isTriggered= this._getTrigger(todaysLowestPrice, currentPrice, socCurrent, socLowerThreshold);
-
-    const hours = new Date().getHours();
-    const min = new Date().getMinutes();
-    const index = hours * 4 + Math.round(min/15);
-    this.dailyMap[index] = new PriceTrigger(currentPrice, isTriggered);
-    return isTriggered;
+    return new Promise((resolve, reject) => {
+      this.findCurrentPrice().then( currentPrice => {
+        this.getTodaysEnergyPrices().then(lowestPrice=> {
+          const todaysLowestPrice = this.findLowestPrice(lowestPrice );
+          const isTriggered= this._getTrigger(todaysLowestPrice, currentPrice, socCurrent, socLowerThreshold);
+          const hours = new Date().getHours();
+          const min = new Date().getMinutes();
+          const index = hours * 4 + Math.round(min/15);
+          this.dailyMap[index] = new PriceTrigger(currentPrice, isTriggered);
+          return Promise.resolve(isTriggered);
+        }).catch(err => {
+          console.log('could not fetch todays prices,error : ' + err);
+          return Promise.resolve(false);
+        });
+      }).catch( error => {
+        console.error('Tibber: Could not determine trigger ');
+        return Promise.resolve(false);
+      });
+    });
   }
 
   // render current Image from current values
@@ -105,10 +138,15 @@ export class TibberService {
     let index = 0;
     const values = new Array(0);
     while (index < this.IMAGE_INDEX_LENGHT ) { // 15 min intervall
-      const cnt = this.dailyMap[index].currentPrice;
-      const trigger = this.dailyMap[index].trigger; //TODO;index > 40 && index < 65;
-      const entry = {time:index, cnt: cnt, trigger:trigger};
-      values.push(entry);
+      if (this.dailyMap.has(index)){
+        const cnt = this.dailyMap[index].currentPrice;
+        const trigger = this.dailyMap[index].trigger; //TODO;index > 40 && index < 65;
+        const entry = {time:index, cnt: cnt, trigger:trigger};
+        values.push(entry);
+      } else{
+        const entry = {time:index, cnt: 0, trigger: false};
+        values.push(entry);
+      }
       index++ ;
     }
     await this.alphaImageService.graphToImageTibber(this.imageUrl, values);

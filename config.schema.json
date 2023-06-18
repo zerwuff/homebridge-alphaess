@@ -134,6 +134,13 @@
         "default":10,
         "required": false,
         "description" :  "the threshold in cents that is required to trigger tibber loading"
+      },
+      "tibberImageFilename": {
+        "title": "Tibber Image Filename",
+        "type": "string",
+        "required": false,
+        "default":"/tmp/tibber_image.png",
+        "description" :  "the filename where tibber image is rendered to "
       }
     }
   }
