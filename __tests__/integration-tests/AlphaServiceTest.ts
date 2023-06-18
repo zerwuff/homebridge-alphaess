@@ -7,8 +7,6 @@ import { AlphaImageService } from '../../src/alpha/AlphaImageService';
 import { AlphaLoginResponse, LoginReponse } from '../../src/alpha/response/AlphaLoginResponse';
 import { AlphaStatisticsByDayResponse, AlphaStatisticsData } from '../../src/alpha/response/AlphaStatisticsByDayResponse';
 import fs from 'fs';
-import { exec } from 'child_process';
-const path = require('path');
 
 const username = 'fasel';
 const password = 'bla';
@@ -136,7 +134,7 @@ test('test image rendering from test data json', async () => {
 test('test image rendering', async () => {
   const imageService = new AlphaImageService('testgraph.png');
   const PowerData = [{1:12, 2:11, 3:14, 4:15}];
-  const imageUrl = await imageService.graphToImage('testgraph.png', PowerData );
+  const imageUrl = await imageService.graphToImageAlpha('testgraph.png', PowerData );
   expect(imageUrl).toBeDefined();
 });
 
@@ -149,7 +147,6 @@ test('test image rendering', async () => {
   const statistics = new AlphaStatisticsData();
   badResponse.data = statistics;
   expect(await imageService.renderImage(badResponse)).toBeFalsy();
-
 });
 
 

@@ -15,13 +15,99 @@ const colorBattery = '#85C5A6';
 
 export class AlphaImageService{
   private power_image_filename: string ;
-
   constructor(power_image_filename: string) {
     this.power_image_filename = power_image_filename;
   }
 
+  async graphToImageTibber (fileName: string, values: object) {
+    const vlSpecTibber = {
+      $schema: 'https://vega.github.io/schema/vega-lite/v3.json',
+      width: width,
+      height: height,
+      background: backgroundColour,
+      padding: pading,
+      config: {'font':'Tahoma'},
+      data : {
+        values: values,
+      },
+      layer: [
+        {
+          mark: {
+            type: 'line',
+            color:  colorPower,
+          },
+          title:'Tibber Price',
+          encoding: {
+            x: {
+              field: 'time',
+              type: 'nominal',
+              title: '24 hrs',
+              axis: {
+                labels: false,
+                tickSize: 0,
+                labelAlign: 'left',
+              },
+            },
+            y: {
+              sort:'descending',
+              field: 'cnt',
+              title: 'Cents',
+              type: 'nominal',
+              axis: {
+                labelOverlap: 'parity',
+                orient:'left',
+                format:'~s',
+              },
+            },
+          },
+        },
+        {
+          title:'Trigger',
+          mark: {
+            type: 'bar',
+            color: colorBattery,
+            opacity: 0.7,
+          },
+          encoding: {
+            x: {
+              field: 'time',
+              type: 'nominal',
+              title: '24 hrs',
+              axis: {
+                labels: false,
+                tickSize: 0,
+              },
+            },
+            y: {
+              sort:'ascending',
+              field: 'trigger',
+              axis: {'orient':'right', 'format':'~s', 'grid': true, 'ticks': false},
+              title: 'Trigger ',
+              values: [0, 1],
+              type: 'quantitative',
+              scale: {'domain': [0, 1]},
+            },
+          },
+        },
+      ],
+    };
 
-  async graphToImage (fileName: string, values: object) {
+    const vegaspec = lite.compile(vlSpecTibber).spec;
+    const view = new vega.View(vega.parse(vegaspec), {renderer: 'none'});
+
+    // Generate an SVG string
+    view.resize(width, height).toSVG().then(async (svg) => {
+      await sharp(Buffer.from(svg))
+        .toFormat('png')
+        .toFile(fileName);
+    }).catch((err) => {
+      console.error(err);
+    });
+
+    return view;
+  }
+
+  async graphToImageAlpha (fileName: string, values: object) {
     const vlSpec = {
       $schema: 'https://vega.github.io/schema/vega-lite/v3.json',
       width: width,
@@ -113,8 +199,9 @@ export class AlphaImageService{
     if (this.power_image_filename === undefined){
       return false;
     }
-    if (statistics === null || (statistics!==null && statistics.data === null) || (statistics.data === undefined) || (statistics.data!= undefined && statistics.data.Time === undefined) ){
-      console.log('statistics resposnse is empty ');
+    if (statistics === null || (statistics!==null && statistics.data === null) ||
+        (statistics.data === undefined) || (statistics.data !== undefined && statistics.data.Time === undefined) ){
+      console.log('statistics response is empty, skipping image rendering');
       return false;
     }
 
@@ -131,8 +218,7 @@ export class AlphaImageService{
       const entry = {timeStamp: timeStamp, time:cnt, ppv: ppv*10, soc:soc};
       values.push(entry);
     });
-
-    this.graphToImage(this.power_image_filename, values);
+    this.graphToImageAlpha(this.power_image_filename, values);
     return true;
   }
 

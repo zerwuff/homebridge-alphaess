@@ -1,6 +1,6 @@
 import { API, PlatformConfig, Logging, StaticPlatformPlugin, AccessoryPlugin } from 'homebridge';
 import { AlphaPlugin } from './AlphaPlugin';
-import { AlphaTriggerPlugin } from './AlphaTriggerPlugin';
+import { EnergyTriggerPlugin } from './EnergyTriggerPlugin';
 
 const PLATFORM_NAME = 'AlphaEssPlatform';
 
@@ -29,7 +29,7 @@ class AlphaEssPlatformPlugin implements StaticPlatformPlugin {
   accessories(callback: (foundAccessories: AccessoryPlugin[]) => void): void {
     callback([
       new AlphaPlugin(this.log, this.config, this.api),
-      new AlphaTriggerPlugin(this.log, this.config, this.api),
+      new EnergyTriggerPlugin(this.log, this.config, this.api),
     ]);
   }
 

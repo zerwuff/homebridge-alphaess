@@ -1,7 +1,7 @@
 
 import { HAP, API, AccessoryPlugin, Logging, PlatformConfig, Service } from 'homebridge';
 import { AlphaService, BASE_URL } from './alpha/AlphaService.js';
-import { AlphaMqttService, MqttTopics } from './alpha/mqtt/AlphaMqttService';
+import { AlphaMqttService, MqttTopics } from './alpha/mqtt/AlphaMqttService.js';
 import { TibberService } from './tibber/TibberService.js';
 
 
@@ -9,7 +9,7 @@ import { TibberService } from './tibber/TibberService.js';
  * This Plugin provides a homebridge trigger logic that can be used to control external devices.
  *
  */
-export class AlphaTriggerPlugin implements AccessoryPlugin {
+export class EnergyTriggerPlugin implements AccessoryPlugin {
 
   private alphaService: AlphaService;
   private informationService: Service;
@@ -21,30 +21,32 @@ export class AlphaTriggerPlugin implements AccessoryPlugin {
   private name: string;
   private refreshTimerInterval: number; // timer milliseconds to check timer
 
-  // true / false trigger
-  private trigger: boolean;
-
+  private triggerTotal: boolean;
+  private triggerAlpha : boolean;
+  private triggerTibber: boolean;
+  private socCurrent: number;
   private tibberApiKey: string;
   private tibberQueryUrl: string;
+  private tibberThresholdSOC: number;// soc percentage to trigger tibber loading
 
   // alpha mqtt service
   private mqtt: AlphaMqttService;
-
   private tibber: TibberService;
 
-  // Alpha ESS Trigger Plugin
+
   constructor (log: Logging, config: PlatformConfig, api: API) {
     this.hap = api.hap;
     this.log = log;
     this.refreshTimerInterval = 10000;
+    this.socCurrent = -1;
     this.config = config;
-    this.name= 'AlphaEssTrigger';
-    log.debug('Alpha ESS Trigger plugin loaded');
+    this.name= 'EnergyTriggerPlugin';
+    log.debug('EnergyTriggerPlugin plugin loaded');
 
     this.informationService = new this.hap.Service.AccessoryInformation()
-      .setCharacteristic(this.hap.Characteristic.Manufacturer, 'Alpha Ess Homebridge Trigger Plugin by Jens Zeidler')
+      .setCharacteristic(this.hap.Characteristic.Manufacturer, 'EnergyTriggerPlugin by Jens Zeidler')
       .setCharacteristic(this.hap.Characteristic.SerialNumber, config.serialnumber)
-      .setCharacteristic(this.hap.Characteristic.Model, 'Alpha ESS Trigger Plugin');
+      .setCharacteristic(this.hap.Characteristic.Model, 'Alpha ESS // Tibber combined Trigger Plugin');
 
     this.service = new this.hap.Service.ContactSensor(config.name);
 
@@ -56,13 +58,13 @@ export class AlphaTriggerPlugin implements AccessoryPlugin {
     this.log.debug(config.serialnumber);
     this.log.debug(config.username);
     if (!config.serialnumber || !config.username || !config.password) {
-      this.log.error('Configuration was missing: either serialnumber, password or username not present');
+      this.log.debug('Alpha ESS trigger is disabled: either serialnumber, password or username not present');
     }
 
     if (!config.tibberEnabled ) {
-      this.log.debug('tibber trigger is disabled');
+      this.log.debug('Tibber API trigger is disabled');
     } else {
-      this.log.debug('tibber trigger is enabled');
+      this.log.debug('Tibber API trigger is enabled');
       this.tibber = new TibberService(config.tibberAPIKey, config.tibberUrl, config.tibberThresholdCnts, config.tibberHomeId);
     }
 
@@ -73,7 +75,14 @@ export class AlphaTriggerPlugin implements AccessoryPlugin {
       // auto refresh statistics
       setInterval(() => {
         this.log.debug('Running Timer to check trigger every  ' + config.refreshTimerInterval + ' ms ');
-        this.fetchAlphaEssData(config.serialnumber);
+        this.calculateAlphaTrigger(config.serialnumber);
+
+        if (config.tibberEnabled ) {
+          this.tibberThresholdSOC = config.tibberThresholdSOC;
+          this.calculateTibberTrigger(this.tibber);
+        }
+
+
       }, this.refreshTimerInterval);
     }
 
@@ -90,7 +99,13 @@ export class AlphaTriggerPlugin implements AccessoryPlugin {
     }
   }
 
-  async fetchAlphaEssData(serialNumber: string) {
+
+  async calculateTibberTrigger(tibber: TibberService) {
+    this.triggerTibber = await tibber.isTriggered(this.socCurrent, this.tibberThresholdSOC);
+  }
+
+  async calculateAlphaTrigger(serialNumber: string) {
+    this.triggerAlpha = false;
     this.log.debug('fetch Alpha ESS Data -> fetch token');
     await this.alphaService.login().then(loginResponse => {
 
@@ -100,24 +115,19 @@ export class AlphaTriggerPlugin implements AccessoryPlugin {
         this.alphaService.getDetailData(loginResponse.data.AccessToken, serialNumber).then(
           detailData => {
             this.log.debug('SOC: ' + detailData.data.soc);
-
-            this.trigger = this.alphaService.isTriggered(
-              detailData,
-              this.config.powerLoadingThreshold,
-              this.config.socLoadingThreshold);
-            this.log.debug('Trigger value: '+ this.trigger);
-
-            this.handleContactSensorStateGet();
+            this.socCurrent = detailData.data.soc;
+            this.triggerAlpha= this.alphaService.isTriggered(
+              detailData, this.config.powerLoadingThreshold, this.config.socLoadingThreshold);
           },
         ).catch(error => {
-          this.log.error('Getting Statistics Data from Alpha Ess failed ');
+          this.log.error('Getting Statistics Data from Alpha Ess failed ' + error);
           return;
         });
       }else {
         this.log.error('Could not login to Alpha Cloud, please check username or password');
       }
     }).catch(error => {
-      this.log.error('Login to Alpha Ess failed');
+      this.log.error('Login to Alpha Ess failed ' + error);
       return;
     });
   }
@@ -131,14 +141,19 @@ export class AlphaTriggerPlugin implements AccessoryPlugin {
   }
 
   handleContactSensorStateGet() {
+    this.triggerTotal = this.triggerAlpha || this.triggerTibber;
+    this.log.debug('Trigger: alpha ess: '+ this.triggerAlpha + ' tibber: ' + this.triggerTibber + ' total:'+this.triggerTotal);
+    this.handleContactSensorStateGet();
+
+
     this.log.debug('Triggered GET ContactSensorState');
 
     // set this to a valid value for ContactSensorState
     if (this.mqtt !== undefined) {
-      this.mqtt.pushTriggerMessage(this.trigger);
+      this.mqtt.pushTriggerMessage(this.triggerTotal);
     }
 
-    if (this.trigger === false){
+    if (this.triggerTotal === false){
       this.log.debug('trigger not fired -> status CONTACT_DETECTED');
       return this.hap.Characteristic.ContactSensorState.CONTACT_DETECTED;
     }
@@ -148,7 +163,7 @@ export class AlphaTriggerPlugin implements AccessoryPlugin {
 
 
   identify(): void {
-    this.log.debug('Its me, Alpha cloud contact sensor trigger plugin');
+    this.log.debug('Its me, Energy contact sensor trigger plugin');
   }
 
 

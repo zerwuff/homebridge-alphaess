@@ -126,14 +126,14 @@
         "type": "integer",
         "default": 60,
         "required": false,
-        "description" :  "the tibber soc threshold required to trigger loading"
+        "description" :  "the battery SOC threshold that is required to trigger tibber loading"
       },
       "tibberThresholdCnts": {
         "title": "Tibber Threshold in cents ",
         "type": "integer",
         "default":10,
         "required": false,
-        "description" :  "the tibber threshold in cents "
+        "description" :  "the threshold in cents that is required to trigger tibber loading"
       }
     }
   }

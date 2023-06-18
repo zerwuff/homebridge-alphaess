@@ -60,7 +60,7 @@ export class AlphaMqttService {
 
     client.on('connect', ()=> {
       this.log.debug('connected to mqtt');
-      this.log.debug('tigger value: ' + trigger);
+      this.log.debug('trigger value: ' + trigger);
       if (trigger===false){
         this.log.debug('sending message trigger false: ' + this.topics.mqtt_trigger_message_false + 'on topic: ' + this.topics.mqtt_trigger_topic_false);
         client.publish(this.topics.mqtt_trigger_topic_false, this.topics.mqtt_trigger_message_false);

@@ -1,9 +1,10 @@
 import 'jest';
 
-import { TibberService } from '../../src/tibber/TibberService';
-import { PROJECTION_PROPERTIES } from 'vega-lite/build/src/projection';
+import { TibberService, PriceTrigger } from '../../src/tibber/TibberService';
 import { IPrice } from 'tibber-api/lib/src/models/IPrice';
 import { PriceLevel } from 'tibber-api/lib/src/models/enums/PriceLevel';
+import { AlphaImageService } from '../../src/alpha/AlphaImageService';
+
 
 test('test trigger from tibber api - positive case (1)', async () => {
 
@@ -122,4 +123,20 @@ class PriceTestData implements IPrice {
     this.total = total;
   }
 }
+
+
+test('test image rendering from tibber test data json', async () => {
+  const imageService = new AlphaImageService('testgraph_tibber_response.png');
+  let hour = 0;
+  const values = new Array(0);
+  while (hour < 96 ) { // 15 min intervall
+    hour++ ;
+    const cnt = Math.random()*100;
+    const trigger = hour > 40 && hour < 65;
+    const entry = {time:' '+ hour, cnt: cnt, trigger:trigger};
+    values.push(entry);
+  }
+  const imageUrl = await imageService.graphToImageTibber('image_rendered_tibber.png', values );
+  expect(imageUrl).toBeDefined();
+});
 

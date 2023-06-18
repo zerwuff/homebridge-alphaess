@@ -11,6 +11,6 @@ export const PLATFORM_NAME = 'AlphaESS HomeBridge Platform';
 export const PLUGIN_NAME = 'homebridge-alphaess';
 export const ACCESSORY_NAME = 'homebridge-alphaess-accessory';
 
-// the tigger accessory
+// the trigger accessory
 export const PLUGIN_NAME_TRIGGER = 'homebridge-alphaess-trigger';
 export const ACCESSORY_NAME_TRIGGER = 'homebridge-alphaess-accessory-trigger';
