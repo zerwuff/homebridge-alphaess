@@ -102,6 +102,18 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
 
   async calculateTibberTrigger(tibber: TibberService) {
     this.triggerTibber = await tibber.isTriggered(this.socCurrent, this.tibberThresholdSOC);
+
+    /**
+        this.alphaService.getSettingsData(loginResponse.data.AccessToken, serialNumber).then(
+          settings => {
+            this.log.debug('Settings Data : ');
+            this.log.debug('' + JSON.stringify(settings));
+            this.log.debug('' + JSON.stringify(settings['data']));
+            this.alphaService.setBatteryCharge(loginResponse.data.AccessToken, serialNumber, settings.data);
+
+          },
+        );**/
+    await tibber.renderImage();
   }
 
   async calculateAlphaTrigger(serialNumber: string) {
@@ -114,10 +126,12 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
 
         this.alphaService.getDetailData(loginResponse.data.AccessToken, serialNumber).then(
           detailData => {
-            this.log.debug('SOC: ' + detailData.data.soc);
-            this.socCurrent = detailData.data.soc;
-            this.triggerAlpha= this.alphaService.isTriggered(
-              detailData, this.config.powerLoadingThreshold, this.config.socLoadingThreshold);
+            if (detailData!==null && detailData.data!==null){
+              this.log.debug('SOC: ' + detailData.data.soc);
+              this.socCurrent = detailData.data.soc;
+              this.triggerAlpha= this.alphaService.isTriggered(
+                detailData, this.config.powerLoadingThreshold, this.config.socLoadingThreshold);
+            }
           },
         ).catch(error => {
           this.log.error('Getting Statistics Data from Alpha Ess failed ' + error);
@@ -130,6 +144,7 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
       this.log.error('Login to Alpha Ess failed ' + error);
       return;
     });
+
   }
 
 
@@ -143,9 +158,6 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
   handleContactSensorStateGet() {
     this.triggerTotal = this.triggerAlpha || this.triggerTibber;
     this.log.debug('Trigger: alpha ess: '+ this.triggerAlpha + ' tibber: ' + this.triggerTibber + ' total:'+this.triggerTotal);
-    this.handleContactSensorStateGet();
-
-
     this.log.debug('Triggered GET ContactSensorState');
 
     // set this to a valid value for ContactSensorState

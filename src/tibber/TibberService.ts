@@ -1,5 +1,6 @@
 import { TibberQuery, IConfig } from 'tibber-api';
 import { IPrice } from 'tibber-api/lib/src/models/IPrice';
+import { AlphaImageService } from '../alpha/AlphaImageService';
 
 export class PriceTrigger {
   price: number;
@@ -12,11 +13,13 @@ export class PriceTrigger {
 
 
 export class TibberService {
+  private IMAGE_INDEX_LENGHT = 96;
 
   private config: IConfig;
   private thresholdCnts: number; // threshold to lowest in cents
-
   private dailyMap: Map<number, PriceTrigger>;
+  private alphaImageService: AlphaImageService;
+  private imageUrl ='tibber_image.png';
 
   constructor(tibberApiKey:string, tibberQueryUrl:string, thresholdCnts: number, tibberHomeId?: string){
     this.config = {
@@ -32,6 +35,12 @@ export class TibberService {
       active: true,
     };
     this.thresholdCnts = thresholdCnts;
+    this.alphaImageService = new AlphaImageService(this.imageUrl);
+
+  }
+
+  getDailyMap(): Map<number, PriceTrigger>{
+    return this.dailyMap;
   }
 
   async getTodaysEnergyPrices(): Promise<IPrice[]> {
@@ -89,4 +98,20 @@ export class TibberService {
     return isTriggered;
   }
 
+  // render current Image from current values
+  async renderImage(): Promise<boolean>{
+    console.log('render image triggered with:' + this.dailyMap + ' data points');
+
+    let index = 0;
+    const values = new Array(0);
+    while (index < this.IMAGE_INDEX_LENGHT ) { // 15 min intervall
+      const cnt = this.dailyMap[index].currentPrice;
+      const trigger = this.dailyMap[index].trigger; //TODO;index > 40 && index < 65;
+      const entry = {time:index, cnt: cnt, trigger:trigger};
+      values.push(entry);
+      index++ ;
+    }
+    await this.alphaImageService.graphToImageTibber(this.imageUrl, values);
+    return true;
+  }
 }

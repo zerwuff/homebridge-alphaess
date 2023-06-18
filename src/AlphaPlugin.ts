@@ -83,7 +83,7 @@ export class AlphaPlugin implements AccessoryPlugin {
 
         this.alphaService.getDetailData(loginResponse.data.AccessToken, serialNumber).then(
           detailData => {
-            if (detailData!=null && detailData.data!=null){
+            if (detailData!==null && detailData.data!==null){
               this.log.debug('SOC: ' + detailData.data.soc);
               this.batteryLevel = detailData.data.soc;
               const totalPower = this.alphaService.getTotalPower(detailData);
@@ -112,21 +112,9 @@ export class AlphaPlugin implements AccessoryPlugin {
           },
         ).catch(error => {
           this.log.error(error);
-          this.log.error('Getting Statistics Data from Alpha Ess failed ');
+          this.log.error('Getting Statistics Data from Alpha Ess failed: ' + error);
           return;
         });
-
-        this.alphaService.getSettingsData(loginResponse.data.AccessToken, serialNumber).then(
-          settings => {
-            this.log.debug('Settings Data : ');
-            this.log.debug('' + JSON.stringify(settings));
-            this.log.debug('' + JSON.stringify(settings['data']));
-
-            this.alphaService.setBatteryCharge(loginResponse.data.AccessToken, serialNumber, settings.data);
-
-          },
-        );
-
       }else {
         this.log.error('Could not login to Alpha Cloud, please check username or password');
       }

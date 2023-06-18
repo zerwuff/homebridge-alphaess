@@ -53,9 +53,14 @@ export class AlphaData {
 
 export class AlphaDetailResponse {
 
+
   @JsonProperty() @JsonClassType({type: () => [Number]})
     code: number;
 
   @JsonProperty() @JsonClassType({type: () => [AlphaData]})
     data: AlphaData;
+
+  @JsonProperty() @JsonClassType({type: () => [String]})
+    info: string;
+
 }
