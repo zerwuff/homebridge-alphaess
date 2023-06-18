@@ -56,7 +56,7 @@ export class AlphaImageService{
               axis: {
                 labelOverlap: 'parity',
                 orient:'left',
-                format:'~s',
+                format:'.2',
               },
             },
           },

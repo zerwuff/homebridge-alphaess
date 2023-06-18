@@ -65,7 +65,7 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
       this.log.debug('Tibber API trigger is disabled');
     } else {
       this.log.debug('Tibber API trigger is enabled');
-      this.tibber = new TibberService(config.tibberAPIKey, config.tibberUrl, config.tibberThresholdCnts, config.tibberHomeId);
+      this.tibber = new TibberService(config.tibberAPIKey, config.tibberUrl, config.tibberThresholdCnts, config.tibberImageFilename, config.tibberHomeId);
     }
 
     if (!config.refreshTimerInterval ) {
