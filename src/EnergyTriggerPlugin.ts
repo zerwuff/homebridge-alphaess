@@ -75,11 +75,15 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
       // auto refresh statistics
       setInterval(() => {
         this.log.debug('Running Timer to check trigger every  ' + config.refreshTimerInterval + ' ms ');
-        this.calculateAlphaTrigger(config.serialnumber);
+        this.calculateAlphaTrigger(config.serialnumber).catch(error => {
+          this.log(error);
+        });
 
         if (config.tibberEnabled ) {
           this.tibberThresholdSOC = config.tibberThresholdSOC;
-          this.calculateTibberTrigger(this.tibber);
+          this.calculateTibberTrigger(this.tibber).catch(error => {
+            this.log(error);
+          });
         }
 
 
@@ -101,7 +105,22 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
 
 
   async calculateTibberTrigger(tibber: TibberService) {
-    this.triggerTibber = await tibber.isTriggered(this.socCurrent, this.tibberThresholdSOC);
+
+    try {
+      await tibber.isTriggered(this.socCurrent, this.tibberThresholdSOC).then(result => {
+        this.triggerTibber = result;
+      }).catch(() => {
+        this.triggerTibber = false;
+      });
+    } catch (err){
+      this.log.error('' + err);
+    }
+
+    await tibber.renderImage().catch(error => {
+      this.log.error('error rendering image: ' +error);
+    });
+
+
 
     /**
         this.alphaService.getSettingsData(loginResponse.data.AccessToken, serialNumber).then(
@@ -113,7 +132,7 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
 
           },
         );**/
-    await tibber.renderImage();
+
   }
 
   async calculateAlphaTrigger(serialNumber: string) {

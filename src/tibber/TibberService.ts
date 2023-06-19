@@ -20,7 +20,7 @@ export class TibberService {
   private alphaImageService: AlphaImageService;
   private imageUrl ='';
   private tibberHomeId: string ;
-  private tibberImageFilename;
+  private lastClearDate: Date ;
   constructor(tibberApiKey:string, tibberQueryUrl:string, thresholdCnts: number, imageUrl:string, tibberHomeId?: string){
     this.config = {
       // Endpoint configuration.
@@ -39,6 +39,7 @@ export class TibberService {
     this.tibberHomeId= tibberHomeId;
     this.imageUrl = imageUrl;
     this.alphaImageService = new AlphaImageService(imageUrl);
+    this.lastClearDate = new Date() ;
   }
 
   getDailyMap(): Map<number, PriceTrigger>{
@@ -51,10 +52,12 @@ export class TibberService {
       tibberQuery.getHomes().then( homes => {
         const homeId = this.tibberHomeId !== undefined ? this.tibberHomeId : homes[0].id;
         return resolve(tibberQuery.getTodaysEnergyPrices(homeId));
-      }).catch( () => {
+      }).catch( error => {
+        console.error('could not collect home ids ' + error);
         return reject();
-      },
-      );
+      }).catch(err => {
+        console.error('could not collect todays energy prices ' + err);
+      });
     });
 
   }
@@ -91,6 +94,8 @@ export class TibberService {
             return reject();
           },
           );
+      }).catch(err => {
+        console.error('could not fetch home ids ' + err);
       });
     });
   }
@@ -104,18 +109,25 @@ export class TibberService {
         this.getTodaysEnergyPrices().then(lowestPrice=> {
           const todaysLowestPrice = this.findLowestPrice(lowestPrice );
           const isTriggered= this._getTrigger(todaysLowestPrice, currentPrice, socCurrent, socLowerThreshold);
-          const hours = new Date().getHours();
-          const min = new Date().getMinutes();
+          const now = new Date();
+          const hours = now.getHours();
+          const min = now.getMinutes();
           const index = hours * 4 + Math.round(min/15);
+
+          if (now < this.lastClearDate){
+            // day switch, empty cache
+            this.dailyMap.clear();
+            this.lastClearDate = now;
+          }
           this.dailyMap.set(index, new PriceTrigger(currentPrice, isTriggered));
           return resolve(isTriggered);
         }).catch(err => {
           console.log('Could not fetch todays prices,error : ' + err);
-          return reject();
+          return resolve(false);
         });
       }).catch( error => {
         console.error('Tibber: Could not determine trigger ');
-        return reject();
+        return resolve(false);
       });
     });
   }
@@ -135,7 +147,7 @@ export class TibberService {
   }
 
   // render current Image from current values
-  async renderImage(): Promise<boolean>{
+  async renderImage(): Promise<any> {
     console.log('render image triggered with:' + this.dailyMap + ' data points');
 
     let index = 0;
@@ -152,7 +164,8 @@ export class TibberService {
       }
       index++ ;
     }
-    await this.alphaImageService.graphToImageTibber(this.imageUrl, values);
-    return true;
+    return this.alphaImageService.graphToImageTibber(this.imageUrl, values).catch(error => {
+      console.log(error);
+    });
   }
 }

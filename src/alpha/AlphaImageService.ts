@@ -99,7 +99,9 @@ export class AlphaImageService{
     view.resize(width, height).toSVG().then(async (svg) => {
       await sharp(Buffer.from(svg))
         .toFormat('png')
-        .toFile(fileName);
+        .toFile(fileName).catch(error => {
+          console.error(' error rendering:' + error);
+        });
     }).catch((err) => {
       console.error(err);
     });
