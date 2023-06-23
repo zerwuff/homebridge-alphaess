@@ -3,8 +3,7 @@ import { HAP, API, AccessoryPlugin, Logging, PlatformConfig, Service } from 'hom
 import { AlphaService, BASE_URL } from './alpha/AlphaService.js';
 import { AlphaMqttService, MqttTopics } from './alpha/mqtt/AlphaMqttService.js';
 import { TibberService } from './tibber/TibberService.js';
-
-
+import { AlphaTrigger } from './interfaces.js';
 /**
  * This Plugin provides a homebridge trigger logic that can be used to control external devices.
  *
@@ -25,9 +24,10 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
   private triggerAlpha : boolean;
   private triggerTibber: boolean;
   private socCurrent: number;
-  private tibberApiKey: string;
-  private tibberQueryUrl: string;
   private tibberThresholdSOC: number;// soc percentage to trigger tibber loading
+  private lastClearDate: Date ;
+
+  private dailyMap: Map<number, AlphaTrigger>;
 
   // alpha mqtt service
   private mqtt: AlphaMqttService;
@@ -38,6 +38,7 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
     this.hap = api.hap;
     this.log = log;
     this.refreshTimerInterval = 10000;
+    this.dailyMap = new Map();
     this.socCurrent = -1;
     this.config = config;
     this.name= 'EnergyTriggerPlugin';
@@ -116,7 +117,7 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
       this.log.error('' + err);
     }
 
-    await tibber.renderImage().catch(error => {
+    await tibber.renderImage(this.dailyMap).catch(error => {
       this.log.error('error rendering image: ' +error);
     });
 
@@ -150,6 +151,19 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
               this.socCurrent = detailData.data.soc;
               this.triggerAlpha= this.alphaService.isTriggered(
                 detailData, this.config.powerLoadingThreshold, this.config.socLoadingThreshold);
+
+
+              const now = new Date();
+              const hours = now.getHours();
+              const min = now.getMinutes();
+              const index = hours * 4 + Math.round(min/15);
+              this.dailyMap.set(index, new AlphaTrigger(this.triggerAlpha ? 1:0, new Date()));
+
+              if (this.isNewDate(now, this.lastClearDate)){
+                // day switch, empty cache
+                this.dailyMap.clear();
+                this.lastClearDate = now;
+              }
             }
           },
         ).catch(error => {
@@ -166,6 +180,11 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
 
   }
 
+
+  isNewDate(now:Date, old:Date){
+    const diff = now.getHours() - old.getHours();
+    return diff <0;
+  }
 
   getServices() {
     return [

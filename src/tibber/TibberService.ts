@@ -1,15 +1,8 @@
 import { TibberQuery, IConfig } from 'tibber-api';
 import { IPrice } from 'tibber-api/lib/src/models/IPrice';
 import { AlphaImageService } from '../alpha/AlphaImageService';
+import { PriceTrigger, AlphaTrigger } from '../interfaces';
 
-export class PriceTrigger {
-  price: number;
-  trigger: boolean;
-  constructor(price:number, trigger:boolean){
-    this.price = price;
-    this.trigger = trigger;
-  }
-}
 
 
 export class TibberService {
@@ -21,6 +14,7 @@ export class TibberService {
   private imageUrl ='';
   private tibberHomeId: string ;
   private lastClearDate: Date ;
+
   constructor(tibberApiKey:string, tibberQueryUrl:string, thresholdCnts: number, imageUrl:string, tibberHomeId?: string){
     this.config = {
       // Endpoint configuration
@@ -120,7 +114,7 @@ export class TibberService {
             this.dailyMap.clear();
             this.lastClearDate = now;
           }
-          this.dailyMap.set(index, new PriceTrigger(currentPrice, isTriggered));
+          this.dailyMap.set(index, new PriceTrigger(currentPrice, isTriggered?1:0, new Date()));
           return resolve(isTriggered);
         }).catch(err => {
           console.log('Could not fetch todays prices,error : ' + err);
@@ -153,21 +147,34 @@ export class TibberService {
   }
 
   // render current Image from current values
-  async renderImage(): Promise<any> {
+  async renderImage(alphaMap:Map<number, AlphaTrigger>): Promise<void> {
     console.debug('render image triggered with:' + this.dailyMap + ' data points');
 
     let index = 0;
     const values = new Array(0);
+    const runninDate = new Date();
+    runninDate.setHours(0);
+    runninDate.setMinutes(0);
+    runninDate.setSeconds(0);
+
     while (index < this.IMAGE_INDEX_LENGHT ) { // 15 min intervall
+      let triggerAlpha= 0;
+      if (alphaMap.get(index)!==undefined){
+        //
+        triggerAlpha = alphaMap.get(index).trigger;
+      }
       if (this.dailyMap.get(index)!==undefined){
         const cnt = this.dailyMap.get(index).price;
         const trigger = this.dailyMap.get(index).trigger; //TODO;index > 40 && index < 65;
-        const entry = {time:index, cnt: cnt, trigger:trigger};
+        const date = this.dailyMap.get(index).date;
+        const entry = {time: date.toISOString(), cnt: cnt, triggerTibber:trigger, triggerAlpha:triggerAlpha};
         values.push(entry);
       } else{
-        const entry = {time:index, cnt: 0, trigger: false};
+        // reset
+        const entry = {time: runninDate.toISOString(), cnt: 0, triggerTibber:0, triggerAlpha:triggerAlpha};
         values.push(entry);
       }
+      runninDate.setMinutes(runninDate.getMinutes()+15);
       index++ ;
     }
     return this.alphaImageService.graphToImageTibber(this.imageUrl, values).catch(error => {

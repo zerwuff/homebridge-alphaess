@@ -1,4 +1,3 @@
-import { stat } from 'fs';
 import { AlphaStatisticsByDayResponse } from './response/AlphaStatisticsByDayResponse';
 const fs = require('fs');
 const sharp = require('sharp');
@@ -12,6 +11,9 @@ const pading = 45;
 
 const colorPower = '#ff6a2fb1';
 const colorBattery = '#85C5A6';
+const colorTibber = '#3277a8';
+const colorTriggerTibber = '#ebc934';
+const colorTriggerAlpha = '#ff6a2fb1';
 
 export class AlphaImageService{
   private power_image_filename: string ;
@@ -28,13 +30,24 @@ export class AlphaImageService{
       padding: pading,
       config: {'font':'Tahoma'},
       data : {
+        name: 'table',
         values: values,
+
+      },
+      encoding: {
+        x: {
+          field: 'time',
+          type:'ordinal',
+          timeUnit: 'hoursminutes',
+          title: 'time',
+        },
+        axis: {labelAngle: 45},
       },
       layer: [
         {
           mark: {
             type: 'line',
-            color:  colorPower,
+            color:  colorTibber,
           },
           title:'Tibber Price',
           encoding: {
@@ -43,29 +56,54 @@ export class AlphaImageService{
               type: 'nominal',
               title: '24 hrs',
               axis: {
-                labels: false,
-                tickSize: 0,
-                labelAlign: 'left',
+                labels: true,
               },
             },
             y: {
-              sort:'descending',
+              sort:'ascending',
               field: 'cnt',
               title: 'Cents',
-              type: 'nominal',
+              type: 'quantitative',
               axis: {
                 labelOverlap: 'parity',
                 orient:'left',
                 format:'.2',
+                titleColor:  colorTibber,
               },
             },
           },
         },
         {
-          title:'Trigger',
           mark: {
-            type: 'bar',
-            color: colorBattery,
+            type: 'line',
+            color:  colorTriggerTibber,
+          },
+          title:'Trigger Tibber',
+          encoding: {
+            x: {
+              field: 'time',
+              type: 'nominal',
+              title: '24 hrs',
+              axis: {
+                labels: true,
+              },
+            },
+            y: {
+              sort:'ascending',
+              field: 'triggerTibber',
+              title: 'Trigger Tibber',
+              axis: {'orient':'right', 'format':'~s', 'grid': true, 'ticks': false, labelSeparation:500, titleColor: colorTriggerTibber },
+              values: [0, 1],
+              type: 'nominal',
+              scale: {'domain': [1, 0]},
+            },
+          },
+
+        },
+        {
+          mark: {
+            type: 'line',
+            color:  colorTriggerAlpha,
             opacity: 0.7,
           },
           encoding: {
@@ -75,17 +113,16 @@ export class AlphaImageService{
               title: '24 hrs',
               axis: {
                 labels: false,
-                tickSize: 0,
               },
             },
             y: {
               sort:'ascending',
-              field: 'trigger',
-              axis: {'orient':'right', 'format':'~s', 'grid': true, 'ticks': false},
-              title: 'Trigger ',
+              field: 'triggerAlpha',
+              title: 'TriggerAlpha',
+              axis: {'orient':'right', 'format':'~s', 'grid': true, 'ticks': false, labelPadding:25, titleColor: colorTriggerAlpha },
               values: [0, 1],
-              type: 'quantitative',
-              scale: {'domain': [0, 1]},
+              type: 'nominal',
+              scale: {'domain': [1, 0]},
             },
           },
         },
