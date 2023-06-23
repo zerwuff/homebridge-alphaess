@@ -23,7 +23,7 @@ export class TibberService {
   private lastClearDate: Date ;
   constructor(tibberApiKey:string, tibberQueryUrl:string, thresholdCnts: number, imageUrl:string, tibberHomeId?: string){
     this.config = {
-      // Endpoint configuration.
+      // Endpoint configuration
       apiEndpoint: {
         apiKey:  tibberApiKey, //'5K4MVS-OjfWhK_4yrjOlFe1F6kJXPVf7eQYggo8ebAE', // Demo token
         queryUrl: tibberQueryUrl, //'wss://api.tibber.com/v1-beta/gql/subscriptions',
@@ -40,6 +40,7 @@ export class TibberService {
     this.imageUrl = imageUrl;
     this.alphaImageService = new AlphaImageService(imageUrl);
     this.lastClearDate = new Date() ;
+    this.lastClearDate.setHours(23);
   }
 
   getDailyMap(): Map<number, PriceTrigger>{
@@ -53,10 +54,10 @@ export class TibberService {
         const homeId = this.tibberHomeId !== undefined ? this.tibberHomeId : homes[0].id;
         return resolve(tibberQuery.getTodaysEnergyPrices(homeId));
       }).catch( error => {
-        console.error('could not collect home ids ' + error);
+        console.error('could not collect home ids ', error);
         return reject();
       }).catch(err => {
-        console.error('could not collect todays energy prices ' + err);
+        console.error('could not collect todays energy prices ', err);
       });
     });
 
@@ -114,7 +115,7 @@ export class TibberService {
           const min = now.getMinutes();
           const index = hours * 4 + Math.round(min/15);
 
-          if (now < this.lastClearDate){
+          if (this.isNewDate(now, this.lastClearDate)){
             // day switch, empty cache
             this.dailyMap.clear();
             this.lastClearDate = now;
@@ -133,22 +134,27 @@ export class TibberService {
   }
 
 
+  isNewDate(now:Date, old:Date){
+    const diff = now.getHours() - old.getHours();
+    return diff <0;
+  }
+
   // check if we have the lowest energy price for today - if yes, raise the trigger
   _getTrigger(todaysLowestPrice: number, currentPrice: number, socBattery: number, socLowerThreshold: number ): boolean {
     const diffToLowest = currentPrice - todaysLowestPrice;
     // diffToLowest is in acceptable range
-    console.log('lowest today: ' + todaysLowestPrice + ' current: ' + currentPrice + ' diffToLowest: ' + diffToLowest );
+    console.debug('lowest today: ' + todaysLowestPrice + ' current: ' + currentPrice + ' diffToLowest: ' + diffToLowest );
     if (diffToLowest <= this.thresholdCnts && socBattery >= socLowerThreshold ) {
-      console.log('trigger lowest price: true');
+      console.debug('trigger lowest price: true');
       return true;
     }
-    console.log('trigger lowest price: false');
+    console.debug('trigger lowest price: false');
     return false;
   }
 
   // render current Image from current values
   async renderImage(): Promise<any> {
-    console.log('render image triggered with:' + this.dailyMap + ' data points');
+    console.debug('render image triggered with:' + this.dailyMap + ' data points');
 
     let index = 0;
     const values = new Array(0);
@@ -165,7 +171,7 @@ export class TibberService {
       index++ ;
     }
     return this.alphaImageService.graphToImageTibber(this.imageUrl, values).catch(error => {
-      console.log(error);
+      console.error('Error occured during tibber image rendering', error);
     });
   }
 }
