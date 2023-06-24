@@ -13,7 +13,7 @@ This plugin connects the alpha ess cloud to homebridge and provides 2 accessorie
 
 # Building 
 
- -  npm build && npm test
+ -  npm run build && npm test
 
 # Releasing
 
