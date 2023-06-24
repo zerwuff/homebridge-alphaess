@@ -135,12 +135,12 @@
         "required": false,
         "description" :  "the threshold in cents that is required to trigger tibber loading"
       },
-      "tibberImageFilename": {
-        "title": "Tibber Image Filename",
+      "triggerImageFilename": {
+        "title": "Trigger Image Filename",
         "type": "string",
         "required": false,
         "default":"/tmp/tibber_image.png",
-        "description" :  "the filename where tibber image is rendered to "
+        "description" :  "the filename where the trigger / tibber image is rendered to "
       }
     }
   }

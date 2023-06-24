@@ -1,13 +1,16 @@
 import { AlphaStatisticsByDayResponse } from './response/AlphaStatisticsByDayResponse';
-const fs = require('fs');
+import { AlphaTrigger } from '../interfaces';
+import { PriceTrigger } from '../interfaces';
+
 const sharp = require('sharp');
 const vega = require('vega');
 const lite = require('vega-lite');
 
-const width = 640;   // define width and height of the power image
-const height = 320;
+const width = 1024;   // define width and height of the power image
+const height = 768;
 const backgroundColour = 'white';
 const pading = 45;
+const IMAGE_INDEX_LENGHT = 96;
 
 const colorPower = '#ff6a2fb1';
 const colorBattery = '#85C5A6';
@@ -15,10 +18,46 @@ const colorTibber = '#3277a8';
 const colorTriggerTibber = '#ebc934';
 const colorTriggerAlpha = '#ff6a2fb1';
 
-export class AlphaImageService{
-  private power_image_filename: string ;
-  constructor(power_image_filename: string) {
-    this.power_image_filename = power_image_filename;
+export class ImageRenderingService{
+
+  // render current Image from current values
+  async renderTriggerImage(fileName:string, tibberMap:Map<number, PriceTrigger>, alphaMap:Map<number, AlphaTrigger>): Promise<void> {
+    if (fileName===undefined){
+      console.error('filename is not defined - not rendering trigger image ');
+      return;
+    }
+    console.debug('render image triggered with data points ', tibberMap, alphaMap);
+
+    let index = 0;
+    const values = new Array(0);
+    const runninDate = new Date();
+    runninDate.setHours(0);
+    runninDate.setMinutes(0);
+    runninDate.setSeconds(0);
+
+    while (index < IMAGE_INDEX_LENGHT ) { // 15 min intervall
+      let triggerAlpha = 0;
+      let entry = {time: runninDate.toISOString(), cnt: 0, triggerTibber:0, triggerAlpha:triggerAlpha};
+
+      if (alphaMap.get(index)!==undefined){
+        triggerAlpha = alphaMap.get(index).trigger;
+      }
+
+      if (tibberMap.get(index)!==undefined){
+        const priceCnt = tibberMap.get(index).price;
+        const trigger = tibberMap.get(index).trigger;
+        const date = tibberMap.get(index).date;
+        entry = {time: date.toISOString(), cnt: priceCnt, triggerTibber:trigger, triggerAlpha:triggerAlpha};
+      }
+
+      values.push(entry);
+
+      runninDate.setMinutes(runninDate.getMinutes()+15);
+      index++ ;
+    }
+    return this.graphToImageTibber(fileName, values).catch(error => {
+      console.error('Error occured during tibber image rendering', error);
+    });
   }
 
   async graphToImageTibber (fileName: string, values: object) {
@@ -112,7 +151,7 @@ export class AlphaImageService{
               type: 'nominal',
               title: '24 hrs',
               axis: {
-                labels: false,
+                labels: true,
               },
             },
             y: {
@@ -137,7 +176,7 @@ export class AlphaImageService{
       await sharp(Buffer.from(svg))
         .toFormat('png')
         .toFile(fileName).catch(error => {
-          console.error(' error rendering:' + error);
+          console.error('error rendering:' + error);
         });
     }).catch((err) => {
       console.error(err);
@@ -226,7 +265,7 @@ export class AlphaImageService{
     view.resize(width, height).toSVG().then(async (svg) => {
       await sharp(Buffer.from(svg))
         .toFormat('png')
-        .toFile(this.power_image_filename);
+        .toFile(fileName);
     }).catch((err) => {
       console.error(err);
     });
@@ -234,10 +273,8 @@ export class AlphaImageService{
     return view;
   }
 
-  async renderImage(statistics:AlphaStatisticsByDayResponse): Promise<boolean>{
-    if (this.power_image_filename === undefined){
-      return false;
-    }
+  async renderImage(power_image_filename:string, statistics:AlphaStatisticsByDayResponse): Promise<boolean>{
+
     if (statistics === null || (statistics!==null && statistics.data === null) ||
         (statistics.data === undefined) || (statistics.data !== undefined && statistics.data.Time === undefined) ){
       console.log('statistics response is empty, skipping image rendering');
@@ -257,7 +294,7 @@ export class AlphaImageService{
       const entry = {timeStamp: timeStamp, time:cnt, ppv: ppv*10, soc:soc};
       values.push(entry);
     });
-    this.graphToImageAlpha(this.power_image_filename, values);
+    this.graphToImageAlpha(power_image_filename, values);
     return true;
   }
 

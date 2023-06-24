@@ -20,7 +20,6 @@ export class AlphaService {
   private username;
   private password;
   private logRequestDetails: boolean;
-
   private baseUrl: string;
 
   constructor(logger: Logging | undefined, username: string | undefined, password: string, logRequestDetails: boolean, url: string ) {

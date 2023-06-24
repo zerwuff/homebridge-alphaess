@@ -4,6 +4,7 @@ import { AlphaService, BASE_URL } from './alpha/AlphaService.js';
 import { AlphaMqttService, MqttTopics } from './alpha/mqtt/AlphaMqttService.js';
 import { TibberService } from './tibber/TibberService.js';
 import { AlphaTrigger } from './interfaces.js';
+import { ImageRenderingService } from './alpha/ImageRenderingService.js';
 /**
  * This Plugin provides a homebridge trigger logic that can be used to control external devices.
  *
@@ -17,17 +18,19 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
   private hap: HAP;
   private log: Logging;
   private config: PlatformConfig;
-  private name: string;
+  private name: string; // REQUIRED !!
   private refreshTimerInterval: number; // timer milliseconds to check timer
 
   private triggerTotal: boolean;
   private triggerAlpha : boolean;
   private triggerTibber: boolean;
+  private triggerImageFilename: string;
   private socCurrent: number;
   private tibberThresholdSOC: number;// soc percentage to trigger tibber loading
   private lastClearDate: Date ;
+  private alphaImageService: ImageRenderingService;
 
-  private dailyMap: Map<number, AlphaTrigger>;
+  private alphaTriggerMap: Map<number, AlphaTrigger>;
 
   // alpha mqtt service
   private mqtt: AlphaMqttService;
@@ -38,7 +41,7 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
     this.hap = api.hap;
     this.log = log;
     this.refreshTimerInterval = 10000;
-    this.dailyMap = new Map();
+    this.alphaTriggerMap = new Map();
     this.socCurrent = -1;
     this.config = config;
     this.name= 'EnergyTriggerPlugin';
@@ -54,10 +57,13 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
     this.service.getCharacteristic(this.hap.Characteristic.ContactSensorState)
       .onGet(this.handleContactSensorStateGet.bind(this));
 
+    this.alphaImageService = new ImageRenderingService();
     this.alphaService = new AlphaService(this.log, config.username, config.password, config.logrequestdata, BASE_URL);
 
     this.log.debug(config.serialnumber);
     this.log.debug(config.username);
+
+    this.triggerImageFilename = config.triggerImageFilename;
     if (!config.serialnumber || !config.username || !config.password) {
       this.log.debug('Alpha ESS trigger is disabled: either serialnumber, password or username not present');
     }
@@ -66,7 +72,7 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
       this.log.debug('Tibber API trigger is disabled');
     } else {
       this.log.debug('Tibber API trigger is enabled');
-      this.tibber = new TibberService(config.tibberAPIKey, config.tibberUrl, config.tibberThresholdCnts, config.tibberImageFilename, config.tibberHomeId);
+      this.tibber = new TibberService(config.tibberAPIKey, config.tibberUrl, config.tibberThresholdCnts, config.tibberHomeId);
     }
 
     if (!config.refreshTimerInterval ) {
@@ -117,7 +123,8 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
       this.log.error('' + err);
     }
 
-    await tibber.renderImage(this.dailyMap).catch(error => {
+
+    await this.alphaImageService.renderTriggerImage(this.triggerImageFilename, tibber.getDailyMap(), this.alphaTriggerMap).catch(error => {
       this.log.error('error rendering image: ' +error);
     });
 
@@ -152,16 +159,15 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
               this.triggerAlpha= this.alphaService.isTriggered(
                 detailData, this.config.powerLoadingThreshold, this.config.socLoadingThreshold);
 
-
               const now = new Date();
               const hours = now.getHours();
               const min = now.getMinutes();
               const index = hours * 4 + Math.round(min/15);
-              this.dailyMap.set(index, new AlphaTrigger(this.triggerAlpha ? 1:0, new Date()));
+              this.alphaTriggerMap.set(index, new AlphaTrigger(this.triggerAlpha ? 1:0, new Date()));
 
               if (this.isNewDate(now, this.lastClearDate)){
                 // day switch, empty cache
-                this.dailyMap.clear();
+                this.alphaTriggerMap.clear();
                 this.lastClearDate = now;
               }
             }

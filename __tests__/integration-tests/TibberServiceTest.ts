@@ -3,7 +3,7 @@ import 'jest';
 import { TibberService } from '../../src/tibber/TibberService';
 import { IPrice } from 'tibber-api/lib/src/models/IPrice';
 import { PriceLevel } from 'tibber-api/lib/src/models/enums/PriceLevel';
-import { AlphaImageService } from '../../src/alpha/AlphaImageService';
+import { ImageRenderingService } from '../../src/alpha/ImageRenderingService';
 
 
 test('test trigger from tibber api - positive case (1)', async () => {
@@ -124,7 +124,7 @@ class PriceTestData implements IPrice {
 
 
 test('test image rendering from tibber test data json', async () => {
-  const imageService = new AlphaImageService('testgraph_tibber_response.png');
+  const imageService = new ImageRenderingService();
   let hour = 0;
   const values = new Array(0);
   const date = new Date() ;

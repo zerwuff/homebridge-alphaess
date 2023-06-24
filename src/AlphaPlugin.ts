@@ -2,14 +2,14 @@
 import { HAP, API, AccessoryPlugin, PlatformConfig, Service, Logging, Topics } from 'homebridge';
 import { AlphaService, BASE_URL } from './alpha/AlphaService.js';
 import { AlphaMqttService, MqttTopics } from './alpha/mqtt/AlphaMqttService';
-import { AlphaImageService } from './alpha/AlphaImageService.js';
+import { ImageRenderingService } from './alpha/ImageRenderingService.js';
 
 export class AlphaPlugin implements AccessoryPlugin {
 
   private alphaService: AlphaService;
   private informationService: Service;
   private service: Service;
-  private alphaImageService: AlphaImageService;
+  private alphaImageService: ImageRenderingService;
 
   private hap: HAP ;
   private log: Logging;
@@ -17,6 +17,8 @@ export class AlphaPlugin implements AccessoryPlugin {
 
   private serialnumber: string;
   private refreshTimerInterval: number; // timer milliseconds to check timer
+
+  private power_image_filename; // filename for image rendering
 
   // alpha ess status variables
   private batteryLevel: number;
@@ -33,7 +35,7 @@ export class AlphaPlugin implements AccessoryPlugin {
     this.name= 'AlphaEssBattery';
 
     log.debug('Alpha ESS Accessory Loaded');
-    this.alphaImageService = new AlphaImageService(config.power_image_filename);
+    this.alphaImageService = new ImageRenderingService();
     this.informationService = new this.hap.Service.AccessoryInformation()
       .setCharacteristic(this.hap.Characteristic.Manufacturer, 'Alpha Ess Homebridge Percentage Plugin by Jens Zeidler')
       .setCharacteristic(this.hap.Characteristic.SerialNumber, config.serialnumber)
@@ -47,6 +49,7 @@ export class AlphaPlugin implements AccessoryPlugin {
 
 
     this.serialnumber = config.serialnumber;
+    this.power_image_filename = config.power_image_filename;
     this.alphaService = new AlphaService(this.log, config.username, config.password, config.logrequestdata, BASE_URL);
 
     if (!config.serialnumber || !config.username || !config.password) {
@@ -105,7 +108,7 @@ export class AlphaPlugin implements AccessoryPlugin {
             this.log.debug('Rendering image from statistics data: ');
             try {
               this.log.debug('Response from statistics data : ' + JSON.stringify(statisticData));
-              this.alphaImageService.renderImage(statisticData);
+              this.alphaImageService.renderImage(this.power_image_filename, statisticData);
             } catch (ex) {
               this.log.error('Could not render from statistics data: ' + ex);
             }

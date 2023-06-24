@@ -3,7 +3,7 @@ import { MockServer } from 'jest-mock-server';
 
 import { AlphaService } from '../../src/alpha/AlphaService';
 import { AlphaDetailResponse, AlphaData } from '../../src/alpha/response/AlphaDetailResponse';
-import { AlphaImageService } from '../../src/alpha/AlphaImageService';
+import { ImageRenderingService } from '../../src/alpha/ImageRenderingService';
 import { AlphaLoginResponse, LoginReponse } from '../../src/alpha/response/AlphaLoginResponse';
 import { AlphaStatisticsByDayResponse, AlphaStatisticsData } from '../../src/alpha/response/AlphaStatisticsByDayResponse';
 import fs from 'fs';
@@ -121,10 +121,10 @@ describe('Integration Test with Mock Server', () => {
 
 
 test('test image rendering from test data json', async () => {
-  const imageService = new AlphaImageService('testgraph_static.png');
+  const imageService = new ImageRenderingService();
   const dir = process.cwd();
   const data = JSON.parse(fs.readFileSync(dir+'/__tests__/testdata/response_detaildata.json', 'utf-8'));
-  const imageUrl = await imageService.renderImage(data);
+  const imageUrl = await imageService.renderImage('testgraph_static.png', data);
   expect(imageUrl).toBeDefined();
 });
 
@@ -132,21 +132,21 @@ test('test image rendering from test data json', async () => {
 
 
 test('test image rendering', async () => {
-  const imageService = new AlphaImageService('testgraph.png');
+  const imageService = new ImageRenderingService();
   const PowerData = [{1:12, 2:11, 3:14, 4:15}];
   const imageUrl = await imageService.graphToImageAlpha('testgraph.png', PowerData );
   expect(imageUrl).toBeDefined();
 });
 
 test('test image rendering', async () => {
-  const imageService = new AlphaImageService('testgraph.png');
+  const imageService = new ImageRenderingService();
   let badResponse = new AlphaStatisticsByDayResponse();
-  expect(await imageService.renderImage(badResponse)).toBeFalsy();
+  expect(await imageService.renderImage('testgraph.png', badResponse)).toBeFalsy();
 
   badResponse = new AlphaStatisticsByDayResponse();
   const statistics = new AlphaStatisticsData();
   badResponse.data = statistics;
-  expect(await imageService.renderImage(badResponse)).toBeFalsy();
+  expect(await imageService.renderImage('testgraph.png', badResponse)).toBeFalsy();
 });
 
 
