@@ -53,6 +53,14 @@ Click install and do the following configuration:
             "mqtt_trigger_message_true": "ON",
             "mqtt_trigger_message_false": "OFF",
             "power_image_filename":"/tmp/somefilename.png", # rendered output of todays statistics (PV & battery) - for camera / image exposing  
+
+            # tibber : experimental !        
+            "tibberEnabled": true,
+            "tibberUrl": "https://api.tibber.com/v1-beta/gql",
+            "tibberAPIKey": "<your tibber api key>",
+            "tibberThresholdSOC": 60,  // below threshold on below that tibber is triggered. 
+            "tibberThresholdCnts": 2,  // tibber threshold (+/-) in cents that will still enable the tibber trigger. e.g. current tibber price is 20 cents,  [18...22] cents will trigger it  
+            "triggerImageFilename": "/tmp/tibber_image.png", // rendering image of alpha and tibber trigger
         }
     ],
 
@@ -83,3 +91,9 @@ following parameters are ignored.
  - `mqtt_trigger_message_true` :  a static message that is pushed to the mqtt_trigger_topic_true indicating that the trigger is met
  - `mqtt_trigger_topic_false` :  a topic name where a trigger information is pushed to if the trigger condition is not met 
  - `mqtt_trigger_message_false` :  a static message that is pushed to the mqtt_trigger_topic_true indicating that the trigger is not met
+
+
+
+##  Tibber is new experimental:
+
+Provides a new combined trigger that is raised if Alpha or Tibber trigger is fired. Also, rendering for that trigger is possible.
