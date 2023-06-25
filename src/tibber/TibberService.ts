@@ -103,7 +103,6 @@ export class TibberService {
           const hours = now.getHours();
           const min = now.getMinutes();
           const index = hours * 4 + Math.round(min/15);
-
           const currentIndex = hours * 4 + Math.round(min/15);
 
           this.dailyMap.set(index, new PriceTrigger(currentPrice, isTriggered?1:0, new Date()));
@@ -135,7 +134,7 @@ export class TibberService {
     const diffToLowest = currentPrice - todaysLowestPrice;
     // diffToLowest is in acceptable range
     this.logger.debug('lowest today: ' + todaysLowestPrice + ' current: ' + currentPrice + ' diffToLowest: ' + diffToLowest );
-    if (diffToLowest <= this.thresholdCnts && socBattery >= socLowerThreshold ) {
+    if (diffToLowest <= this.thresholdCnts && socBattery <= socLowerThreshold ) {
       this.logger.debug('trigger lowest price: true');
       return true;
     }
