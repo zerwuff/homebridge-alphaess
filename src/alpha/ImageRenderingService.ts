@@ -15,7 +15,7 @@ const IMAGE_INDEX_LENGHT = 96;
 const colorPower = '#ff6a2fb1';
 const colorBattery = '#85C5A6';
 const colorTibber = '#3277a8';
-const colorTriggerTibber = '#ebc934';
+const colorTriggerTibber = '#30fc03';
 const colorTriggerAlpha = '#ff6a2fb1';
 
 export class ImageRenderingService{
@@ -35,8 +35,13 @@ export class ImageRenderingService{
     runninDate.setMinutes(0);
     runninDate.setSeconds(0);
 
+    let lastTibberEntry:PriceTrigger = undefined;
+    let triggerAlpha = 0;
+
     while (index < IMAGE_INDEX_LENGHT ) { // 15 min intervall
-      let triggerAlpha = 0;
+
+      triggerAlpha = 0;
+
       let entry = {time: runninDate.toISOString(), cnt: 0, triggerTibber:0, triggerAlpha:triggerAlpha};
 
       if (alphaMap.get(index)!==undefined){
@@ -47,7 +52,17 @@ export class ImageRenderingService{
         const priceCnt = tibberMap.get(index).price;
         const trigger = tibberMap.get(index).trigger;
         const date = tibberMap.get(index).date;
+        lastTibberEntry = tibberMap.get(index);
         entry = {time: date.toISOString(), cnt: priceCnt, triggerTibber:trigger, triggerAlpha:triggerAlpha};
+      }else{
+        // use last tibber entry
+        if (lastTibberEntry!==undefined){
+          entry = {time: runninDate.toISOString(), cnt: lastTibberEntry.price, triggerTibber:lastTibberEntry.trigger,
+            triggerAlpha:triggerAlpha};
+
+        } else {
+          entry = {time: runninDate.toISOString(), cnt: 0, triggerTibber:0, triggerAlpha:triggerAlpha};
+        }
       }
 
       values.push(entry);

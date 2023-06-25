@@ -1,7 +1,7 @@
 import { TibberQuery, IConfig } from 'tibber-api';
 import { IPrice } from 'tibber-api/lib/src/models/IPrice';
 import { PriceTrigger } from '../interfaces';
-
+import { Logging } from 'homebridge';
 
 export class TibberService {
   private config: IConfig;
@@ -9,8 +9,9 @@ export class TibberService {
   private dailyMap: Map<number, PriceTrigger>;
   private tibberHomeId: string ;
   private lastClearDate: Date ;
+  private logger: Logging;
 
-  constructor(tibberApiKey:string, tibberQueryUrl:string, thresholdCnts: number, tibberHomeId?: string){
+  constructor(logger:Logging, tibberApiKey:string, tibberQueryUrl:string, thresholdCnts: number, tibberHomeId?: string){
     this.config = {
       // Endpoint configuration
       apiEndpoint: {
@@ -28,6 +29,7 @@ export class TibberService {
     this.tibberHomeId= tibberHomeId;
     this.lastClearDate = new Date() ;
     this.lastClearDate.setHours(23);
+    this.logger = logger;
   }
 
   getDailyMap(): Map<number, PriceTrigger>{
@@ -41,10 +43,10 @@ export class TibberService {
         const homeId = this.tibberHomeId !== undefined ? this.tibberHomeId : homes[0].id;
         return resolve(tibberQuery.getTodaysEnergyPrices(homeId));
       }).catch( error => {
-        console.error('could not collect home ids ', error);
+        this.logger.debug('could not collect home ids ', error);
         return reject();
       }).catch(err => {
-        console.error('could not collect todays energy prices ', err);
+        this.logger.debug('could not collect todays energy prices ', err);
       });
     });
 
@@ -78,12 +80,12 @@ export class TibberService {
           return resolve(current.total);
         } ).
           catch(error => {
-            console.error('Tibber: Could not fetch prices: statusMessage:' + error.statusMessage + ' errorCode:' +error.statusCode);
+            this.logger.debug('Tibber: Could not fetch prices: statusMessage:' + error.statusMessage + ' errorCode:' +error.statusCode);
             return reject();
           },
           );
       }).catch(err => {
-        console.error('could not fetch home ids ' + err);
+        this.logger.debug('could not fetch home ids ' + err);
       });
     });
   }
@@ -94,48 +96,50 @@ export class TibberService {
 
     return new Promise((resolve, reject) => {
       this.findCurrentPrice().then( currentPrice => {
-        this.getTodaysEnergyPrices().then(lowestPrice=> {
-          const todaysLowestPrice = this.findLowestPrice(lowestPrice );
+        this.getTodaysEnergyPrices().then(todaysEnergyPrices=> {
+          const todaysLowestPrice = this.findLowestPrice(todaysEnergyPrices );
           const isTriggered= this._getTrigger(todaysLowestPrice, currentPrice, socCurrent, socLowerThreshold);
           const now = new Date();
           const hours = now.getHours();
           const min = now.getMinutes();
           const index = hours * 4 + Math.round(min/15);
 
-          if (this.isNewDate(now, this.lastClearDate)){
-            // day switch, empty cache
-            this.dailyMap.clear();
-            this.lastClearDate = now;
-          }
+          const currentIndex = hours * 4 + Math.round(min/15);
+
           this.dailyMap.set(index, new PriceTrigger(currentPrice, isTriggered?1:0, new Date()));
+          todaysEnergyPrices.forEach(hourlyprice => {
+            const dateString = hourlyprice.startsAt;
+            const cents = hourlyprice.total;
+            const dateLong = Date.parse(dateString);
+            const date = new Date(dateLong);
+            const hours = date.getHours();
+            const min = date.getMinutes();
+            const index = hours * 4 + Math.round(min/15);
+            this.dailyMap.set(index, new PriceTrigger(cents, isTriggered && index === currentIndex ?1:0, date));
+
+          });
           return resolve(isTriggered);
         }).catch(err => {
-          console.log('Could not fetch todays prices,error : ' + err);
+          this.logger.debug('Could not fetch todays prices,error : ', err);
           return resolve(false);
         });
-      }).catch( error => {
-        console.error('Tibber: Could not determine trigger ');
+      }).catch(error => {
+        this.logger.debug('Tibber: Could not determine trigger ', error);
         return resolve(false);
       });
     });
-  }
-
-
-  isNewDate(now:Date, old:Date){
-    const diff = now.getHours() - old.getHours();
-    return diff <0;
   }
 
   // check if we have the lowest energy price for today - if yes, raise the trigger
   _getTrigger(todaysLowestPrice: number, currentPrice: number, socBattery: number, socLowerThreshold: number ): boolean {
     const diffToLowest = currentPrice - todaysLowestPrice;
     // diffToLowest is in acceptable range
-    console.debug('lowest today: ' + todaysLowestPrice + ' current: ' + currentPrice + ' diffToLowest: ' + diffToLowest );
+    this.logger.debug('lowest today: ' + todaysLowestPrice + ' current: ' + currentPrice + ' diffToLowest: ' + diffToLowest );
     if (diffToLowest <= this.thresholdCnts && socBattery >= socLowerThreshold ) {
-      console.debug('trigger lowest price: true');
+      this.logger.debug('trigger lowest price: true');
       return true;
     }
-    console.debug('trigger lowest price: false');
+    this.logger.debug('trigger lowest price: false');
     return false;
   }
 

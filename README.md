@@ -61,6 +61,7 @@ Click install and do the following configuration:
             "tibberThresholdSOC": 60,  // below threshold on below that tibber is triggered. 
             "tibberThresholdCnts": 2,  // tibber threshold (+/-) in cents that will still enable the tibber trigger. e.g. current tibber price is 20 cents,  [18...22] cents will trigger it  
             "triggerImageFilename": "/tmp/tibber_image.png", // rendering image of alpha and tibber trigger
+            "tibberHomeId": // tibber home Id, or if none the first one is used.
         }
     ],
 

@@ -44,6 +44,8 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
     this.alphaTriggerMap = new Map();
     this.socCurrent = -1;
     this.config = config;
+    this.triggerAlpha = false;
+    this.triggerTibber = false;
     this.name= 'EnergyTriggerPlugin';
     log.debug('EnergyTriggerPlugin plugin loaded');
 
@@ -72,7 +74,7 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
       this.log.debug('Tibber API trigger is disabled');
     } else {
       this.log.debug('Tibber API trigger is enabled');
-      this.tibber = new TibberService(config.tibberAPIKey, config.tibberUrl, config.tibberThresholdCnts, config.tibberHomeId);
+      this.tibber = new TibberService(log, config.tibberAPIKey, config.tibberUrl, config.tibberThresholdCnts, config.tibberHomeId);
     }
 
     if (!config.refreshTimerInterval ) {
@@ -129,7 +131,6 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
     });
 
 
-
     /**
         this.alphaService.getSettingsData(loginResponse.data.AccessToken, serialNumber).then(
           settings => {
@@ -140,7 +141,6 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
 
           },
         );**/
-
   }
 
   async calculateAlphaTrigger(serialNumber: string) {
@@ -188,6 +188,9 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
 
 
   isNewDate(now:Date, old:Date){
+    if (now === undefined || old === undefined) {
+      return false;
+    }
     const diff = now.getHours() - old.getHours();
     return diff <0;
   }
