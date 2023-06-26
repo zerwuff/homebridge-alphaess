@@ -168,6 +168,7 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
               if (this.isNewDate(now, this.lastClearDate)){
                 // day switch, empty cache
                 this.alphaTriggerMap.clear();
+                this.tibber.getDailyMap().clear();
                 this.lastClearDate = now;
               }
             }
