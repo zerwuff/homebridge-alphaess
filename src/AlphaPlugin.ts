@@ -74,7 +74,6 @@ export class AlphaPlugin implements AccessoryPlugin {
       topics.mqtt_status_topic = config.mqtt_status_topic;
       this.mqtt = new AlphaMqttService(log, config.mqtt_url, topics);
     }
-
   }
 
   async fetchAlphaEssData(serialNumber: string) {
@@ -129,7 +128,6 @@ export class AlphaPlugin implements AccessoryPlugin {
   }
 
 
-
   getServices() {
     return [
       this.informationService,
@@ -148,7 +146,6 @@ export class AlphaPlugin implements AccessoryPlugin {
 
 
   handleCurrentRelativeHumidityGet() {
-    this.fetchAlphaEssData(this.serialnumber);
     return this.batteryLevel;
   }
 
