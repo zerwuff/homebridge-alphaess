@@ -129,9 +129,9 @@
         "description" :  "the battery SOC threshold that is required to trigger tibber loading"
       },
       "tibberThresholdCnts": {
-        "title": "Tibber Threshold in cents ",
-        "type": "integer",
-        "default":10,
+        "title": "Tibber Threshold in euro ",
+        "type": "number",
+        "default":"0.010",
         "required": false,
         "description" :  "the threshold in cents that is required to trigger tibber loading"
       },
