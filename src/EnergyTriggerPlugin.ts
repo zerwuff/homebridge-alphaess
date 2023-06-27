@@ -107,7 +107,7 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
       topics.mqtt_trigger_topic_true = this.config.mqtt_trigger_topic_true;
       topics.mqtt_trigger_topic_false= this.config.mqtt_trigger_topic_false;
       topics.mqtt_trigger_message_true = this.config.mqtt_trigger_message_true;
-      topics.mqtt_trigger_message_false = this.config.mqtt_trigger_messge_false;
+      topics.mqtt_trigger_message_false = this.config.mqtt_trigger_message_false;
       this.mqtt = new AlphaMqttService(log, config.mqtt_url, topics);
     }
   }
