@@ -67,6 +67,8 @@ export class AlphaPlugin implements AccessoryPlugin {
       }, this.refreshTimerInterval);
     }
 
+    this.fetchAlphaEssData(config.serialnumber);
+
     if (config.mqtt_url===undefined ){
       this.log.debug('mqtt_url is not set, not pushing anywhere');
     } else{
@@ -113,15 +115,14 @@ export class AlphaPlugin implements AccessoryPlugin {
             }
           },
         ).catch(error => {
-          this.log.error(error);
-          this.log.error('Getting Statistics Data from Alpha Ess failed: ' + error);
+          this.log.error('Getting Statistics Data from Alpha Ess failed: ', error);
           return;
         });
       }else {
         this.log.error('Could not login to Alpha Cloud, please check username or password');
       }
     }).catch(error => {
-      this.log.error('Login to Alpha Ess failed');
+      this.log.error('Login to Alpha Ess failed ', error);
       return;
     });
 

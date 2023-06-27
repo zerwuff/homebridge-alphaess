@@ -84,20 +84,11 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
       // auto refresh statistics
       setInterval(() => {
         this.log.debug('Running Timer to check trigger every  ' + config.refreshTimerInterval + ' ms ');
-        this.calculateAlphaTrigger(config.serialnumber).catch(error => {
-          this.log(error);
-        });
-
-        if (config.tibberEnabled ) {
-          this.tibberThresholdSOC = config.tibberThresholdSOC;
-          this.calculateTibberTrigger(this.tibber).catch(error => {
-            this.log(error);
-          });
-        }
-
-
+        this.calculateCombinedTriggers(config);
       }, this.refreshTimerInterval);
     }
+
+    this.calculateCombinedTriggers(config);
 
     if (this.config.mqtt_url===undefined ){
       this.log.debug('mqtt_url is not set, not pushing anywhere');
@@ -112,6 +103,18 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
     }
   }
 
+  calculateCombinedTriggers(config: PlatformConfig){
+    this.calculateAlphaTrigger(config.serialnumber).catch(error => {
+      this.log(error);
+    });
+
+    if (config.tibberEnabled ) {
+      this.tibberThresholdSOC = config.tibberThresholdSOC;
+      this.calculateTibberTrigger(this.tibber).catch(error => {
+        this.log(error);
+      });
+    }
+  }
 
   async calculateTibberTrigger(tibber: TibberService) {
 
@@ -124,11 +127,6 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
     } catch (err){
       this.log.error('' + err);
     }
-
-
-    await this.alphaImageService.renderTriggerImage(this.triggerImageFilename, tibber.getDailyMap(), this.alphaTriggerMap).catch(error => {
-      this.log.error('error rendering image: ' +error);
-    });
 
 
     /**
