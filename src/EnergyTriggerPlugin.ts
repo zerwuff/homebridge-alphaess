@@ -5,6 +5,7 @@ import { AlphaMqttService, MqttTopics } from './alpha/mqtt/AlphaMqttService.js';
 import { TibberService } from './tibber/TibberService.js';
 import { AlphaTrigger } from './interfaces.js';
 import { ImageRenderingService } from './alpha/ImageRenderingService.js';
+import { Utils } from './util/Utils.js';
 /**
  * This Plugin provides a homebridge trigger logic that can be used to control external devices.
  *
@@ -31,7 +32,7 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
   private alphaImageService: ImageRenderingService;
 
   private alphaTriggerMap: Map<number, AlphaTrigger>;
-
+  private utils: Utils;
   // alpha mqtt service
   private mqtt: AlphaMqttService;
   private tibber: TibberService;
@@ -46,6 +47,7 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
     this.config = config;
     this.triggerAlpha = false;
     this.triggerTibber = false;
+    this.utils = new Utils();
     this.name= 'EnergyTriggerPlugin';
     log.debug('EnergyTriggerPlugin plugin loaded');
 
@@ -163,7 +165,7 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
               const index = hours * 4 + Math.round(min/15);
               this.alphaTriggerMap.set(index, new AlphaTrigger(this.triggerAlpha ? 1:0, new Date()));
 
-              if (this.isNewDate(now, this.lastClearDate)){
+              if (this.utils.isNewDate(now, this.lastClearDate)){
                 // day switch, empty cache
                 this.alphaTriggerMap.clear();
                 this.tibber.getDailyMap().clear();
@@ -186,13 +188,6 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
   }
 
 
-  isNewDate(now:Date, old:Date){
-    if (now === undefined || old === undefined) {
-      return false;
-    }
-    const diff = now.getHours() - old.getHours();
-    return diff <0;
-  }
 
   getServices() {
     return [
