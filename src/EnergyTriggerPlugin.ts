@@ -105,7 +105,7 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
     }
   }
 
-  calculateCombinedTriggers(config: PlatformConfig){
+  async calculateCombinedTriggers(config: PlatformConfig){
     this.calculateAlphaTrigger(config.serialnumber).catch(error => {
       this.log(error);
     });
@@ -116,6 +116,11 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
         this.log(error);
       });
     }
+
+    await this.alphaImageService.renderTriggerImage(this.triggerImageFilename, this.tibber.getDailyMap(), this.alphaTriggerMap).catch(error => {
+      this.log.error('error rendering image: ', error);
+    });
+
   }
 
   async calculateTibberTrigger(tibber: TibberService) {
