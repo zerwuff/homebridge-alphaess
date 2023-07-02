@@ -9,7 +9,9 @@ This plugin connects the alpha ess cloud to homebridge and provides 2 accessorie
    - soc threshold , eg. 10% 
    this enables smart loading of ev batteries depending on the sun. thresholds are configurable
    
+# Support me
 
+- https://ko-fi.com/zerwuff
 
 # Building 
 
