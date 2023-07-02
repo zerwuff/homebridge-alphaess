@@ -8,7 +8,12 @@ This plugin connects the alpha ess cloud to homebridge and provides 2 accessorie
    - power poading threshold (the generated sun power), eg. 1500w 
    - soc threshold , eg. 10% 
    this enables smart loading of ev batteries depending on the sun. thresholds are configurable
-   
+More features:
+
+- mqtt messaging included - push energy & battery status and trigger status to mqtt
+- image rendering 1: daily status of battery soc, sun power
+- image rendering 2: status of alpha and tibber trigger
+  
 # Support me
 
 - https://ko-fi.com/zerwuff
