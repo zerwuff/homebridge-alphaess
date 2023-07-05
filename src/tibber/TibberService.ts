@@ -8,7 +8,6 @@ export class TibberService {
   private thresholdCnts: number; // threshold to lowest in cents
   private dailyMap: Map<number, PriceTrigger>;
   private tibberHomeId: string ;
-  private lastClearDate: Date ;
   private logger: Logging;
 
   constructor(logger:Logging, tibberApiKey:string, tibberQueryUrl:string, thresholdCnts: number, tibberHomeId?: string){
@@ -27,8 +26,6 @@ export class TibberService {
     this.thresholdCnts = thresholdCnts;
     this.dailyMap = new Map();
     this.tibberHomeId= tibberHomeId;
-    this.lastClearDate = new Date() ;
-    this.lastClearDate.setHours(23);
     this.logger = logger;
   }
 

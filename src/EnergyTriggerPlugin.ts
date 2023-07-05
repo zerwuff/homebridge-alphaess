@@ -49,6 +49,11 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
     this.triggerTibber = false;
     this.utils = new Utils();
     this.name= 'EnergyTriggerPlugin';
+    this.lastClearDate = new Date();
+    this.lastClearDate.setHours(23);
+    this.lastClearDate.setMinutes(59);
+    this.lastClearDate.setMinutes(59);
+
     log.debug('EnergyTriggerPlugin plugin loaded');
 
     this.informationService = new this.hap.Service.AccessoryInformation()
@@ -187,9 +192,7 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
       }
     }).catch(error => {
       this.log.error('Login to Alpha Ess failed ' + error);
-      return;
     });
-
   }
 
 

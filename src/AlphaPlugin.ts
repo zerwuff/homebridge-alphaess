@@ -108,7 +108,6 @@ export class AlphaPlugin implements AccessoryPlugin {
           statisticData => {
             this.log.debug('Rendering image from statistics data: ');
             try {
-              this.log.debug('Response from statistics data : ' + JSON.stringify(statisticData));
               this.alphaImageService.renderImage(this.power_image_filename, statisticData);
             } catch (ex) {
               this.log.error('Could not render from statistics data: ' + ex);
