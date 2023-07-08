@@ -50,9 +50,9 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
     this.utils = new Utils();
     this.name= 'EnergyTriggerPlugin';
     this.lastClearDate = new Date();
-    this.lastClearDate.setHours(23);
-    this.lastClearDate.setMinutes(59);
-    this.lastClearDate.setMinutes(59);
+    this.lastClearDate.setHours(0);
+    this.lastClearDate.setMinutes(0);
+    this.lastClearDate.setMinutes(1);
 
     log.debug('EnergyTriggerPlugin plugin loaded');
 
@@ -182,7 +182,9 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
               if (this.utils.isNewDate(now, this.lastClearDate)){
                 // day switch, empty cache
                 this.alphaTriggerMap.clear();
-                this.tibber.getDailyMap().clear();
+                if (this.tibber === undefined){
+                  this.tibber.getDailyMap().clear();
+                }
                 this.lastClearDate = now;
               }
             }
