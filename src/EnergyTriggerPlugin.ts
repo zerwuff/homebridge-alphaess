@@ -123,7 +123,7 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
     }
 
     let tibberMap = new Map();
-    if (this.tibber === undefined){
+    if (this.tibber !== undefined){
       tibberMap = this.tibber.getDailyMap();
     }
     await this.alphaImageService.renderTriggerImage(this.triggerImageFilename, tibberMap, this.alphaTriggerMap).catch(error => {
@@ -182,7 +182,7 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
               if (this.utils.isNewDate(now, this.lastClearDate)){
                 // day switch, empty cache
                 this.alphaTriggerMap.clear();
-                if (this.tibber === undefined){
+                if (this.tibber !== undefined){
                   this.tibber.getDailyMap().clear();
                 }
                 this.lastClearDate = now;
