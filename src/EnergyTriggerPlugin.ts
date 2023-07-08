@@ -122,7 +122,11 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
       });
     }
 
-    await this.alphaImageService.renderTriggerImage(this.triggerImageFilename, this.tibber.getDailyMap(), this.alphaTriggerMap).catch(error => {
+    let tibberMap = new Map();
+    if (this.tibber === undefined){
+      tibberMap = this.tibber.getDailyMap();
+    }
+    await this.alphaImageService.renderTriggerImage(this.triggerImageFilename, tibberMap, this.alphaTriggerMap).catch(error => {
       this.log.error('error rendering image: ', error);
     });
 
