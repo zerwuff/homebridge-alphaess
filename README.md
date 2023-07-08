@@ -1,6 +1,10 @@
 
 # Alpha - ESS Homebridge Plugin
 
+Connecting Alpha ESS batteries with your homebridge and automate!
+
+<img src="Screen.png" width="800"/>
+
 This plugin connects the alpha ess cloud to homebridge and provides 2 accessories:
  
  - the alpha ess battery percentage as humidity sensor (0-100)% 
