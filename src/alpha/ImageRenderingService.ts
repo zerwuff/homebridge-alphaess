@@ -80,7 +80,6 @@ export class ImageRenderingService{
 
   // render current Image from current values
   async graphToImageTibber (fileName: string, values: object, limit:number ) {
-    console.log(values);
     const vlSpecTibber = {
       $schema: 'https://vega.github.io/schema/vega-lite/v5.json',
       width: width,
