@@ -9,6 +9,7 @@ export class TibberService {
   private dailyMap: Map<number, PriceTrigger>;
   private tibberHomeId: string ;
   private logger: Logging;
+  private pricePoint : number;
 
   constructor(logger:Logging, tibberApiKey:string, tibberQueryUrl:string, thresholdCnts: number, tibberHomeId?: string){
     this.config = {
@@ -27,6 +28,7 @@ export class TibberService {
     this.dailyMap = new Map();
     this.tibberHomeId= tibberHomeId;
     this.logger = logger;
+    this.pricePoint = 0;
   }
 
   getDailyMap(): Map<number, PriceTrigger>{
@@ -47,6 +49,11 @@ export class TibberService {
       });
     });
 
+  }
+
+  // get threshold that will trigger tibber
+  getPricePoint(): number {
+    return this.pricePoint;
   }
 
   // determine lowest next price for the curent day
@@ -82,7 +89,7 @@ export class TibberService {
           },
           );
       }).catch(err => {
-        this.logger.debug('could not fetch home ids ' + err);
+        this.logger.error('could not fetch home ids ' + err);
       });
     });
   }
@@ -101,6 +108,7 @@ export class TibberService {
           const min = now.getMinutes();
           const index = hours * 4 + Math.round(min/15);
           const currentIndex = hours * 4 + Math.round(min/15);
+          this.pricePoint = todaysLowestPrice + this.thresholdCnts;
 
           this.dailyMap.set(index, new PriceTrigger(currentPrice, isTriggered?1:0, new Date()));
           todaysEnergyPrices.forEach(hourlyprice => {

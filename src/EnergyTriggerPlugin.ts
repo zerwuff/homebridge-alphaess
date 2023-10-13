@@ -126,14 +126,14 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
     if (this.tibber !== undefined){
       tibberMap = this.tibber.getDailyMap();
     }
-    await this.alphaImageService.renderTriggerImage(this.triggerImageFilename, tibberMap, this.alphaTriggerMap).catch(error => {
+    await this.alphaImageService.renderTriggerImage(this.triggerImageFilename, tibberMap, this.alphaTriggerMap, this.tibber.getPricePoint() ).catch(error => {
       this.log.error('error rendering image: ', error);
     });
 
   }
 
-  async calculateTibberTrigger(tibber: TibberService) {
 
+  async calculateTibberTrigger(tibber: TibberService) {
     try {
       await tibber.isTriggered(this.socCurrent, this.tibberThresholdSOC).then(result => {
         this.triggerTibber = result;

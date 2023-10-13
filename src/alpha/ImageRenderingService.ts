@@ -17,11 +17,13 @@ const colorBattery = '#85C5A6';
 const colorTibber = '#3277a8';
 const colorTriggerTibber = '#30fc03';
 const colorTriggerAlpha = '#ff6a2fb1';
+const colorTibberPricePoint= '#1b6a2fb1';
+const colorTibberPricePointRed= '#f57542';
 
 export class ImageRenderingService{
 
   // render current Image from current values
-  async renderTriggerImage(fileName:string, tibberMap:Map<number, PriceTrigger>, alphaMap:Map<number, AlphaTrigger>): Promise<void> {
+  async renderTriggerImage(fileName:string, tibberMap:Map<number, PriceTrigger>, alphaMap:Map<number, AlphaTrigger>, pricePoint:number): Promise<void> {
     if (fileName===undefined){
       console.error('filename is not defined - not rendering trigger image ');
       return;
@@ -42,7 +44,7 @@ export class ImageRenderingService{
 
       triggerAlpha = 0;
 
-      let entry = {time: runninDate.toISOString(), cnt: 0, triggerTibber:0, triggerAlpha:triggerAlpha};
+      let entry = {time: runninDate.toISOString(), tibberColor: 'red', cnt: 0, triggerTibber:0, tibberPricePoint:pricePoint, triggerAlpha:triggerAlpha};
 
       if (alphaMap.get(index)!==undefined){
         triggerAlpha = alphaMap.get(index).trigger;
@@ -52,32 +54,35 @@ export class ImageRenderingService{
         const priceCnt = tibberMap.get(index).price;
         const trigger = tibberMap.get(index).trigger;
         const date = tibberMap.get(index).date;
+        const tibberColor = priceCnt >= pricePoint?colorTibberPricePointRed:colorTibberPricePoint;
         lastTibberEntry = tibberMap.get(index);
-        entry = {time: date.toISOString(), cnt: priceCnt, triggerTibber:trigger, triggerAlpha:triggerAlpha};
+        entry = {time: date.toISOString(), tibberColor:tibberColor, cnt: priceCnt, triggerTibber:trigger, tibberPricePoint: pricePoint, triggerAlpha:triggerAlpha};
       }else{
         // use last tibber entry
         if (lastTibberEntry!==undefined){
-          entry = {time: runninDate.toISOString(), cnt: lastTibberEntry.price, triggerTibber:lastTibberEntry.trigger,
+          const tibberColor = lastTibberEntry.price >= pricePoint?colorTibberPricePointRed:colorTibberPricePoint;
+          entry = {time: runninDate.toISOString(), tibberColor:tibberColor, cnt: lastTibberEntry.price, tibberPricePoint: pricePoint, triggerTibber:lastTibberEntry.trigger,
             triggerAlpha:triggerAlpha};
-
         } else {
-          entry = {time: runninDate.toISOString(), cnt: 0, triggerTibber:0, triggerAlpha:triggerAlpha};
+          const tibberColor =colorTibberPricePoint;
+          entry = {time: runninDate.toISOString(), tibberColor:tibberColor, cnt: 0, triggerTibber:0, tibberPricePoint: pricePoint, triggerAlpha:triggerAlpha};
         }
       }
 
       values.push(entry);
-
       runninDate.setMinutes(runninDate.getMinutes()+15);
       index++ ;
     }
-    return this.graphToImageTibber(fileName, values).catch(error => {
+    return this.graphToImageTibber(fileName, values, pricePoint).catch(error => {
       console.error('Error occured during tibber image rendering', error);
     });
   }
 
-  async graphToImageTibber (fileName: string, values: object) {
+  // render current Image from current values
+  async graphToImageTibber (fileName: string, values: object, limit:number ) {
+    console.log(values);
     const vlSpecTibber = {
-      $schema: 'https://vega.github.io/schema/vega-lite/v3.json',
+      $schema: 'https://vega.github.io/schema/vega-lite/v5.json',
       width: width,
       height: height,
       background: backgroundColour,
@@ -100,11 +105,17 @@ export class ImageRenderingService{
       layer: [
         {
           mark: {
-            type: 'line',
-            color:  colorTibber,
+            type: 'bar',
+            interpolate: 'linear',
+            defined: false,
           },
-          title:'Tibber Price',
+          title:'Tibber Price [ limit: ' + Math.round(limit*100) + ' Cents]',
           encoding: {
+            color: {
+              field: 'tibberColor',
+              type: 'quantitative',
+              scale: null,
+            },
             x: {
               field: 'time',
               type: 'nominal',
@@ -119,7 +130,7 @@ export class ImageRenderingService{
               title: 'Cents',
               type: 'quantitative',
               axis: {
-                labelOverlap: 'parity',
+                labelOverlap: 'true',
                 orient:'left',
                 format:'.2',
                 titleColor:  colorTibber,
@@ -145,8 +156,8 @@ export class ImageRenderingService{
             y: {
               sort:'ascending',
               field: 'triggerTibber',
-              title: 'Trigger Tibber',
-              axis: {'orient':'right', 'format':'~s', 'grid': true, 'ticks': false, labelSeparation:500, titleColor: colorTriggerTibber },
+              title: 'Trigger Tibber ',
+              axis: {'orient':'right', 'format':'~s', 'grid': true, 'ticks': false, labelPadding:20, labelSeparation:500, titleColor: colorTriggerTibber },
               values: [0, 1],
               type: 'nominal',
               scale: {'domain': [1, 0]},
@@ -173,7 +184,7 @@ export class ImageRenderingService{
               sort:'ascending',
               field: 'triggerAlpha',
               title: 'TriggerAlpha',
-              axis: {'orient':'right', 'format':'~s', 'grid': true, 'ticks': false, labelPadding:25, titleColor: colorTriggerAlpha },
+              axis: {'orient':'right', 'format':'~s', 'grid': true, 'ticks': false, labelPadding:45, titleColor: colorTriggerAlpha },
               values: [0, 1],
               type: 'nominal',
               scale: {'domain': [1, 0]},
@@ -200,6 +211,7 @@ export class ImageRenderingService{
     return view;
   }
 
+  // render Alpha ESS
   async graphToImageAlpha (fileName: string, values: object) {
     const vlSpec = {
       $schema: 'https://vega.github.io/schema/vega-lite/v3.json',
