@@ -12,13 +12,13 @@ const backgroundColour = 'white';
 const pading = 45;
 const IMAGE_INDEX_LENGHT = 96;
 
-const colorPower = '#ff6a2fb1';
-const colorBattery = '#85C5A6';
-const colorTibber = '#3277a8';
-const colorTriggerTibber = '#30fc03';
-const colorTriggerAlpha = '#ff6a2fb1';
-const colorTibberPricePoint= '#1b6a2fb1';
-const colorTibberPricePointRed= '#f57542';
+const colorPower = '#ff6a2f'; // orange
+const colorBattery = '#85C5A6';  //light green
+const colorTibber = '#3277a8'; // blue
+const colorTriggerTibber = '#80ff99'; // strong green
+const colorTriggerAlpha = '#f54242';  // blue
+const colorTibberPricePoint= '#1b6a2f'; // dark green
+const colorTibberPricePointRed= '#f57542'; // orange
 
 export class ImageRenderingService{
 
@@ -28,7 +28,7 @@ export class ImageRenderingService{
       console.error('filename is not defined - not rendering trigger image ');
       return;
     }
-    console.debug('render image triggered with data points ', tibberMap, alphaMap);
+    //console.debug('render image triggered with data points ', tibberMap, alphaMap);
 
     let index = 0;
     const values = new Array(0);
@@ -107,6 +107,7 @@ export class ImageRenderingService{
             type: 'bar',
             interpolate: 'linear',
             defined: false,
+            opacity: 0.7,
           },
           title:'Tibber Price [ limit: ' + Math.round(limit*100) + ' Cents]',
           encoding: {
@@ -140,6 +141,7 @@ export class ImageRenderingService{
         {
           mark: {
             type: 'line',
+            strokeWidth: 4,
             color:  colorTriggerTibber,
           },
           title:'Trigger Tibber',
@@ -168,7 +170,7 @@ export class ImageRenderingService{
           mark: {
             type: 'line',
             color:  colorTriggerAlpha,
-            opacity: 0.7,
+            strokeWidth: 4,
           },
           encoding: {
             x: {
