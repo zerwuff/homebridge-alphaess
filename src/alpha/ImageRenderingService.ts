@@ -18,6 +18,8 @@ const colorTibber = '#3277a8'; // blue
 const colorTriggerTibber = '#80ff99'; // strong green
 const colorTriggerAlpha = '#f54242';  // blue
 const colorTibberPricePoint= '#1b6a2f'; // dark green
+const colorTibberPricePointAndLoading = '#8d32a8'; // violet
+
 const colorTibberPricePointRed= '#f57542'; // orange
 
 export class ImageRenderingService{
@@ -39,28 +41,34 @@ export class ImageRenderingService{
 
     let lastTibberEntry:PriceTrigger = undefined;
     let triggerAlpha = 0;
+    let triggerLoadingAlpha = false ;
 
     while (index < IMAGE_INDEX_LENGHT ) { // 15 min intervall
-
       triggerAlpha = 0;
-
       let entry = {time: runninDate.toISOString(), tibberColor: 'red', cnt: 0, triggerTibber:0, tibberPricePoint:pricePoint, triggerAlpha:triggerAlpha};
 
       if (alphaMap.get(index)!==undefined){
         triggerAlpha = alphaMap.get(index).trigger;
+        triggerLoadingAlpha = alphaMap.get(index).tibberTriggerLoading;
       }
 
       if (tibberMap.get(index)!==undefined){
         const priceCnt = tibberMap.get(index).price;
         const trigger = tibberMap.get(index).trigger;
         const date = tibberMap.get(index).date;
-        const tibberColor = priceCnt >= pricePoint?colorTibberPricePointRed:colorTibberPricePoint;
+        let tibberColor = priceCnt >= pricePoint?colorTibberPricePointRed:colorTibberPricePoint;
+        if (triggerLoadingAlpha){
+          tibberColor = colorTibberPricePointAndLoading; // net loading
+        }
         lastTibberEntry = tibberMap.get(index);
         entry = {time: date.toISOString(), tibberColor:tibberColor, cnt: priceCnt, triggerTibber:trigger, tibberPricePoint: pricePoint, triggerAlpha:triggerAlpha};
       }else{
         // use last tibber entry
         if (lastTibberEntry!==undefined){
-          const tibberColor = lastTibberEntry.price >= pricePoint?colorTibberPricePointRed:colorTibberPricePoint;
+          let tibberColor = lastTibberEntry.price >= pricePoint?colorTibberPricePointRed:colorTibberPricePoint;
+          if (triggerLoadingAlpha){
+            tibberColor = colorTibberPricePointAndLoading; // net loading
+          }
           entry = {time: runninDate.toISOString(), tibberColor:tibberColor, cnt: lastTibberEntry.price, tibberPricePoint: pricePoint, triggerTibber:lastTibberEntry.trigger,
             triggerAlpha:triggerAlpha};
         } else {
@@ -259,10 +267,14 @@ export class ImageRenderingService{
           title:'SOC',
           mark: {
             type: 'bar',
-            color: colorBattery,
             opacity: 0.7,
           },
           encoding: {
+            color: {
+              field: 'colorBattery',
+              type: 'quantitative',
+              scale: null,
+            },
             x: {
               field: 'time',
               type: 'nominal',
@@ -319,7 +331,8 @@ export class ImageRenderingService{
       powerData[timeStamp]= ppv*10;
       batteryData[timeStamp]= soc;
       cnt++;
-      const entry = {timeStamp: timeStamp, time:cnt, ppv: ppv*10, soc:soc};
+      const colorBatteryLoading = colorBattery;
+      const entry = {timeStamp: timeStamp, time:cnt, ppv: ppv*10, soc:soc, colorBattery: colorBatteryLoading};
       values.push(entry);
     });
     this.graphToImageAlpha(power_image_filename, values);

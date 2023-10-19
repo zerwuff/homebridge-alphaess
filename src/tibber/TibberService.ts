@@ -10,6 +10,7 @@ export class TibberService {
   private tibberHomeId: string ;
   private logger: Logging;
   private pricePoint : number;
+  private lowestPriceHours: number ;
 
   constructor(logger:Logging, tibberApiKey:string, tibberQueryUrl:string, thresholdCnts: number, tibberHomeId?: string){
     this.config = {
@@ -29,6 +30,7 @@ export class TibberService {
     this.tibberHomeId= tibberHomeId;
     this.logger = logger;
     this.pricePoint = 0;
+    this.lowestPriceHours = undefined;
   }
 
   getDailyMap(): Map<number, PriceTrigger>{
@@ -57,19 +59,22 @@ export class TibberService {
   }
 
   // determine lowest next price for the curent day
-  findLowestPrice(prices: IPrice[]): number {
+  findLowestPrice(prices: IPrice[]): IPrice {
     let lowest = undefined;
+    let lowestIPrice = undefined;
     prices.forEach(price => {
       price.total;
       if (lowest===undefined){
         lowest = price.total;
+        lowestIPrice = price;
       }else{
         if (price.total < lowest){
           lowest = price.total;
+          lowestIPrice = price;
         }
       }
     });
-    return lowest;
+    return lowestIPrice;
   }
 
 
@@ -101,7 +106,13 @@ export class TibberService {
     return new Promise((resolve, reject) => {
       this.findCurrentPrice().then( currentPrice => {
         this.getTodaysEnergyPrices().then(todaysEnergyPrices=> {
-          const todaysLowestPrice = this.findLowestPrice(todaysEnergyPrices );
+          const todaysLowestIPrice = this.findLowestPrice(todaysEnergyPrices);
+          const todaysLowestTime = todaysLowestIPrice.startsAt;
+          //const dateObject = Date.parse(todaysLowestTime);
+          const dateObject = new Date(todaysLowestTime);
+          this.lowestPriceHours = dateObject.getHours(); // at which hour starts minimum Price ?
+          const todaysLowestPrice = todaysLowestIPrice.total;
+          this.logger.debug(todaysLowestIPrice.startsAt+' <-- price ');
           const isTriggered= this._getTrigger(todaysLowestPrice, currentPrice, socCurrent, socLowerThreshold);
           const now = new Date();
           const hours = now.getHours();
@@ -120,7 +131,6 @@ export class TibberService {
             const min = date.getMinutes();
             const index = hours * 4 + Math.round(min/15);
             this.dailyMap.set(index, new PriceTrigger(cents, isTriggered && index === currentIndex ?1:0, date));
-
           });
           return resolve(isTriggered);
         }).catch(err => {
@@ -133,6 +143,11 @@ export class TibberService {
       });
     });
   }
+
+  getLowestPriceHours():number{
+    return this.lowestPriceHours;
+  }
+
 
   // check if we have the lowest energy price for today - if yes, raise the trigger
   _getTrigger(todaysLowestPrice: number, currentPrice: number, socBattery: number, socLowerThreshold: number ): boolean {

@@ -102,13 +102,13 @@ test('test trigger from tibber api - negative case (3)', async () => {
 test('find lowest todays price - positive case (1)', async() => {
   const sut = new TibberService(logger, '', '', 300, 'testtibber.png');
   const prices = [new PriceTestData(50.0), new PriceTestData(20.0), new PriceTestData(70.0) ];
-  expect( sut.findLowestPrice(prices) ).toBe(20.0);
+  expect( sut.findLowestPrice(prices).total).toBe(20.0);
 });
 
 test('find lowest todays price - positive case (1)', async() => {
   const sut = new TibberService(logger, '', '', 300, 'testtibber.png');
   const prices = [new PriceTestData(-10.0), new PriceTestData(20.0), new PriceTestData(70.0) ];
-  expect( sut.findLowestPrice(prices) ).toBe(-10.0);
+  expect( sut.findLowestPrice(prices).total ).toBe(-10.0);
 
 });
 
@@ -144,7 +144,7 @@ test('test image rendering from tibber test data json', async () => {
     const entry = {time: date.toISOString(), cnt: cnt, triggerTibber:triggerTibber, triggerAlpha:triggerAlpha};
     values.push(entry);
   }
-  const imageUrl = await imageService.graphToImageTibber('image_rendered_tibber.png', values );
+  const imageUrl = await imageService.graphToImageTibber('image_rendered_tibber.png', values, 30 );
   expect(imageUrl).toBeDefined();
 });
 

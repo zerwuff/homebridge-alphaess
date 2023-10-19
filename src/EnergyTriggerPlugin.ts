@@ -126,7 +126,10 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
     if (this.tibber !== undefined){
       tibberMap = this.tibber.getDailyMap();
     }
-    await this.alphaImageService.renderTriggerImage(this.triggerImageFilename, tibberMap, this.alphaTriggerMap, this.tibber.getPricePoint() ).catch(error => {
+
+    await this.alphaImageService.renderTriggerImage(this.triggerImageFilename, tibberMap,
+      this.alphaTriggerMap, this.tibber.getPricePoint(),
+    ).catch(error => {
       this.log.error('error rendering image: ', error);
     });
 
@@ -144,17 +147,6 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
       this.log.error('' + err);
     }
 
-
-    /**
-        this.alphaService.getSettingsData(loginResponse.data.AccessToken, serialNumber).then(
-          settings => {
-            this.log.debug('Settings Data : ');
-            this.log.debug('' + JSON.stringify(settings));
-            this.log.debug('' + JSON.stringify(settings['data']));
-            this.alphaService.setBatteryCharge(loginResponse.data.AccessToken, serialNumber, settings.data);
-
-          },
-        );**/
   }
 
   async calculateAlphaTrigger(serialNumber: string) {
@@ -164,6 +156,47 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
 
       if (loginResponse.data !== undefined && loginResponse.data.AccessToken !== undefined) {
         this.log.debug('Logged in to alpha cloud, trying to fetch detail data');
+
+        this.alphaService.getSettingsData(loginResponse.data.AccessToken, serialNumber).then(
+          settings => {
+            this.log.debug('Settings Data : ');
+            this.log.debug('' + JSON.stringify(settings));
+            this.log.debug('' + JSON.stringify(settings['data']));
+          },
+        );
+
+        const priceIsLow = this.triggerTibber;
+        const socBattery = this.socCurrent;
+        const socBatteryThreshold = this.tibberThresholdSOC;
+
+        // check enable reloading
+        let isBatteryLoadingFromNet = false;
+        if (this.config.tibberEnabled ) {
+          this.alphaService.checkAndEnableReloading(
+            loginResponse.data.AccessToken,
+            serialNumber,
+            priceIsLow,
+            socBattery,
+            socBatteryThreshold).then(
+            () => {
+              this.log.debug('Check reloading if battery from net was done.');
+            },
+          ) .catch(error => {
+            this.log.error('Error Checking Battery Loading via Tibber price trigger ' + error);
+            return;
+          });
+
+
+          this.alphaService.isBatteryCurrentlyLoading(loginResponse.data.AccessToken, serialNumber).then(
+            result => {
+              isBatteryLoadingFromNet = result;
+            }).catch(error => {
+            this.log.error('Error Checking Battery currently loading not possible ' + error);
+            return;
+          });
+
+        }
+
 
         this.alphaService.getDetailData(loginResponse.data.AccessToken, serialNumber).then(
           detailData => {
@@ -177,7 +210,7 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
               const hours = now.getHours();
               const min = now.getMinutes();
               const index = hours * 4 + Math.round(min/15);
-              this.alphaTriggerMap.set(index, new AlphaTrigger(this.triggerAlpha ? 1:0, new Date()));
+              this.alphaTriggerMap.set(index, new AlphaTrigger(this.triggerAlpha ? 1:0, isBatteryLoadingFromNet, new Date()));
 
               if (this.utils.isNewDate(now, this.lastClearDate)){
                 // day switch, empty cache
@@ -193,6 +226,7 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
           this.log.error('Getting Statistics Data from Alpha Ess failed ' + error);
           return;
         });
+
       }else {
         this.log.error('Could not login to Alpha Cloud, please check username or password');
       }
