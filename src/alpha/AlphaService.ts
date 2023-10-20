@@ -128,14 +128,15 @@ export class AlphaService {
 
     const timeLoadingEnd = ''+ newSettingsData['time_chae1a'];
     const hourLoadingEnd = parseInt(timeLoadingEnd.substring(0, 2));
-    const loadingShallEnd = new Date().getHours() > hourLoadingEnd;
 
 
     const loadingFeatureSet = newSettingsData['grid_charge'] === 1 ;
     const isCurrentlyLoading = time_active_start && loadingFeatureSet ;
+    const loadingShallEndByTime = (new Date().getHours() > hourLoadingEnd) && isCurrentlyLoading;
+    const loadingShallEndByPrice = !priceIsLow && isCurrentlyLoading;
 
     this.logMsg('calculate new loading isCurrentlyLoading: ' + isCurrentlyLoading + ' time_active_start:' +
-    time_active_start +' loadingShallEnd:' + loadingShallEnd);
+    time_active_start +' loadingShallEndByTime:' + loadingShallEndByTime);
 
     //shall load
     if (batteryLow && priceIsLow ){
@@ -158,7 +159,7 @@ export class AlphaService {
     }
 
     // disable loading after time is up or price goes up
-    if (loadingShallEnd || !priceIsLow){
+    if (loadingShallEndByPrice || loadingShallEndByTime ){
       this. logMsg('loading shall stop now, disable it ');
       // disable loading, set default time values
       newSettingsData['grid_charge'] = 0;
@@ -354,7 +355,7 @@ export class AlphaService {
       pvTrigger = true;
     }
     if (soc >= socLoadingThreshold){
-      this.logMsg('Battery SOC:' + soc + ' is over threshold:' +socLoadingThreshold + 'soc trigger:true ');
+      this.logMsg('Battery SOC:' + soc + ' is over threshold:' +socLoadingThreshold + ' soc trigger:true ');
       socTrigger = true;
     }
 

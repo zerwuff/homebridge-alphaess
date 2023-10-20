@@ -209,18 +209,13 @@ describe('Integration Test with Mock Server', () => {
     });
 
 
-
     const batteryChargeResult = await alphaService.checkAndEnableReloading('token', 'serialNumeber123', false, 10, 20);
-
     expect(settingsGetNotLoading).toHaveBeenCalledTimes(1);
     expect(settingsPost).toHaveBeenCalledTimes(1);
-
     expect(batteryChargeResult).toBeDefined();
     expect(batteryChargeResult['grid_charge']).toBe(0);
     expect(batteryChargeResult['time_chaf1a']).toBe('00:00');
     expect(batteryChargeResult['time_chae1a']).toBe('00:00');
-
-
   });
 
 });

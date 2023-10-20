@@ -25,6 +25,7 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
   private triggerTotal: boolean;
   private triggerAlpha : boolean;
   private triggerTibber: boolean;
+  private triggerReloadBattryTrigger : boolean;
   private triggerImageFilename: string;
   private socCurrent: number;
   private tibberThresholdSOC: number;// soc percentage to trigger tibber loading
@@ -81,7 +82,8 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
       this.log.debug('Tibber API trigger is disabled');
     } else {
       this.log.debug('Tibber API trigger is enabled');
-      this.tibber = new TibberService(log, config.tibberAPIKey, config.tibberUrl, config.tibberThresholdCnts, config.tibberHomeId);
+      this.tibber = new TibberService(log, config.tibberAPIKey, config.tibberUrl, config.tibberThresholdCnts,
+        config.tibberLoadBatteryEnabled, config.tibberHomeId);
     }
 
     if (!config.refreshTimerInterval ) {
@@ -132,7 +134,6 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
     ).catch(error => {
       this.log.error('error rendering image: ', error);
     });
-
   }
 
 
@@ -146,7 +147,6 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
     } catch (err){
       this.log.error('' + err);
     }
-
   }
 
   async calculateAlphaTrigger(serialNumber: string) {
@@ -157,21 +157,14 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
       if (loginResponse.data !== undefined && loginResponse.data.AccessToken !== undefined) {
         this.log.debug('Logged in to alpha cloud, trying to fetch detail data');
 
-        this.alphaService.getSettingsData(loginResponse.data.AccessToken, serialNumber).then(
-          settings => {
-            this.log.debug('Settings Data : ');
-            this.log.debug('' + JSON.stringify(settings));
-            this.log.debug('' + JSON.stringify(settings['data']));
-          },
-        );
-
         const priceIsLow = this.triggerTibber;
         const socBattery = this.socCurrent;
         const socBatteryThreshold = this.tibberThresholdSOC;
 
-        // check enable reloading
+        // check battery reloading
         let isBatteryLoadingFromNet = false;
-        if (this.config.tibberEnabled ) {
+        if (this.config.tibberEnabled && this.tibber.getTibberLoadingBatteryEnabled() ) {
+          this.log.debug('Check reloading of battery triggered ');
           this.alphaService.checkAndEnableReloading(
             loginResponse.data.AccessToken,
             serialNumber,
@@ -186,7 +179,6 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
             return;
           });
 
-
           this.alphaService.isBatteryCurrentlyLoading(loginResponse.data.AccessToken, serialNumber).then(
             result => {
               isBatteryLoadingFromNet = result;
@@ -196,7 +188,6 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
           });
 
         }
-
 
         this.alphaService.getDetailData(loginResponse.data.AccessToken, serialNumber).then(
           detailData => {

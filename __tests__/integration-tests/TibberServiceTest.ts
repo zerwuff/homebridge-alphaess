@@ -17,7 +17,7 @@ test('test trigger from tibber api - positive case (1)', async () => {
   const socBatteryThreshold =50;
 
   const maxPriceThreshold = 3;
-  const sut = new TibberService(logger, '', '', maxPriceThreshold, 'testtibber.png');
+  const sut = new TibberService(logger, '', '', maxPriceThreshold, false);
 
   expect(sut._getTrigger(todaysLowestPrice, currentPrice, socBattery, socBatteryThreshold)).toBeTruthy();
 });
@@ -29,7 +29,7 @@ test('test trigger from tibber api - positive case (2)', async () => {
   const socBatteryThreshold =50;
 
   const maxPriceThreshold = 5;
-  const sut = new TibberService(logger, '', '', maxPriceThreshold, 'testtibber.png') ;
+  const sut = new TibberService(logger, '', '', maxPriceThreshold, false);
 
   expect(sut._getTrigger(todaysLowestPrice, currentPrice, socBattery, socBatteryThreshold)).toBeTruthy();
 });
@@ -42,7 +42,7 @@ test('test trigger from tibber api - positive case (3)', async () => {
   const socBatteryThreshold =50;
 
   const maxPriceThreshold = 10;
-  const sut = new TibberService(logger, '', '', maxPriceThreshold, 'testtibber.png');
+  const sut = new TibberService(logger, '', '', maxPriceThreshold, false);
   expect(sut._getTrigger(todaysLowestPrice, currentPrice, socBattery, socBatteryThreshold)).toBeTruthy();
 });
 
@@ -54,7 +54,7 @@ test('test trigger from tibber api - positive case (4)', async () => {
   const socBatteryThreshold =50;
 
   const maxPriceThreshold = 1;
-  const sut = new TibberService(logger, '', '', maxPriceThreshold, 'testtibber.png');
+  const sut = new TibberService(logger, '', '', maxPriceThreshold, false);
   expect(sut._getTrigger(todaysLowestPrice, currentPrice, socBattery, socBatteryThreshold)).toBeTruthy();
 });
 
@@ -67,7 +67,7 @@ test('test trigger from tibber api - negative case (1)', async () => {
   const socBatteryLowerThreshold = 50;
 
   const maxPriceThreshold = 3;
-  const sut = new TibberService(logger, '', '', maxPriceThreshold, 'testtibber.png');
+  const sut = new TibberService(logger, '', '', maxPriceThreshold, false);
   expect(sut._getTrigger(todaysLowestPrice, currentPrice, currentSOCBattery, socBatteryLowerThreshold)).toBeFalsy();
 
 });
@@ -81,7 +81,7 @@ test('test trigger from tibber api - negative case (2)', async () => {
   const socBatteryThreshold =50;
 
   const maxPriceThreshold = 4;
-  const sut = new TibberService(logger, '', '', maxPriceThreshold, 'testtibber.png');
+  const sut = new TibberService(logger, '', '', maxPriceThreshold, false);
   expect(sut._getTrigger(todaysLowestPrice, currentPrice, socBattery, socBatteryThreshold)).toBeFalsy();
 });
 
@@ -94,19 +94,19 @@ test('test trigger from tibber api - negative case (3)', async () => {
   const socBatteryThreshold =50;
 
   const maxPriceThreshold = 2;
-  const sut = new TibberService(logger, '', '', maxPriceThreshold, 'testtibber.png');
+  const sut = new TibberService(logger, '', '', maxPriceThreshold, false);
   expect(sut._getTrigger(todaysLowestPrice, currentPrice, socBattery, socBatteryThreshold)).toBeFalsy();
 });
 
 
 test('find lowest todays price - positive case (1)', async() => {
-  const sut = new TibberService(logger, '', '', 300, 'testtibber.png');
+  const sut = new TibberService(logger, '', '', 300, false);
   const prices = [new PriceTestData(50.0), new PriceTestData(20.0), new PriceTestData(70.0) ];
   expect( sut.findLowestPrice(prices).total).toBe(20.0);
 });
 
 test('find lowest todays price - positive case (1)', async() => {
-  const sut = new TibberService(logger, '', '', 300, 'testtibber.png');
+  const sut = new TibberService(logger, '', '', 300, false);
   const prices = [new PriceTestData(-10.0), new PriceTestData(20.0), new PriceTestData(70.0) ];
   expect( sut.findLowestPrice(prices).total ).toBe(-10.0);
 

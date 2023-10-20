@@ -11,8 +11,10 @@ export class TibberService {
   private logger: Logging;
   private pricePoint : number;
   private lowestPriceHours: number ;
+  private tibberLoadBatteryEnabled: boolean;
 
-  constructor(logger:Logging, tibberApiKey:string, tibberQueryUrl:string, thresholdCnts: number, tibberHomeId?: string){
+  constructor(logger:Logging, tibberApiKey:string, tibberQueryUrl:string, thresholdCnts: number,
+    tibberLoadBatteryEnabled:boolean, tibberHomeId?: string){
     this.config = {
       // Endpoint configuration
       apiEndpoint: {
@@ -31,6 +33,7 @@ export class TibberService {
     this.logger = logger;
     this.pricePoint = 0;
     this.lowestPriceHours = undefined;
+    this.tibberLoadBatteryEnabled = tibberLoadBatteryEnabled;
   }
 
   getDailyMap(): Map<number, PriceTrigger>{
@@ -100,15 +103,14 @@ export class TibberService {
   }
 
 
-  async isTriggered(socCurrent: number /** Current SOC of battery */,
-    socLowerThreshold: number /** SOC of battery to be trigger */ ): Promise<boolean> {
-
+  async isTriggered(
+    socCurrent: number /** Current SOC of battery */,
+    socLowerThreshold: number /** SOC of battery to be trigger */): Promise<boolean> {
     return new Promise((resolve, reject) => {
       this.findCurrentPrice().then( currentPrice => {
         this.getTodaysEnergyPrices().then(todaysEnergyPrices=> {
           const todaysLowestIPrice = this.findLowestPrice(todaysEnergyPrices);
           const todaysLowestTime = todaysLowestIPrice.startsAt;
-          //const dateObject = Date.parse(todaysLowestTime);
           const dateObject = new Date(todaysLowestTime);
           this.lowestPriceHours = dateObject.getHours(); // at which hour starts minimum Price ?
           const todaysLowestPrice = todaysLowestIPrice.total;
@@ -148,6 +150,10 @@ export class TibberService {
     return this.lowestPriceHours;
   }
 
+
+  getTibberLoadingBatteryEnabled():boolean{
+    return this.tibberLoadBatteryEnabled;
+  }
 
   // check if we have the lowest energy price for today - if yes, raise the trigger
   _getTrigger(todaysLowestPrice: number, currentPrice: number, socBattery: number, socLowerThreshold: number ): boolean {

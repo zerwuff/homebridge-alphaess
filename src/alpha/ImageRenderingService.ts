@@ -62,6 +62,7 @@ export class ImageRenderingService{
         }
         lastTibberEntry = tibberMap.get(index);
         entry = {time: date.toISOString(), tibberColor:tibberColor, cnt: priceCnt, triggerTibber:trigger, tibberPricePoint: pricePoint, triggerAlpha:triggerAlpha};
+
       }else{
         // use last tibber entry
         if (lastTibberEntry!==undefined){
