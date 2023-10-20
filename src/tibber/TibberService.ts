@@ -164,7 +164,7 @@ export class TibberService {
     const diffToLowest = currentPrice - todaysLowestPrice;
     // diffToLowest is in acceptable range
     this.logger.debug('lowest today: ' + todaysLowestPrice + ' current: ' + currentPrice + ' diffToLowest: ' + diffToLowest );
-    if (diffToLowest <= this.thresholdEur && (socBattery < socLowerThreshold )) {
+    if (diffToLowest <= this.thresholdEur && (socBattery <= socLowerThreshold )) {
       this.logger.debug('trigger lowest price: true');
       return true;
     }
