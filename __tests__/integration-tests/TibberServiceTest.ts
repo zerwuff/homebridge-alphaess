@@ -16,8 +16,8 @@ test('test trigger from tibber api - positive case (1)', async () => {
   const socBattery = 50;
   const socBatteryThreshold =50;
 
-  const maxPriceThreshold = 3;
-  const sut = new TibberService(logger, '', '', maxPriceThreshold, 'testtibber.png');
+  const maxPriceThreshold = 1;
+  const sut = new TibberService(logger, '', '', maxPriceThreshold, false);
 
   expect(sut._getTrigger(todaysLowestPrice, currentPrice, socBattery, socBatteryThreshold)).toBeTruthy();
 });
@@ -29,7 +29,7 @@ test('test trigger from tibber api - positive case (2)', async () => {
   const socBatteryThreshold =50;
 
   const maxPriceThreshold = 5;
-  const sut = new TibberService(logger, '', '', maxPriceThreshold, 'testtibber.png') ;
+  const sut = new TibberService(logger, '', '', maxPriceThreshold, false);
 
   expect(sut._getTrigger(todaysLowestPrice, currentPrice, socBattery, socBatteryThreshold)).toBeTruthy();
 });
@@ -41,8 +41,8 @@ test('test trigger from tibber api - positive case (3)', async () => {
   const socBattery = 50;
   const socBatteryThreshold =50;
 
-  const maxPriceThreshold = 10;
-  const sut = new TibberService(logger, '', '', maxPriceThreshold, 'testtibber.png');
+  const maxPriceThreshold = 9;
+  const sut = new TibberService(logger, '', '', maxPriceThreshold, false);
   expect(sut._getTrigger(todaysLowestPrice, currentPrice, socBattery, socBatteryThreshold)).toBeTruthy();
 });
 
@@ -54,7 +54,7 @@ test('test trigger from tibber api - positive case (4)', async () => {
   const socBatteryThreshold =50;
 
   const maxPriceThreshold = 1;
-  const sut = new TibberService(logger, '', '', maxPriceThreshold, 'testtibber.png');
+  const sut = new TibberService(logger, '', '', maxPriceThreshold, false);
   expect(sut._getTrigger(todaysLowestPrice, currentPrice, socBattery, socBatteryThreshold)).toBeTruthy();
 });
 
@@ -67,7 +67,7 @@ test('test trigger from tibber api - negative case (1)', async () => {
   const socBatteryLowerThreshold = 50;
 
   const maxPriceThreshold = 3;
-  const sut = new TibberService(logger, '', '', maxPriceThreshold, 'testtibber.png');
+  const sut = new TibberService(logger, '', '', maxPriceThreshold, false);
   expect(sut._getTrigger(todaysLowestPrice, currentPrice, currentSOCBattery, socBatteryLowerThreshold)).toBeFalsy();
 
 });
@@ -81,7 +81,7 @@ test('test trigger from tibber api - negative case (2)', async () => {
   const socBatteryThreshold =50;
 
   const maxPriceThreshold = 4;
-  const sut = new TibberService(logger, '', '', maxPriceThreshold, 'testtibber.png');
+  const sut = new TibberService(logger, '', '', maxPriceThreshold, false);
   expect(sut._getTrigger(todaysLowestPrice, currentPrice, socBattery, socBatteryThreshold)).toBeFalsy();
 });
 
@@ -94,21 +94,21 @@ test('test trigger from tibber api - negative case (3)', async () => {
   const socBatteryThreshold =50;
 
   const maxPriceThreshold = 2;
-  const sut = new TibberService(logger, '', '', maxPriceThreshold, 'testtibber.png');
+  const sut = new TibberService(logger, '', '', maxPriceThreshold, false);
   expect(sut._getTrigger(todaysLowestPrice, currentPrice, socBattery, socBatteryThreshold)).toBeFalsy();
 });
 
 
 test('find lowest todays price - positive case (1)', async() => {
-  const sut = new TibberService(logger, '', '', 300, 'testtibber.png');
+  const sut = new TibberService(logger, '', '', 300, false);
   const prices = [new PriceTestData(50.0), new PriceTestData(20.0), new PriceTestData(70.0) ];
-  expect( sut.findLowestPrice(prices) ).toBe(20.0);
+  expect( sut.findLowestPrice(prices).total).toBe(20.0);
 });
 
 test('find lowest todays price - positive case (1)', async() => {
-  const sut = new TibberService(logger, '', '', 300, 'testtibber.png');
+  const sut = new TibberService(logger, '', '', 300, false);
   const prices = [new PriceTestData(-10.0), new PriceTestData(20.0), new PriceTestData(70.0) ];
-  expect( sut.findLowestPrice(prices) ).toBe(-10.0);
+  expect( sut.findLowestPrice(prices).total ).toBe(-10.0);
 
 });
 
@@ -144,7 +144,7 @@ test('test image rendering from tibber test data json', async () => {
     const entry = {time: date.toISOString(), cnt: cnt, triggerTibber:triggerTibber, triggerAlpha:triggerAlpha};
     values.push(entry);
   }
-  const imageUrl = await imageService.graphToImageTibber('image_rendered_tibber.png', values );
+  const imageUrl = await imageService.graphToImageTibber('image_rendered_tibber.png', values, 30 );
   expect(imageUrl).toBeDefined();
 });
 

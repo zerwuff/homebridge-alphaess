@@ -100,6 +100,15 @@
         "default": false, 
         "description":"Enable Tibber Trigger yes / no"
       },
+      
+      "tibberLoadBatteryEnabled": {
+        "title": "Enable Battery loading w/ tibber ",
+        "type": "boolean",
+        "required": false,
+        "default": false, 
+        "description":"Enable Loading of the battery when lowest price point is met yes / no"
+      },
+
       "tibberUrl": {
         "title": "Tibber API URL",
         "type": "string",
@@ -128,13 +137,14 @@
         "required": false,
         "description" :  "the battery SOC threshold that is required to trigger tibber loading"
       },
-      "tibberThresholdCnts": {
-        "title": "Tibber Threshold in euro ",
+      "tibberThresholdEuro": {
+        "title": "Tibber Threshold in euro (trigger) ",
         "type": "number",
         "default":"0.010",
         "required": false,
-        "description" :  "the threshold in cents that is required to trigger tibber loading"
+        "description" :  "the threshold in cents that is required to trigger tibber"
       },
+  
       "triggerImageFilename": {
         "title": "Trigger Image Filename",
         "type": "string",

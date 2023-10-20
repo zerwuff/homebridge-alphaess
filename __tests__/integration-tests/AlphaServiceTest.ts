@@ -7,14 +7,18 @@ import { ImageRenderingService } from '../../src/alpha/ImageRenderingService';
 import { AlphaLoginResponse, LoginReponse } from '../../src/alpha/response/AlphaLoginResponse';
 import { AlphaStatisticsByDayResponse, AlphaStatisticsData } from '../../src/alpha/response/AlphaStatisticsByDayResponse';
 import fs from 'fs';
+import { AlphaSettingsResponse } from '../../src/alpha/response/AlphaSettingsResponse';
 
 const username = 'fasel';
 const password = 'bla';
 const serialNumber = 'AE1234';
 const logRequestData = false;
 
+
 describe('Integration Test with Mock Server', () => {
   const server = new MockServer();
+
+
 
   afterAll(() => server.stop());
 
@@ -106,6 +110,7 @@ describe('Integration Test with Mock Server', () => {
     const alphaService = new AlphaService(undefined, username, password, logRequestData, mockServerUrl );
     const alphaLoginResponse = await alphaService.login();
     const details = await alphaService.getStatisticsData(alphaLoginResponse.data.AccessToken, serialNumber);
+
     expect(details.data).toBeDefined();
 
     expect(details.data).toBeDefined();
@@ -117,7 +122,104 @@ describe('Integration Test with Mock Server', () => {
     expect(statisticsRoute).toHaveBeenCalledTimes(1);
   });
 
+
+  it('positive test: check get an set settings data ', async () => {
+
+    const mockServerUrl ='http://localhost:' + server.getURL().port;
+    const settingsPost = server.post('/Account/CustomUseESSSetting').mockImplementation((ctx) => {
+      ctx.status = 200;
+      ctx.response.status = 200;
+      ctx.response.body= '';
+    });
+
+    const settingsGet = server.get('/Account/GetCustomUseESSSetting').mockImplementation((ctx) => {
+      const data = new Map<string, string>;
+      data['time_chaf1a']='12:00';
+      data['time_chae1a']='13:00';
+      const alphaSettings = new AlphaSettingsResponse();
+      alphaSettings.data = data;
+      ctx.response.body = JSON.stringify(alphaSettings);
+      ctx.status = 200;
+    });
+
+
+    const alphaService = new AlphaService(undefined, username, password, logRequestData, mockServerUrl );
+    const settingsData = await alphaService.getSettingsData('token', 'serialNumeber123');
+    await alphaService.setAlphaSettings('token', 'serialNumeber123', new Map<string, unknown>);
+
+    expect(settingsGet).toHaveBeenCalledTimes(1);
+    expect(settingsPost).toHaveBeenCalledTimes(1);
+
+    expect(settingsData.data).toBeDefined();
+    expect(settingsData.data['time_chaf1a']).toBe('12:00');
+    expect(settingsData.data['time_chae1a']).toBe('13:00');
+  });
+
+  it('positive test: enable loading, currently not loading ', async () => {
+
+    const mockServerUrl ='http://localhost:' + server.getURL().port;
+
+    const settingsPost = server.post('/Account/CustomUseESSSetting').mockImplementation((ctx) => {
+      ctx.status = 200;
+      ctx.response.status = 200;
+      ctx.response.body= '';
+    });
+
+    const settingsGetNotLoading = server.get('/Account/GetCustomUseESSSetting').mockImplementation((ctx) => {
+      const data = new Map<string, string>;
+      const alphaSettings = new AlphaSettingsResponse();
+      alphaSettings.data = data;
+      ctx.response.body = JSON.stringify(alphaSettings);
+      ctx.status = 200;
+    });
+
+
+    const alphaService = new AlphaService(undefined, username, password, logRequestData, mockServerUrl );
+
+    const batteryChargeResult = await alphaService.checkAndEnableReloading('token', 'serialNumeber123', true, 10, 20);
+
+    expect(settingsGetNotLoading).toHaveBeenCalledTimes(1);
+    expect(settingsPost).toHaveBeenCalledTimes(1);
+
+    expect(batteryChargeResult).toBeDefined();
+    expect(batteryChargeResult['grid_charge']).toBe(1);
+
+  });
+
+  it('positive test: disable loading, while currently loading', async () => {
+
+    const mockServerUrl ='http://localhost:' + server.getURL().port;
+    const alphaService = new AlphaService(undefined, username, password, logRequestData, mockServerUrl );
+
+    const settingsPost = server.post('/Account/CustomUseESSSetting').mockImplementation((ctx) => {
+      ctx.status = 200;
+      ctx.response.status = 200;
+      ctx.response.body= '';
+    });
+
+    const settingsGetNotLoading = server.get('/Account/GetCustomUseESSSetting').mockImplementation((ctx) => {
+      const data = new Map<string, string>;
+      const alphaSettings = new AlphaSettingsResponse();
+      data['grid_charge']=1;
+      data['time_chaf1a']= alphaService.getHourString(new Date().getHours());
+      data['time_chae1a']= alphaService.getHourString(new Date().getHours()+1);
+      alphaSettings.data = data;
+      ctx.response.body = JSON.stringify(alphaSettings);
+      ctx.status = 200;
+    });
+
+
+    const batteryChargeResult = await alphaService.checkAndEnableReloading('token', 'serialNumeber123', false, 10, 20);
+    expect(settingsGetNotLoading).toHaveBeenCalledTimes(1);
+    expect(settingsPost).toHaveBeenCalledTimes(1);
+    expect(batteryChargeResult).toBeDefined();
+    expect(batteryChargeResult['grid_charge']).toBe(0);
+    expect(batteryChargeResult['time_chaf1a']).toBe('00:00');
+    expect(batteryChargeResult['time_chae1a']).toBe('00:00');
+  });
+
 });
+
 
 
 test('test image rendering from test data json', async () => {
@@ -218,3 +320,75 @@ test('negative test: threshold of Detail Response exceeds config -> trigger valu
   const trigger = alphaService.isTriggered(response, 10000, 20);
   expect(trigger).toEqual(false);
 });
+
+
+
+
+test('test enable loading if currently not loading. ', async () => {
+  const alphaService = new AlphaService(undefined, '123', 'password', true, 'http://localhost:8080');
+
+
+  const settingsMap = new Map<string, string>;
+  settingsMap['grid_charge']=0;
+
+  const responseMap = alphaService.calculateUpdatedSettingsData(settingsMap, true, 30, 30);
+  const expectedStartHours = alphaService.getHourString(new Date().getHours());
+  const expectedStartHoursEnd = alphaService.getHourString(new Date().getHours()+1);
+
+  expect(responseMap).toBeDefined();
+  expect(responseMap['grid_charge']).toBe(1);
+  expect(responseMap['time_chaf1a']).toBe(expectedStartHours);
+  expect(responseMap['time_chae1a']).toBe(expectedStartHoursEnd);
+});
+
+
+
+
+test('test disable loading if its currentlyloading.  not disabling via battery threshold since now loading', async () => {
+  const alphaService = new AlphaService(undefined, '123', 'password', true, 'http://localhost:8080');
+
+
+  const settingsMap = new Map<string, string>;
+  settingsMap['grid_charge']=1;
+  settingsMap['time_chaf1a']=alphaService.getHourString(new Date().getHours());
+  settingsMap['time_chae1a']=alphaService.getHourString(new Date().getHours()+1);
+
+  const responseMap = alphaService.calculateUpdatedSettingsData(settingsMap, false, 31, 30);
+
+  expect(responseMap).toBeDefined();
+  expect(responseMap['grid_charge']).toBe(0);
+  expect(responseMap['time_chaf1a']).toBe('00:00');
+  expect(responseMap['time_chae1a']).toBe('00:00');
+});
+
+
+test('test disable loading if its currentlyloading. disable via high price ', async () => {
+  const alphaService = new AlphaService(undefined, '123', 'password', true, 'http://localhost:8080');
+  const settingsMap = new Map<string, string>;
+  settingsMap['grid_charge']=1;
+  settingsMap['time_chaf1a']=alphaService.getHourString(new Date().getHours());
+  settingsMap['time_chae1a']=alphaService.getHourString(new Date().getHours()+1);
+
+  const responseMap = alphaService.calculateUpdatedSettingsData(settingsMap, false, 31, 30);
+
+  expect(responseMap).toBeDefined();
+  expect(responseMap['grid_charge']).toBe(0);
+  expect(responseMap['time_chaf1a']).toBe('00:00');
+  expect(responseMap['time_chae1a']).toBe('00:00');
+});
+
+test('test disable loading if its currentlyloading. disable loading via time is up ', async () => {
+  const alphaService = new AlphaService(undefined, '123', 'password', true, 'http://localhost:8080');
+  const settingsMap = new Map<string, string>;
+  settingsMap['grid_charge']=1;
+  settingsMap['time_chaf1a']=alphaService.getHourString(new Date().getHours()-2);
+  settingsMap['time_chae1a']=alphaService.getHourString(new Date().getHours()-1);
+
+  const responseMap = alphaService.calculateUpdatedSettingsData(settingsMap, true, 30, 30);
+
+  expect(responseMap).toBeDefined();
+  expect(responseMap['grid_charge']).toBe(0);
+  expect(responseMap['time_chaf1a']).toBe('00:00');
+  expect(responseMap['time_chae1a']).toBe('00:00');
+});
+
