@@ -5,15 +5,15 @@ import { Logging } from 'homebridge';
 
 export class TibberService {
   private config: IConfig;
-  private thresholdCnts: number; // threshold to lowest in cents
   private dailyMap: Map<number, PriceTrigger>;
   private tibberHomeId: string ;
   private logger: Logging;
   private pricePoint : number;
   private lowestPriceHours: number ;
   private tibberLoadBatteryEnabled: boolean;
+  private thresholdEur: number ;
 
-  constructor(logger:Logging, tibberApiKey:string, tibberQueryUrl:string, thresholdCnts: number,
+  constructor(logger:Logging, tibberApiKey:string, tibberQueryUrl:string, thresholdEur: number,
     tibberLoadBatteryEnabled:boolean, tibberHomeId?: string){
     this.config = {
       // Endpoint configuration
@@ -27,7 +27,7 @@ export class TibberService {
       power: true,
       active: true,
     };
-    this.thresholdCnts = thresholdCnts;
+    this.thresholdEur = thresholdEur;
     this.dailyMap = new Map();
     this.tibberHomeId= tibberHomeId;
     this.logger = logger;
@@ -121,7 +121,7 @@ export class TibberService {
           const min = now.getMinutes();
           const index = hours * 4 + Math.round(min/15);
           const currentIndex = hours * 4 + Math.round(min/15);
-          this.pricePoint = todaysLowestPrice + this.thresholdCnts;
+          this.pricePoint = todaysLowestPrice + this.thresholdEur;
 
           this.dailyMap.set(index, new PriceTrigger(currentPrice, isTriggered?1:0, new Date()));
           todaysEnergyPrices.forEach(hourlyprice => {
@@ -157,10 +157,14 @@ export class TibberService {
 
   // check if we have the lowest energy price for today - if yes, raise the trigger
   _getTrigger(todaysLowestPrice: number, currentPrice: number, socBattery: number, socLowerThreshold: number ): boolean {
+    if (socBattery<0){
+      this.logger.debug('battery not checked correctly ');
+      return false;
+    }
     const diffToLowest = currentPrice - todaysLowestPrice;
     // diffToLowest is in acceptable range
     this.logger.debug('lowest today: ' + todaysLowestPrice + ' current: ' + currentPrice + ' diffToLowest: ' + diffToLowest );
-    if (diffToLowest <= this.thresholdCnts && socBattery <= socLowerThreshold ) {
+    if (diffToLowest <= this.thresholdEur && (socBattery < socLowerThreshold )) {
       this.logger.debug('trigger lowest price: true');
       return true;
     }

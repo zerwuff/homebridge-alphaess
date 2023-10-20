@@ -94,11 +94,14 @@ export class AlphaService {
   // calculate loading settings: if currently loading, continue, else disable loading trigger
   async isBatteryCurrentlyLoading(token: string, serialNumber:string) : Promise<boolean> {
 
-    const settings = await this.getSettingsData(token, serialNumber).catch( () => {
+    const alphaSettingsResponse = await this.getSettingsData(token, serialNumber).catch( () => {
       this.logMsg('could not fetch settings data ');
-      return false;
+      const resp = new AlphaSettingsResponse();
+      resp.data = new Map<string, undefined>;
+      return resp;
     } );
 
+    const settings = alphaSettingsResponse.data;
     // enable trigger reloading now for one hour, exit
     const timeLoadingStart = ''+ settings['time_chaf1a'];
     const hourLoadingStart = parseInt(timeLoadingStart.substring(0, 2));

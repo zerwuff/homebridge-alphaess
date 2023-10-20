@@ -82,7 +82,7 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
       this.log.debug('Tibber API trigger is disabled');
     } else {
       this.log.debug('Tibber API trigger is enabled');
-      this.tibber = new TibberService(log, config.tibberAPIKey, config.tibberUrl, config.tibberThresholdCnts,
+      this.tibber = new TibberService(log, config.tibberAPIKey, config.tibberUrl, config.tibberThresholdEur,
         config.tibberLoadBatteryEnabled, config.tibberHomeId);
     }
 
@@ -163,6 +163,7 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
 
         // check battery reloading
         let isBatteryLoadingFromNet = false;
+
         if (this.config.tibberEnabled && this.tibber.getTibberLoadingBatteryEnabled() ) {
           this.log.debug('Check reloading of battery triggered ');
           this.alphaService.checkAndEnableReloading(

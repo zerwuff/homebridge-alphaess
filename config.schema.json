@@ -137,7 +137,7 @@
         "required": false,
         "description" :  "the battery SOC threshold that is required to trigger tibber loading"
       },
-      "tibberThresholdCnts": {
+      "tibberThresholdEuro": {
         "title": "Tibber Threshold in euro (trigger) ",
         "type": "number",
         "default":"0.010",

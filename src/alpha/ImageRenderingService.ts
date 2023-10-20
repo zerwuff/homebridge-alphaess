@@ -45,6 +45,7 @@ export class ImageRenderingService{
 
     while (index < IMAGE_INDEX_LENGHT ) { // 15 min intervall
       triggerAlpha = 0;
+      triggerLoadingAlpha = false;
       let entry = {time: runninDate.toISOString(), tibberColor: 'red', cnt: 0, triggerTibber:0, tibberPricePoint:pricePoint, triggerAlpha:triggerAlpha};
 
       if (alphaMap.get(index)!==undefined){
