@@ -69,8 +69,8 @@ Click install and do the following configuration:
             "tibberEnabled": true,
             "tibberUrl": "https://api.tibber.com/v1-beta/gql",
             "tibberAPIKey": "<your tibber api key>",
-            "tibberThresholdEuro": 60,  // below threshold on below that tibber is triggered. 
-            "tibberThresholdCnts": 2,  // tibber threshold (+/-) in cents that will still enable the tibber trigger. e.g. current tibber price is 20 cents,  [18...22] cents will trigger it  
+            "tibberThresholdSOC": 60,  // threshold on below that tibber is triggered. 
+            "tibberThresholdEur": 0.02,  // tibber threshold (+/-) in euro that will still enable the tibber trigger. e.g. current tibber price is 20 cents,  [18...22] cents will trigger it  
             "triggerImageFilename": "/tmp/tibber_image.png", // rendering image of alpha and tibber trigger
             "tibberHomeId": // tibber home Id, or if none the first one is used.
         }
