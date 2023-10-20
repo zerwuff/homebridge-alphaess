@@ -37,7 +37,7 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
   // alpha mqtt service
   private mqtt: AlphaMqttService;
   private tibber: TibberService;
-
+  private isBatteryLoadingFromNet = false;
 
   constructor (log: Logging, config: PlatformConfig, api: API) {
     this.hap = api.hap;
@@ -54,6 +54,7 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
     this.lastClearDate.setHours(0);
     this.lastClearDate.setMinutes(0);
     this.lastClearDate.setMinutes(1);
+    this.isBatteryLoadingFromNet = false;
 
     log.debug('EnergyTriggerPlugin plugin loaded');
 
@@ -162,7 +163,6 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
         const socBatteryThreshold = this.tibberThresholdSOC;
 
         // check battery reloading
-        let isBatteryLoadingFromNet = false;
 
         if (this.config.tibberEnabled && this.tibber.getTibberLoadingBatteryEnabled() ) {
           this.log.debug('Check reloading of battery triggered ');
@@ -181,9 +181,10 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
           });
 
           this.alphaService.isBatteryCurrentlyLoading(loginResponse.data.AccessToken, serialNumber).then(
-            result => {
-              isBatteryLoadingFromNet = result;
+            batteryLoading => {
+              this.isBatteryLoadingFromNet = batteryLoading;
             }).catch(error => {
+            this.isBatteryLoadingFromNet = false;
             this.log.error('Error Checking Battery currently loading not possible ' + error);
             return;
           });
@@ -202,7 +203,7 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
               const hours = now.getHours();
               const min = now.getMinutes();
               const index = hours * 4 + Math.round(min/15);
-              this.alphaTriggerMap.set(index, new AlphaTrigger(this.triggerAlpha ? 1:0, isBatteryLoadingFromNet, new Date()));
+              this.alphaTriggerMap.set(index, new AlphaTrigger(this.triggerAlpha ? 1:0, this.isBatteryLoadingFromNet, new Date()));
 
               if (this.utils.isNewDate(now, this.lastClearDate)){
                 // day switch, empty cache
