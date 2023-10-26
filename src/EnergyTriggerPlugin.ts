@@ -119,6 +119,10 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
     return this.tibber;
   }
 
+  setSocCurrent(soc:number){
+    this.socCurrent = soc;
+  }
+
   setCharacteristics(hap:HAP, config:PlatformConfig){
     if (hap !== undefined){
       this.informationService = new hap.Service.AccessoryInformation()
@@ -172,6 +176,7 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
     } catch (err){
       this.log.error('' + err);
     }
+    return this.triggerTibber;
   }
 
   async calculateAlphaTrigger(serialNumber: string) {
@@ -219,7 +224,7 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
           detailData => {
             if (detailData!==null && detailData.data!==null){
               this.log.debug('SOC: ' + detailData.data.soc);
-              this.socCurrent = detailData.data.soc;
+              this.setSocCurrent( detailData.data.soc);
               this.triggerAlpha= this.alphaService.isTriggered(
                 detailData, this.config.powerLoadingThreshold, this.config.socLoadingThreshold);
 

@@ -2,71 +2,142 @@ import 'jest';
 
 import { AlphaService, EnergyTriggerPlugin, TibberService } from '../../src/index';
 
-import { HAP, Logging, Service} from 'homebridge';
+import { Logging } from 'homebridge';
 import { PlatformConfig} from 'homebridge';
 import { API } from 'homebridge';
-import { Mock, It, Times } from 'moq.ts';
+import { Mock, Times, It } from 'moq.ts';
 import { PriceTrigger } from '../../src/interfaces';
 import { IPrice } from 'tibber-api/lib/src/models/IPrice';
+import { PriceLevel } from 'tibber-api/lib/src/models/enums/PriceLevel';
+
 import { AlphaData, AlphaDetailResponse } from '../../src/alpha/response/AlphaDetailResponse';
-import { logger } from 'vega';
-import { any } from 'jest-mock-extended';
 
 
 const loging = new Mock<Logging>()
   .setup( instance => instance.debug).returns(m => m).
   setup(instance => instance.error).returns(m => m);
 
-const pfc = new Mock<PlatformConfig>().setup(
-  instance => instance.debug,
-).returns(m => m);
-
 
 const api = new Mock<API>().setup(instance => instance.version).returns(1);
 
-test('test trigger from tibber api - positive case (1)', async () => {
-  const ipriceLow = new Mock<IPrice>().setup(inst => inst.total).returns(11).setup(inst => inst.startsAt).returns('10:00').object();
-  const ipriceHigh = new Mock<IPrice>().setup(inst => inst.total).returns(20).setup(inst => inst.startsAt).returns('12:00').object();
-  const list = [ipriceLow, ipriceHigh];
+class PFConfig implements PlatformConfig{
+  platform: string;
+  tibberEnabled = true;
+  tibberThresholdSOC = 49;
+  tibberThresholdEur = 0.5;
+  //triggerImageFilename = '';
+  tibberLoadBatteryEnabled = true;
+}
 
-  const tibberPrices = new Promise<IPrice[]>((resolve) => {
-    resolve(list);
-  });
+class PriceTestData implements IPrice {
+  homeId?: string;
+  total: number;
+  energy: number;
+  tax: number;
+  startsAt: string;
+  level: PriceLevel;
+  constructor(total:number, startsAt: string){
+    this.total = total;
+    this.startsAt = startsAt;
+  }
+}
 
-  const alphaDetailResp = new Promise<AlphaDetailResponse>((resolve) => {
-    const detail = new AlphaDetailResponse();
-    detail.code = 200;
-    detail.data = new AlphaData();
-    resolve(detail);
-  });
+
+const alphaDetailResp = new Promise<AlphaDetailResponse>((resolve) => {
+  const detail = new AlphaDetailResponse();
+  detail.code = 200;
+  detail.data = new AlphaData();
+  resolve(detail);
+});
+
+
+test('test trigger tibber service via energy plugin - expect triggered ', async () => {
+  const listIprice:IPrice[] = [new PriceTestData(10, '10:00'), new PriceTestData(20, '12:00')];
 
   const alphaService = new Mock<AlphaService>()
     .setup( instance => instance.getDetailData). returns(() => alphaDetailResp );
 
-  const tibberServiceOrigin = new TibberService(loging.object(), '', '', 20, false, undefined);
+  const tibberServiceOrigin = new TibberService(loging.object(), 'apiKey', 'queryUrl', 0.2, false);
   tibberServiceOrigin.setLogger(loging.object());
 
-  const tibberService = new Mock<TibberService>()
-    .setup(instance => instance.getDailyMap).returns(() => new Map<number, PriceTrigger>)
-
+  const tibberServiceMock = new Mock<TibberService>()
+    .setup(instance => instance.getThresholdEur).returns( () => 0.5)
     .setup(instance => instance.isTriggered).mimics(tibberServiceOrigin)
+    .setup(instance => instance._getTrigger).mimics(tibberServiceOrigin)
+    .setup(instance => instance.findLowestPrice).mimics(tibberServiceOrigin)
+
+    .setup(instance => instance.getDailyMap).returns(() => new Map<number, PriceTrigger>)
     .setup(instance => instance.getLowestPriceHours).returns( () => 10)
-    .setup(instance => instance.findLowestPrice).returns(() => ipriceLow )
     .setup(instance => instance.findCurrentPrice).returns( () => new Promise<number>((resolve => {
       resolve(10);
     })))
-    .setup(async instance => instance.getTodaysEnergyPrices).returnsAsync(() => tibberPrices)
-    .setup(instance => instance.getTodaysEnergyPrices).returns(() => tibberPrices);
+    .setup(instance => instance.getTodaysEnergyPrices).returns(() =>new Promise<IPrice[]>((resolve => {
+      resolve(listIprice);
+    })))
+    .setup(instance => instance.getLogger).returns(() => loging.object());
 
-  tibberService.object().setLogger(loging.object());
 
-  const sut = new EnergyTriggerPlugin(loging.object(), pfc.object(), api.object());
+  tibberServiceMock.object().setLogger(loging.object());
 
+  const sut = new EnergyTriggerPlugin(loging.object(), new PFConfig(), api.object());
   sut.setAlphaService(alphaService.object());
-  sut.calculateTibberTrigger(tibberService.object());
+  sut.setSocCurrent(10);
 
-  tibberService.verify(instance => instance.isTriggered, Times.Exactly(1));
-  tibberService.verify(instance => instance.getLowestPriceHours, Times.Never());
-  tibberService.verify(instance => instance.getTodaysEnergyPrices, Times.Never());
+  // when
+  const result = await sut.calculateTibberTrigger(tibberServiceMock.object());
 
+
+  // then
+  tibberServiceMock.verify(instance => instance.isTriggered, Times.Exactly(1));
+  tibberServiceMock.verify(instance => instance.findCurrentPrice, Times.Once());
+  tibberServiceMock.verify(instance => instance.getTodaysEnergyPrices, Times.Once());
+
+  expect(result).toBeTruthy();
+});
+
+test('test trigger tibber service via energy plugin - expect not triggered', async () => {
+  const currentPrice = 27.0;
+  const listIprice:IPrice[] = [new PriceTestData(34.0, '10:00'),
+    new PriceTestData(currentPrice, '14:00'),
+    new PriceTestData(25.0, '12:00')];
+
+  const alphaService = new Mock<AlphaService>()
+    .setup( instance => instance.getDetailData). returns(() => alphaDetailResp );
+
+  const tibberServiceOrigin = new TibberService(loging.object(), 'apiKey', 'queryUrl', 0.5, false);
+  tibberServiceOrigin.setLogger(loging.object());
+
+  const tibberServiceMock = new Mock<TibberService>()
+    .setup(instance => instance.getThresholdEur).returns( () => 0.5)
+    .setup(instance => instance.isTriggered).mimics(tibberServiceOrigin)
+    .setup(instance => instance._getTrigger).mimics(tibberServiceOrigin)
+    .setup(instance => instance.findLowestPrice).mimics(tibberServiceOrigin)
+
+    .setup(instance => instance.getDailyMap).returns(() => new Map<number, PriceTrigger>)
+    .setup(instance => instance.getLowestPriceHours).returns( () => currentPrice)
+    .setup(instance => instance.findCurrentPrice).returns( () => new Promise<number>((resolve => {
+      resolve(currentPrice);
+    })))
+    .setup(instance => instance.getTodaysEnergyPrices).returns(() =>new Promise<IPrice[]>((resolve => {
+      resolve(listIprice);
+    })))
+    .setup(instance => instance.getLogger).returns(() => loging.object());
+
+
+  tibberServiceMock.object().setLogger(loging.object());
+
+  const sut = new EnergyTriggerPlugin(loging.object(), new PFConfig(), api.object());
+  sut.setAlphaService(alphaService.object());
+  sut.setSocCurrent(10);
+
+  // when
+  const result = await sut.calculateTibberTrigger(tibberServiceMock.object());
+
+
+  // then
+  tibberServiceMock.verify(instance => instance.isTriggered, Times.Exactly(1));
+  tibberServiceMock.verify(instance => instance.findCurrentPrice, Times.Once());
+  tibberServiceMock.verify(instance => instance.getTodaysEnergyPrices, Times.Once());
+
+  expect(result).toBeFalsy();
 });

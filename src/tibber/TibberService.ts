@@ -36,6 +36,10 @@ export class TibberService {
     this.tibberLoadBatteryEnabled = tibberLoadBatteryEnabled;
   }
 
+  getLogger() : Logging{
+    return this.logger;
+  }
+
   setLogger(logger:Logging){
     this.logger = logger;
   }
@@ -51,10 +55,10 @@ export class TibberService {
         const homeId = this.tibberHomeId !== undefined ? this.tibberHomeId : homes[0].id;
         return resolve(tibberQuery.getTodaysEnergyPrices(homeId));
       }).catch( error => {
-        this.logger.debug('could not collect home ids ', error);
+        this.getLogger().debug('could not collect home ids ', error);
         return reject();
       }).catch(err => {
-        this.logger.debug('could not collect todays energy prices ', err);
+        this.getLogger().debug('could not collect todays energy prices ', err);
       });
     });
 
@@ -96,12 +100,14 @@ export class TibberService {
           return resolve(current.total);
         } ).
           catch(error => {
-            this.logger.debug('Tibber: Could not fetch prices: statusMessage:' + error.statusMessage + ' errorCode:' +error.statusCode);
+            this.getLogger().
+              debug('Tibber: Could not fetch prices: statusMessage:' + error.statusMessage + ' errorCode:' +error.statusCode);
             return reject();
           },
           );
       }).catch(err => {
-        this.logger.error('could not fetch home ids ' + err);
+        this.getLogger().
+          error('could not fetch home ids ' + err);
       });
     });
   }
@@ -112,7 +118,7 @@ export class TibberService {
     socLowerThreshold: number /** SOC of battery to be trigger */): Promise<boolean> {
     return new Promise((resolve, reject) => {
       this.findCurrentPrice().then( currentPrice => {
-        this.getTodaysEnergyPrices().then(todaysEnergyPrices=> {
+        this.getTodaysEnergyPrices().then(todaysEnergyPrices => {
           const todaysLowestIPrice = this.findLowestPrice(todaysEnergyPrices);
           const todaysLowestTime = todaysLowestIPrice.startsAt;
           const dateObject = new Date(todaysLowestTime);
@@ -139,11 +145,11 @@ export class TibberService {
           });
           return resolve(isTriggered);
         }).catch(err => {
-          this.logger.debug('Could not fetch todays prices,error : ', err);
+          this.getLogger().debug('Could not fetch todays prices,error : ', err);
           return resolve(false);
         });
       }).catch(error => {
-        this.logger.debug('Tibber: Could not determine trigger ', error);
+        this.getLogger().debug('Tibber: Could not determine trigger ', error);
         return resolve(false);
       });
     });
@@ -158,20 +164,24 @@ export class TibberService {
     return this.tibberLoadBatteryEnabled;
   }
 
+  getThresholdEur(){
+    return this.thresholdEur;
+  }
+
   // check if we have the lowest energy price for today - if yes, raise the trigger
   _getTrigger(todaysLowestPrice: number, currentPrice: number, socBattery: number, socLowerThreshold: number ): boolean {
     if (socBattery<0){
-      this.logger.debug('battery not checked correctly ');
+      this.getLogger().debug('battery not checked correctly ');
       return false;
     }
     const diffToLowest = currentPrice - todaysLowestPrice;
     // diffToLowest is in acceptable range
-    this.logger.debug('lowest today: ' + todaysLowestPrice + ' current: ' + currentPrice + ' diffToLowest: ' + diffToLowest );
-    if (diffToLowest <= this.thresholdEur && (socBattery <= socLowerThreshold )) {
-      this.logger.debug('trigger lowest price: true');
+    this.getLogger().debug('lowest today: ' + todaysLowestPrice + ' current: ' + currentPrice + ' diffToLowest: ' + diffToLowest );
+    if (diffToLowest <= this.getThresholdEur() && (socBattery <= socLowerThreshold )) {
+      this.getLogger().debug('trigger lowest price: true');
       return true;
     }
-    this.logger.debug('trigger lowest price: false');
+    this.getLogger().debug('trigger lowest price: false');
     return false;
   }
 
