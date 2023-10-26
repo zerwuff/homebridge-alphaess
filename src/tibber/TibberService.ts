@@ -36,6 +36,10 @@ export class TibberService {
     this.tibberLoadBatteryEnabled = tibberLoadBatteryEnabled;
   }
 
+  setLogger(logger:Logging){
+    this.logger = logger;
+  }
+
   getDailyMap(): Map<number, PriceTrigger>{
     return this.dailyMap;
   }
@@ -114,7 +118,6 @@ export class TibberService {
           const dateObject = new Date(todaysLowestTime);
           this.lowestPriceHours = dateObject.getHours(); // at which hour starts minimum Price ?
           const todaysLowestPrice = todaysLowestIPrice.total;
-          this.logger.debug(todaysLowestIPrice.startsAt+' <-- price ');
           const isTriggered= this._getTrigger(todaysLowestPrice, currentPrice, socCurrent, socLowerThreshold);
           const now = new Date();
           const hours = now.getHours();
@@ -123,7 +126,7 @@ export class TibberService {
           const currentIndex = hours * 4 + Math.round(min/15);
           this.pricePoint = todaysLowestPrice + this.thresholdEur;
 
-          this.dailyMap.set(index, new PriceTrigger(currentPrice, isTriggered?1:0, new Date()));
+          this.getDailyMap().set(index, new PriceTrigger(currentPrice, isTriggered?1:0, new Date()));
           todaysEnergyPrices.forEach(hourlyprice => {
             const dateString = hourlyprice.startsAt;
             const cents = hourlyprice.total;
@@ -132,7 +135,7 @@ export class TibberService {
             const hours = date.getHours();
             const min = date.getMinutes();
             const index = hours * 4 + Math.round(min/15);
-            this.dailyMap.set(index, new PriceTrigger(cents, isTriggered && index === currentIndex ?1:0, date));
+            this.getDailyMap().set(index, new PriceTrigger(cents, isTriggered && index === currentIndex ?1:0, date));
           });
           return resolve(isTriggered);
         }).catch(err => {

@@ -19,7 +19,6 @@ describe('Integration Test with Mock Server', () => {
   const server = new MockServer();
 
 
-
   afterAll(() => server.stop());
 
   beforeAll(() => server.start());

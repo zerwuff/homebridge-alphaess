@@ -1,8 +1,8 @@
 
 import { HAP, API, AccessoryPlugin, PlatformConfig, Service, Logging, Topics } from 'homebridge';
-import { AlphaService, BASE_URL } from './alpha/AlphaService.js';
-import { AlphaMqttService, MqttTopics } from './alpha/mqtt/AlphaMqttService';
-import { ImageRenderingService } from './alpha/ImageRenderingService.js';
+import { AlphaService, BASE_URL } from './index';
+import { AlphaMqttService, MqttTopics } from './index';
+import { ImageRenderingService } from './index';
 
 export class AlphaPlugin implements AccessoryPlugin {
 

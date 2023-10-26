@@ -1,11 +1,11 @@
 
 import { HAP, API, AccessoryPlugin, Logging, PlatformConfig, Service } from 'homebridge';
-import { AlphaService, BASE_URL } from './alpha/AlphaService.js';
-import { AlphaMqttService, MqttTopics } from './alpha/mqtt/AlphaMqttService.js';
-import { TibberService } from './tibber/TibberService.js';
-import { AlphaTrigger } from './interfaces.js';
-import { ImageRenderingService } from './alpha/ImageRenderingService.js';
-import { Utils } from './util/Utils.js';
+import { AlphaTrigger } from './index';
+import { ImageRenderingService } from './index';
+import { Utils } from './index';
+import { AlphaService, BASE_URL } from './index';
+import { AlphaMqttService, MqttTopics } from './index';
+import { TibberService } from './index';
 /**
  * This Plugin provides a homebridge trigger logic that can be used to control external devices.
  *
@@ -57,20 +57,10 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
     this.isBatteryLoadingFromNet = false;
 
     log.debug('EnergyTriggerPlugin plugin loaded');
-
-    this.informationService = new this.hap.Service.AccessoryInformation()
-      .setCharacteristic(this.hap.Characteristic.Manufacturer, 'EnergyTriggerPlugin by Jens Zeidler')
-      .setCharacteristic(this.hap.Characteristic.SerialNumber, config.serialnumber)
-      .setCharacteristic(this.hap.Characteristic.Model, 'Alpha ESS // Tibber combined Trigger Plugin');
-
-    this.service = new this.hap.Service.ContactSensor(config.name);
-
-    this.service.getCharacteristic(this.hap.Characteristic.ContactSensorState)
-      .onGet(this.handleContactSensorStateGet.bind(this));
+    this.setCharacteristics(this.hap, this.config);
 
     this.alphaImageService = new ImageRenderingService();
     this.alphaService = new AlphaService(this.log, config.username, config.password, config.logrequestdata, BASE_URL);
-
     this.log.debug(config.serialnumber);
     this.log.debug(config.username);
 
@@ -113,6 +103,36 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
     }
   }
 
+  setTibberService(tibberService: TibberService){
+    this.tibber = tibberService;
+  }
+
+  setAlphaService(alphaService: AlphaService){
+    this.alphaService = alphaService;
+  }
+
+  getAlphaService(){
+    return this.alphaService;
+  }
+
+  getTibberService(){
+    return this.tibber;
+  }
+
+  setCharacteristics(hap:HAP, config:PlatformConfig){
+    if (hap !== undefined){
+      this.informationService = new hap.Service.AccessoryInformation()
+        .setCharacteristic(this.hap.Characteristic.Manufacturer, 'EnergyTriggerPlugin by Jens Zeidler')
+        .setCharacteristic(this.hap.Characteristic.SerialNumber, config.serialnumber)
+        .setCharacteristic(this.hap.Characteristic.Model, 'Alpha ESS // Tibber combined Trigger Plugin');
+
+      this.service = new this.hap.Service.ContactSensor(config.name);
+
+      this.service.getCharacteristic(this.hap.Characteristic.ContactSensorState)
+        .onGet(this.handleContactSensorStateGet.bind(this));
+    }
+  }
+
   async calculateCombinedTriggers(config: PlatformConfig){
     this.calculateAlphaTrigger(config.serialnumber).catch(error => {
       this.log(error);
@@ -126,15 +146,19 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
     }
 
     let tibberMap = new Map();
+    let tibberPricePoint = -1 ;
     if (this.tibber !== undefined){
       tibberMap = this.tibber.getDailyMap();
+      tibberPricePoint = this.tibber.getPricePoint();
     }
 
-    await this.alphaImageService.renderTriggerImage(this.triggerImageFilename, tibberMap,
-      this.alphaTriggerMap, this.tibber.getPricePoint(),
-    ).catch(error => {
-      this.log.error('error rendering image: ', error);
-    });
+    if (this.triggerImageFilename!==undefined){
+      await this.alphaImageService.renderTriggerImage(this.triggerImageFilename, tibberMap,
+        this.alphaTriggerMap, tibberPricePoint,
+      ).catch(error => {
+        this.log.error('error rendering image: ', error);
+      });
+    }
   }
 
 
@@ -247,12 +271,14 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
       this.mqtt.pushTriggerMessage(this.triggerTotal);
     }
 
-    if (this.triggerTotal === false){
-      this.log.debug('trigger not fired -> status CONTACT_DETECTED');
-      return this.hap.Characteristic.ContactSensorState.CONTACT_DETECTED;
+    if (this.hap!== undefined){
+      if (this.triggerTotal === false){
+        this.log.debug('trigger not fired -> status CONTACT_DETECTED');
+        return this.hap.Characteristic.ContactSensorState.CONTACT_DETECTED;
+      }
+      this.log.debug('trigger fired -> status CONTACT_NOT_DETECTED');
+      return this.hap.Characteristic.ContactSensorState.CONTACT_NOT_DETECTED;
     }
-    this.log.debug('trigger fired -> status CONTACT_NOT_DETECTED');
-    return this.hap.Characteristic.ContactSensorState.CONTACT_NOT_DETECTED;
   }
 
 
