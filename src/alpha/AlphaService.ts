@@ -9,6 +9,8 @@ import { AlphaSettingsResponse } from './response/AlphaSettingsResponse';
 const request = require('request');
 
 
+const WAIT_LOADING_THRESHOLD_SECONDS = ':09'; // number of seconds after reaching price point to trigger loading
+
 const AUTHPREFIX = 'al8e4s';
 const AUTHCONSTANT = 'LS885ZYDA95JVFQKUIUUUV7PQNODZRDZIS4ERREDS0EED8BCWSS';
 const AUTHSUFFIX = 'ui893ed';
@@ -145,17 +147,17 @@ export class AlphaService {
     if (batteryLow && priceIsLow ){
       // -> if not loading, start it with hours = now plus one hour
       if (!isCurrentlyLoading){
-        console.debug('lets put some energy in this place <---');
+        this.logMsg('lets put some energy in this place <---');
         const now = new Date();
         newSettingsData['grid_charge'] = 1;
-        newSettingsData['time_chaf1a'] = this.getHourString(now.getHours());
+        newSettingsData['time_chaf1a'] = this.getLoadingHourString(now.getHours(), now.getMinutes());
         let nextHours = now.getHours();
         if (nextHours===23){
           nextHours = 0; // day switch
         }else {
           nextHours = nextHours + 1;
         }
-        newSettingsData['time_chae1a'] = this.getHourString(nextHours);
+        newSettingsData['time_chae1a'] = this.getLoadingHourString(nextHours, now.getMinutes());
         this. logMsg('currently not loading detected, enable it via api ');
         return newSettingsData;
       }
@@ -173,12 +175,32 @@ export class AlphaService {
 
   }
 
-  getHourString(hour:number ): string {
-    let hourString = hour + ':00';
-    if (hour < 10){
-      hourString = '0' + hour + ':00';
+
+  // next quarter loading time
+  getLoadingHourString(hour:number, minute:number ): string {
+    let minuteString = ':15';
+    let hourString = new String(hour);
+
+    if (minute> 15){
+      minuteString = ':30';
     }
-    return hourString;
+    if (minute> 30){
+      minuteString = ':45';
+    }
+    if (minute>=45){
+      minuteString = ':00';
+      hour = hour + 1;
+      hourString = new String(hour);
+      if (hour >=24 ){
+        hour = 0;
+        hourString = '00';
+      }
+
+    }
+    if (hour < 10){
+      hourString = '0' + hour;
+    }
+    return hourString + minuteString;
   }
 
   async setAlphaSettings(token:string, serialNumber:string, alphaSettingsData:Map<string, unknown> ): Promise<boolean>{
