@@ -9,6 +9,7 @@ import { AlphaSettingsResponse } from './response/AlphaSettingsResponse';
 const request = require('request');
 
 
+const WAIT_LOADING_THRESHOLD_MIN = 9;
 const WAIT_LOADING_THRESHOLD_SECONDS = ':09'; // number of seconds after reaching price point to trigger loading
 
 const AUTHPREFIX = 'al8e4s';
@@ -129,8 +130,15 @@ export class AlphaService {
     // enable trigger reloading now for one hour, exit
     const timeLoadingStart = ''+ newSettingsData['time_chaf1a'];
     const hourLoadingStart = parseInt(timeLoadingStart.substring(0, 2));
-    const time_active_start = new Date().getHours() >= hourLoadingStart;
+    const minuteLoadingStart = parseInt(timeLoadingStart.substring(3, 4));
 
+    const plannedLoadingDate = new Date();
+    plannedLoadingDate.setHours(hourLoadingStart);
+    plannedLoadingDate.setMinutes(minuteLoadingStart);
+
+    const now = new Date();
+    const diff_to_Start = plannedLoadingDate.getTime() - now.getTime();
+    const time_active_start = diff_to_Start < 1000*60*WAIT_LOADING_THRESHOLD_MIN; // start in 9 minutes ?
     const timeLoadingEnd = ''+ newSettingsData['time_chae1a'];
     const hourLoadingEnd = parseInt(timeLoadingEnd.substring(0, 2));
 
