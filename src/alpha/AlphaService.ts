@@ -10,7 +10,7 @@ const request = require('request');
 
 
 const WAIT_LOADING_THRESHOLD_MIN = 9;
-const WAIT_LOADING_THRESHOLD_SECONDS = ':09'; // number of seconds after reaching price point to trigger loading
+const WAIT_LOADING_THRESHOLD_MIN_END = 5;
 
 const AUTHPREFIX = 'al8e4s';
 const AUTHCONSTANT = 'LS885ZYDA95JVFQKUIUUUV7PQNODZRDZIS4ERREDS0EED8BCWSS';
@@ -130,7 +130,7 @@ export class AlphaService {
     // enable trigger reloading now for one hour, exit
     const timeLoadingStart = ''+ newSettingsData['time_chaf1a'];
     const hourLoadingStart = parseInt(timeLoadingStart.substring(0, 2));
-    const minuteLoadingStart = parseInt(timeLoadingStart.substring(3, 4));
+    const minuteLoadingStart = parseInt(timeLoadingStart.substring(3));
 
     const plannedLoadingDate = new Date();
     plannedLoadingDate.setHours(hourLoadingStart);
@@ -141,11 +141,17 @@ export class AlphaService {
     const time_active_start = diff_to_Start < 1000*60*WAIT_LOADING_THRESHOLD_MIN; // start in 9 minutes ?
     const timeLoadingEnd = ''+ newSettingsData['time_chae1a'];
     const hourLoadingEnd = parseInt(timeLoadingEnd.substring(0, 2));
+    const minuteLoadingEnd = parseInt(timeLoadingEnd.substring(3));
 
 
     const loadingFeatureSet = newSettingsData['grid_charge'] === 1 ;
     const isCurrentlyLoading = time_active_start && loadingFeatureSet ;
-    const loadingShallEndByTime = (new Date().getHours() > hourLoadingEnd) && isCurrentlyLoading;
+    const plannedLoadingEndDate = new Date();
+    plannedLoadingEndDate.setHours(hourLoadingEnd);
+    plannedLoadingEndDate.setMinutes(minuteLoadingEnd);
+
+    const overtimeInMillis = plannedLoadingEndDate.getTime() - now.getTime();
+    const loadingShallEndByTime = overtimeInMillis > ( 1000 * 60 * WAIT_LOADING_THRESHOLD_MIN_END );
     const loadingShallEndByPrice = !priceIsLow && isCurrentlyLoading;
 
     this.logMsg('calculate new loading isCurrentlyLoading: ' + isCurrentlyLoading + ' time_active_start:' +
@@ -172,7 +178,7 @@ export class AlphaService {
     }
 
     // disable loading after time is up or price goes up
-    if (loadingShallEndByPrice || loadingShallEndByTime ){
+    if (loadingShallEndByPrice || (loadingShallEndByTime && isCurrentlyLoading) ){
       this. logMsg('loading shall stop now, disable it ');
       // disable loading, set default time values
       newSettingsData['grid_charge'] = 0;
@@ -180,7 +186,7 @@ export class AlphaService {
       newSettingsData['time_chae1a'] = '00:00';
       return newSettingsData;
     }
-
+    return undefined;
   }
 
 

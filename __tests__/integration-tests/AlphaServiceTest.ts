@@ -204,7 +204,7 @@ describe('Integration Test with Mock Server', () => {
       const date = new Date();
       data['grid_charge']=1;
       data['time_chaf1a']= getLoadingHourString(date.getHours(), date.getMinutes());
-      data['time_chae1a']= getLoadingHourString(date.getHours(), date.getMinutes());
+      data['time_chae1a']= getLoadingHourString(date.getHours(), date.getMinutes()+15);
       alphaSettings.data = data;
       ctx.response.body = JSON.stringify(alphaSettings);
       ctx.status = 200;
@@ -398,13 +398,13 @@ test('test enable loading if currently not loading. ', async () => {
 
 
 
-test('test disable loading if its currentlyloading.  not disabling via battery threshold since now loading', async () => {
+test('test disable loading if its currentlyloading.  disabling via battery threshold since now loading', async () => {
   const alphaService = new AlphaService(undefined, '123', 'password', true, 'http://localhost:8080');
   const date = new Date();
   const settingsMap = new Map<string, string>;
   settingsMap['grid_charge']=1;
-  settingsMap['time_chaf1a']=getLoadingHourString(date.getHours(), date.getMinutes());
-  settingsMap['time_chae1a']=getLoadingHourString(date.getHours(), date.getMinutes());
+  settingsMap['time_chaf1a']=getLoadingHourString(date.getHours()-1, date.getMinutes());
+  settingsMap['time_chae1a']=getLoadingHourString(date.getHours(), date.getMinutes()+15); // threshold
 
   const responseMap = alphaService.calculateUpdatedSettingsData(settingsMap, false, 31, 30);
 
@@ -421,9 +421,8 @@ test('test disable loading if its currentlyloading. disable via high price ', as
   const date = new Date();
 
   settingsMap['grid_charge']=1;
-  settingsMap['time_chaf1a']=getLoadingHourString(date.getHours(), date.getMinutes());
-  settingsMap['time_chae1a']=getLoadingHourString(date.getHours(), date.getMinutes());
-
+  settingsMap['time_chaf1a']=getLoadingHourString(date.getHours()-1, date.getMinutes()); // begin time one hour ago
+  settingsMap['time_chae1a']=getLoadingHourString(date.getHours(), date.getMinutes()+10); // currently loading
 
   const responseMap = alphaService.calculateUpdatedSettingsData(settingsMap, false, 31, 30);
 
@@ -440,7 +439,7 @@ test('test disable loading if its currentlyloading. disable loading via time is 
 
   settingsMap['grid_charge']=1;
   settingsMap['time_chaf1a']=getLoadingHourString(date.getHours()-2, date.getMinutes());
-  settingsMap['time_chae1a']=getLoadingHourString(date.getHours()-1, date.getMinutes());
+  settingsMap['time_chae1a']=getLoadingHourString(date.getHours(), date.getMinutes()+20);
 
   const responseMap = alphaService.calculateUpdatedSettingsData(settingsMap, true, 30, 30);
 
@@ -450,5 +449,16 @@ test('test disable loading if its currentlyloading. disable loading via time is 
   expect(responseMap['time_chae1a']).toBe('00:00');
 });
 
+test('test disable loading if its currentlyloading. do not change settings, since loading via time is not up yet ', async () => {
+  const alphaService = new AlphaService(undefined, '123', 'password', true, 'http://localhost:8080');
+  const settingsMap = new Map<string, string>;
+  const date = new Date();
+
+  settingsMap['grid_charge']=1;
+  settingsMap['time_chaf1a']=getLoadingHourString(date.getHours()-2, date.getMinutes());
+  settingsMap['time_chae1a']=getLoadingHourString(date.getHours(), date.getMinutes()+1);
+  const responseMap = alphaService.calculateUpdatedSettingsData(settingsMap, true, 30, 30);
+  expect(responseMap).toBeUndefined(); // undefined - no stopping of loading triggered
+});
 
 // get the string of the current hour
