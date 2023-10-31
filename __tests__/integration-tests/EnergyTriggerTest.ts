@@ -108,6 +108,7 @@ test('test trigger tibber service via energy plugin - expect not triggered', asy
   tibberServiceOrigin.setLogger(loging.object());
 
   const tibberServiceMock = new Mock<TibberService>()
+
     .setup(instance => instance.getThresholdEur).returns( () => 0.5)
     .setup(instance => instance.isTriggered).mimics(tibberServiceOrigin)
     .setup(instance => instance._getTrigger).mimics(tibberServiceOrigin)
@@ -131,6 +132,7 @@ test('test trigger tibber service via energy plugin - expect not triggered', asy
   sut.setSocCurrent(10);
 
   // when
+
   const result = await sut.calculateTibberTrigger(tibberServiceMock.object());
 
 
@@ -138,6 +140,52 @@ test('test trigger tibber service via energy plugin - expect not triggered', asy
   tibberServiceMock.verify(instance => instance.isTriggered, Times.Exactly(1));
   tibberServiceMock.verify(instance => instance.findCurrentPrice, Times.Once());
   tibberServiceMock.verify(instance => instance.getTodaysEnergyPrices, Times.Once());
-
   expect(result).toBeFalsy();
 });
+
+
+test('test trigger tibber service via energy plugin - expect no change during execption', async () => {
+  const currentPrice = 27.0;
+  const listIprice:IPrice[] = [new PriceTestData(34.0, '10:00'),
+    new PriceTestData(currentPrice, '14:00'),
+    new PriceTestData(25.0, '12:00')];
+
+  const alphaService = new Mock<AlphaService>()
+    .setup( instance => instance.getDetailData). returns(() => alphaDetailResp );
+
+  const tibberServiceOrigin = new TibberService(loging.object(), 'apiKey', 'queryUrl', 0.5, false);
+  tibberServiceOrigin.setLogger(loging.object());
+
+  const tibberServiceMock = new Mock<TibberService>()
+    .setup(instance => instance.getThresholdEur).returns( () => 0.5)
+    .setup(instance => instance.isTriggered).mimics(tibberServiceOrigin)
+    .setup(instance => instance._getTrigger).mimics(tibberServiceOrigin)
+    .setup(instance => instance.findLowestPrice).mimics(tibberServiceOrigin)
+
+    .setup(instance => instance.getDailyMap).returns(() => new Map<number, PriceTrigger>)
+    .setup(instance => instance.getLowestPriceHours).returns( () => currentPrice)
+    .setup(instance => instance.findCurrentPrice).returns( () => new Promise<number>((resolve => {
+      resolve(currentPrice);
+    })))
+    .setup(instance => instance.getTodaysEnergyPrices).throws( () => Error('blafasel'))
+    .setup(instance => instance.getLogger).returns(() => loging.object());
+
+
+  tibberServiceMock.object().setLogger(loging.object());
+
+  const sut = new EnergyTriggerPlugin(loging.object(), new PFConfig(), api.object());
+  sut.setAlphaService(alphaService.object());
+  sut.setSocCurrent(10);
+  sut.setTibberTrigger(true);
+
+  // when
+  const result = await sut.calculateTibberTrigger(tibberServiceMock.object());
+
+
+  // then
+  tibberServiceMock.verify(instance => instance.isTriggered, Times.Exactly(1));
+  tibberServiceMock.verify(instance => instance.findCurrentPrice, Times.Once());
+  tibberServiceMock.verify(instance => instance.getTodaysEnergyPrices, Times.Once());
+  expect(result).toBeTruthy();
+});
+

@@ -145,12 +145,12 @@ export class TibberService {
           });
           return resolve(isTriggered);
         }).catch(err => {
-          this.getLogger().debug('Could not fetch todays prices,error : ', err);
-          return resolve(false);
+          this.getLogger().debug('Could not fetch todays prices, error : ', err);
+          return reject(false);
         });
       }).catch(error => {
         this.getLogger().debug('Tibber: Could not determine trigger ', error);
-        return resolve(false);
+        return reject(false);
       });
     });
   }

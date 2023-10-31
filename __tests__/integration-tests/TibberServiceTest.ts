@@ -109,7 +109,6 @@ test('find lowest todays price - positive case (1)', async() => {
   const sut = new TibberService(logger, '', '', 300, false);
   const prices = [new PriceTestData(-10.0), new PriceTestData(20.0), new PriceTestData(70.0) ];
   expect( sut.findLowestPrice(prices).total ).toBe(-10.0);
-
 });
 
 

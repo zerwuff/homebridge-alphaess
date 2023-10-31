@@ -123,6 +123,10 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
     this.socCurrent = soc;
   }
 
+  setTibberTrigger(triggerTibber:boolean){
+    this.triggerTibber = triggerTibber;
+  }
+
   setCharacteristics(hap:HAP, config:PlatformConfig){
     if (hap !== undefined){
       this.informationService = new hap.Service.AccessoryInformation()
@@ -169,9 +173,9 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
   async calculateTibberTrigger(tibber: TibberService) {
     try {
       await tibber.isTriggered(this.socCurrent, this.tibberThresholdSOC).then(result => {
-        this.triggerTibber = result;
+        this.setTibberTrigger(result);
       }).catch(() => {
-        this.triggerTibber = false;
+        this.log.error('could not fetch trigger result ');
       });
     } catch (err){
       this.log.error('' + err);
