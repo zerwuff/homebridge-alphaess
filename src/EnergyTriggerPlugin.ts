@@ -38,6 +38,7 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
   private mqtt: AlphaMqttService;
   private tibber: TibberService;
   private isBatteryLoadingFromNet = false;
+  private tibberLoadingMinutes: number;
 
   constructor (log: Logging, config: PlatformConfig, api: API) {
     this.hap = api.hap;
@@ -63,6 +64,7 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
     this.alphaService = new AlphaService(this.log, config.username, config.password, config.logrequestdata, BASE_URL);
     this.log.debug(config.serialnumber);
     this.log.debug(config.username);
+    this.tibberLoadingMinutes = config.tibberLoadingMinutes;
 
     this.triggerImageFilename = config.triggerImageFilename;
     if (!config.serialnumber || !config.username || !config.password) {
@@ -203,6 +205,7 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
             loginResponse.data.AccessToken,
             serialNumber,
             priceIsLow,
+            this.tibberLoadingMinutes,
             socBattery,
             socBatteryThreshold).then(
             () => {

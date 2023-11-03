@@ -8,9 +8,7 @@ import { ObjectMapper } from 'jackson-js';
 import { AlphaSettingsResponse } from './response/AlphaSettingsResponse';
 const request = require('request');
 
-
 const WAIT_LOADING_THRESHOLD_MIN = 9;
-const WAIT_LOADING_THRESHOLD_MIN_END = 5;
 
 const AUTHPREFIX = 'al8e4s';
 const AUTHCONSTANT = 'LS885ZYDA95JVFQKUIUUUV7PQNODZRDZIS4ERREDS0EED8BCWSS';
@@ -24,6 +22,7 @@ export class AlphaService {
   private password;
   private logRequestDetails: boolean;
   private baseUrl: string;
+  private lastLoadingStart:Date;
 
   constructor(logger: Logging | undefined, username: string | undefined, password: string, logRequestDetails: boolean, url: string ) {
     this.logger = logger;
@@ -31,8 +30,13 @@ export class AlphaService {
     this.username = username;
     this.logRequestDetails = logRequestDetails;
     this.baseUrl = url;
+    this.lastLoadingStart = undefined;
   }
 
+
+  setLastLoadingStart(lastLoadingStart:Date ){
+    this.lastLoadingStart = lastLoadingStart ;
+  }
 
   async getDetailData(token, serialNumber): Promise<AlphaDetailResponse> {
     const authtimestamp = Math.round(new Date().getTime() / 1000).toString();
@@ -71,7 +75,8 @@ export class AlphaService {
 
 
   // check if current loading of battery makes sense, and if so trigger it
-  async checkAndEnableReloading(token:string, serialNumber:string, priceIsLow : boolean, socBattery:number, socLowerThreshold:number):
+  async checkAndEnableReloading(token:string, serialNumber:string, priceIsLow : boolean, numberOfMinutes:number,
+    socBattery:number, socLowerThreshold:number):
     Promise <Map<string, unknown>> {
 
     const settingsData = await this.getSettingsData(token, serialNumber).catch( () => {
@@ -81,7 +86,8 @@ export class AlphaService {
       return resp;
     });
 
-    const updateSettingsData = this.calculateUpdatedSettingsData(settingsData.data, priceIsLow, socBattery, socLowerThreshold);
+    const updateSettingsData = this.calculateUpdatedSettingsData(settingsData.data, priceIsLow,
+      numberOfMinutes, socBattery, socLowerThreshold);
 
     // update settings needed
     if (updateSettingsData!==undefined){
@@ -122,7 +128,8 @@ export class AlphaService {
   }
 
   // calculate loading settings: if currently loading, continue, else disable loading trigger
-  calculateUpdatedSettingsData(newSettingsData: Map<string, unknown>, priceIsLow : boolean, socBattery:number, socLowerThreshold:number):
+  calculateUpdatedSettingsData(newSettingsData: Map<string, unknown>, priceIsLow : boolean, loadingMinutes:number,
+    socBattery:number, socLowerThreshold:number):
      Map<string, unknown> {
 
     const batteryLow = socBattery <= socLowerThreshold ;
@@ -139,29 +146,29 @@ export class AlphaService {
     const now = new Date();
     const diff_to_Start = plannedLoadingDate.getTime() - now.getTime();
     const time_active_start = diff_to_Start < 1000*60*WAIT_LOADING_THRESHOLD_MIN; // start in 9 minutes ?
-    const timeLoadingEnd = ''+ newSettingsData['time_chae1a'];
-    const hourLoadingEnd = parseInt(timeLoadingEnd.substring(0, 2));
-    const minuteLoadingEnd = parseInt(timeLoadingEnd.substring(3));
-
-
     const loadingFeatureSet = newSettingsData['grid_charge'] === 1 ;
     const isCurrentlyLoading = time_active_start && loadingFeatureSet ;
-    const plannedLoadingEndDate = new Date();
-    plannedLoadingEndDate.setHours(hourLoadingEnd);
-    plannedLoadingEndDate.setMinutes(minuteLoadingEnd);
 
-    const overtimeInMillis = plannedLoadingEndDate.getTime() - now.getTime();
-    const loadingShallEndByTime = overtimeInMillis > ( 1000 * 60 * WAIT_LOADING_THRESHOLD_MIN_END );
-    const loadingShallEndByPrice = !priceIsLow && isCurrentlyLoading;
+    // add loading minutes to planned end time
+    let loadingShallEndByTime = false;
+
+    if (this.lastLoadingStart!==undefined){ // loading has started
+      const lastLoadingStartMillis = this.lastLoadingStart.getTime();
+      const minLoadingMillis = loadingMinutes * 1000 * 60;
+      loadingShallEndByTime = new Date().getTime() > (lastLoadingStartMillis + minLoadingMillis);
+      this.logMsg('lastLoadingStartMillis: ' + lastLoadingStartMillis + ' minLoadingMillis:' +minLoadingMillis + ' loadingShallEndByTime: ' + loadingShallEndByTime);
+
+    }
 
     this.logMsg('calculate new loading isCurrentlyLoading: ' + isCurrentlyLoading + ' time_active_start:' +
     time_active_start +' loadingShallEndByTime:' + loadingShallEndByTime);
 
-    //shall load
+    //shall load initially
     if (batteryLow && priceIsLow ){
       // -> if not loading, start it with hours = now plus one hour
       if (!isCurrentlyLoading){
-        this.logMsg('lets put some energy in this place <---');
+        this.lastLoadingStart = new Date();
+        this.logMsg('lets put some energy in this place for minutes: ' + loadingMinutes);
         const now = new Date();
         newSettingsData['grid_charge'] = 1;
         newSettingsData['time_chaf1a'] = this.getLoadingHourString(now.getHours(), now.getMinutes());
@@ -178,8 +185,9 @@ export class AlphaService {
     }
 
     // disable loading after time is up or price goes up
-    if (loadingShallEndByPrice || (loadingShallEndByTime && isCurrentlyLoading) ){
-      this. logMsg('loading shall stop now, disable it ');
+    if (loadingShallEndByTime){
+      this.lastLoadingStart = undefined;
+      this. logMsg('loading shall stop now, disable it # ');
       // disable loading, set default time values
       newSettingsData['grid_charge'] = 0;
       newSettingsData['time_chaf1a'] = '00:00';

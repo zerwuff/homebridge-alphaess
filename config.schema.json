@@ -108,6 +108,15 @@
         "default": false, 
         "description":"Enable Loading of the battery when lowest price point is met yes / no"
       },
+      
+      "tibberLoadingMinutes": {
+        "title": "Tibber Battery Loading Time (Minutes) ",
+        "type": "integer",
+        "default": 60,
+        "required": false,
+        "description" :  "When in loading mode, number of minutes to load the battery"
+      },
+    
 
       "tibberUrl": {
         "title": "Tibber API URL",
@@ -137,6 +146,7 @@
         "required": false,
         "description" :  "the battery SOC threshold that is required to trigger tibber loading"
       },
+    
       "tibberThresholdEur": {
         "title": "Tibber Threshold in euro (trigger) ",
         "type": "number",
@@ -145,6 +155,7 @@
         "description" :  "the threshold in cents that is required to trigger tibber"
       },
   
+
       "triggerImageFilename": {
         "title": "Trigger Image Filename",
         "type": "string",
