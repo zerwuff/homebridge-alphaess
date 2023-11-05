@@ -19,7 +19,7 @@ const fun = (api: API) => {
 export default fun;
 
 export { AlphaPlugin } from './AlphaPlugin';
-export { AlphaService, BASE_URL } from './alpha/AlphaService';
+export { AlphaService } from './alpha/AlphaService';
 export { AlphaMqttService, MqttTopics } from './alpha/mqtt/AlphaMqttService';
 
 export { AlphaTrigger } from './interfaces';

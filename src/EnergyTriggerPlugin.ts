@@ -3,7 +3,7 @@ import { HAP, API, AccessoryPlugin, Logging, PlatformConfig, Service } from 'hom
 import { AlphaTrigger } from './index';
 import { ImageRenderingService } from './index';
 import { Utils } from './index';
-import { AlphaService, BASE_URL } from './index';
+import { AlphaService } from './index';
 import { AlphaMqttService, MqttTopics } from './index';
 import { TibberService } from './index';
 /**
@@ -61,7 +61,7 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
     this.setCharacteristics(this.hap, this.config);
 
     this.alphaImageService = new ImageRenderingService();
-    this.alphaService = new AlphaService(this.log, config.username, config.password, config.logrequestdata, BASE_URL);
+    this.alphaService = new AlphaService(this.log, config.username, config.password, config.logrequestdata, config.alphaUrl);
     this.log.debug(config.serialnumber);
     this.log.debug(config.username);
     this.tibberLoadingMinutes = config.tibberLoadingMinutes;

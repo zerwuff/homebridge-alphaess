@@ -15,7 +15,7 @@ const AUTHCONSTANT = 'LS885ZYDA95JVFQKUIUUUV7PQNODZRDZIS4ERREDS0EED8BCWSS';
 const AUTHSUFFIX = 'ui893ed';
 
 // see https://github.com/CharlesGillanders/alphaess
-export const BASE_URL= 'https://cloud.alphaess.com/api';
+
 export class AlphaService {
   private logger: Logging;
   private username;

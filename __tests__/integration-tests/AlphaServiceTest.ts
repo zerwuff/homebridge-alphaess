@@ -156,7 +156,7 @@ describe('Integration Test with Mock Server', () => {
     expect(settingsData.data['time_chae1a']).toBe('13:00');
   });
 
-  it('positive test: enable loading, currently not loading ', async () => {
+  it('positive test: enable loading  when currently not loading ', async () => {
 
     const mockServerUrl ='http://localhost:' + server.getURL().port;
 
@@ -177,8 +177,10 @@ describe('Integration Test with Mock Server', () => {
     const minutes = 45 ;
     const alphaService = new AlphaService(undefined, username, password, logRequestData, mockServerUrl );
 
+    // when
     const batteryChargeResult = await alphaService.checkAndEnableReloading('token', 'serialNumeber123', true, minutes, 10, 20);
 
+    //then
     expect(settingsGetNotLoading).toHaveBeenCalledTimes(1);
     expect(settingsPost).toHaveBeenCalledTimes(1);
 
@@ -187,7 +189,14 @@ describe('Integration Test with Mock Server', () => {
 
   });
 
+
+
+
+  
+
 });
+
+
 
 
 test('test loading hours ', () => {

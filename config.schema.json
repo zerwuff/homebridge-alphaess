@@ -4,6 +4,14 @@
   "singular": true,
   "schema": {
     "properties": {
+      "alphaUrl": {
+        "title": "Alpha ESS UL",
+        "type": "string",
+        "default":"https://www.alphaess-cloud.com/api",
+        "required": true,
+        "description" :  "The alpha ess base url"
+      },
+
       "username": {
         "title": "Username",
         "type": "string",
@@ -93,6 +101,7 @@
         "default": false, 
         "description":"log request data yes / no"
       },
+      
       "tibberEnabled": {
         "title": "Enable Tibber Trigger",
         "type": "boolean",
@@ -100,13 +109,47 @@
         "default": false, 
         "description":"Enable Tibber Trigger yes / no"
       },
-      
+
+      "tibberUrl": {
+        "title": "Tibber API URL",
+        "type": "string",
+        "default":"",
+        "required": false,
+        "description" :  "the tibber API Url" ,
+        "condition": {
+          "functionBody": "return model.tibberEnabled === true;"
+        }
+      },
+      "tibberAPIKey": {
+        "title": "Tibber API Key",
+        "type": "string",
+        "required": false,
+        "default":"",
+        "description" : "the the tibber api key ",
+        "condition": {
+          "functionBody": "return model.tibberEnabled === true;"
+        }
+      },
+      "tibberHomeId": {
+        "title": "Tibber API Home Id",
+        "type": "string",
+        "required": false,
+        "default":"",
+        "description" : "the the tibber home id",
+        "condition": {
+          "functionBody": "return model.tibberEnabled === true;"
+        }
+      },
+
       "tibberLoadBatteryEnabled": {
         "title": "Enable Battery loading w/ tibber ",
         "type": "boolean",
         "required": false,
         "default": false, 
-        "description":"Enable Loading of the battery when lowest price point is met yes / no"
+        "description":"Enable Loading of the battery when lowest price point is met yes / no",
+        "condition": {
+          "functionBody": "return model.tibberEnabled === true;"
+        }
       },
       
       "tibberLoadingMinutes": {
@@ -114,37 +157,21 @@
         "type": "integer",
         "default": 60,
         "required": false,
-        "description" :  "When in loading mode, number of minutes to load the battery"
+        "description" :  "When in loading mode, number of minutes to load the battery",
+        "condition": {
+          "functionBody": "return model.tibberEnabled === true;"
+        }
       },
     
-
-      "tibberUrl": {
-        "title": "Tibber API URL",
-        "type": "string",
-        "default":"",
-        "required": false,
-        "description" :  "the tibber API Url"
-      },
-      "tibberAPIKey": {
-        "title": "Tibber API Key",
-        "type": "string",
-        "required": false,
-        "default":"",
-        "description" : "the the tibber api key "
-      },
-      "tibberHomeId": {
-        "title": "Tibber API Home Id",
-        "type": "string",
-        "required": false,
-        "default":"",
-        "description" : "the the tibber home id "
-      },
       "tibberThresholdSOC": {
         "title": "Tibber SOC Threshold",
         "type": "integer",
         "default": 60,
         "required": false,
-        "description" :  "the battery SOC threshold that is required to trigger tibber loading"
+        "description" :  "the battery SOC threshold that is required to trigger tibber loading",
+        "condition": {
+          "functionBody": "return model.tibberEnabled === true;"
+        }
       },
     
       "tibberThresholdEur": {
@@ -152,16 +179,18 @@
         "type": "number",
         "default":"0.010",
         "required": false,
-        "description" :  "the threshold in cents that is required to trigger tibber"
+        "description" :  "the threshold in cents that is required to trigger tibber",
+        "condition": {
+          "functionBody": "return model.tibberEnabled === true;"
+        }
       },
   
-
       "triggerImageFilename": {
         "title": "Trigger Image Filename",
         "type": "string",
         "required": false,
         "default":"/tmp/tibber_image.png",
-        "description" :  "the filename where the trigger / tibber image is rendered to "
+        "description" :  "The filename where the alpha and tibber trigger image is rendered to "
       }
     }
   }
