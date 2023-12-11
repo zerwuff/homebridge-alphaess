@@ -50,10 +50,10 @@ export class AlphaPlugin implements AccessoryPlugin {
 
     this.serialnumber = config.serialnumber;
     this.power_image_filename = config.power_image_filename;
-    this.alphaService = new AlphaService(this.log, config.username, config.password, config.logrequestdata, config.alphaUrl);
+    this.alphaService = new AlphaService(this.log, config.appid, config.appsecret, config.logrequestdata, config.alphaUrl);
 
-    if (!config.serialnumber || !config.username || !config.password) {
-      this.log.error('Configuration was missing: either serialnumber, password or username not present');
+    if (!config.serialnumber || !config.appid || !config.appsecret) {
+      this.log.error('Configuration was missing: either appid or appsecret not present');
     }
 
     if (!config.refreshTimerInterval ) {
@@ -80,52 +80,31 @@ export class AlphaPlugin implements AccessoryPlugin {
 
   async fetchAlphaEssData(serialNumber: string) {
     this.log.debug('fetch Alpha ESS Data -> fetch token');
-    await this.alphaService.login().then(loginResponse => {
 
-      if (loginResponse.data != undefined && loginResponse.data.AccessToken !== undefined) {
-        this.log.debug('Logged in to alpha cloud, trying to fetch detail data');
-
-        this.alphaService.getDetailData(loginResponse.data.AccessToken, serialNumber).then(
-          detailData => {
-            if (detailData!==null && detailData.data!==null){
-              this.log.debug('SOC: ' + detailData.data.soc);
-              this.batteryLevel = detailData.data.soc;
-              const totalPower = this.alphaService.getTotalPower(detailData);
-              if (this.mqtt !== undefined) {
-                this.mqtt.pushStatusMsg(totalPower, detailData.data.soc);
-              }
-            }
-          },
-        ).catch(error => {
-          this.log.error(error);
-          this.log.error('Getting Detail Data from Alpha Ess failed ');
-          return;
-        });
-
-        this.log.debug('Getting statistics Data from Alpha Ess ');
-
-        this.alphaService.getStatisticsData(loginResponse.data.AccessToken, serialNumber).then(
-          statisticData => {
-            this.log.debug('Rendering image from statistics data: ');
-            try {
-              this.alphaImageService.renderImage(this.power_image_filename, statisticData);
-            } catch (ex) {
-              this.log.error('Could not render from statistics data: ' + ex);
-            }
-          },
-        ).catch(error => {
-          this.log.error('Getting Statistics Data from Alpha Ess failed: ', error);
-          return;
-        });
-      }else {
-        this.log.error('Could not login to Alpha Cloud, please check username or password');
-      }
-    }).catch(error => {
-      this.log.error('Login to Alpha Ess failed ', error);
+    this.alphaService.getLastPowerData(serialNumber).then(
+      detailData => {
+        if (detailData!==null && detailData.data!==null){
+          this.log.debug('SOC: ' + detailData.data.soc);
+          this.batteryLevel = detailData.data.soc;
+          const totalPower = this.alphaService.getTotalPower(detailData);
+          if (this.mqtt !== undefined) {
+            this.mqtt.pushStatusMsg(totalPower, detailData.data.soc);
+          }
+        }
+      },
+    ).catch(error => {
+      this.log.error(error);
+      this.log.error('Getting Detail Data from Alpha Ess failed ');
       return;
     });
 
+    this.log.debug('Rendering Image');
+
+    await this.alphaImageService.renderImage(this.power_image_filename, this.alphaService.getDailyMap());
+
   }
+
+
 
 
   getServices() {

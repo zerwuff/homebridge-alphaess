@@ -1,0 +1,374 @@
+{
+	"info": {
+		"_postman_id": "9e466a10-1190-49b0-bf0e-ef64704f3814",
+		"name": "OpenApi",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "19637213"
+	},
+	"item": [
+		{
+			"name": "According to SN to get system list data",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true,
+				"disabledSystemHeaders": {}
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "appId",
+						"value": "{{appId}}",
+						"type": "text"
+					},
+					{
+						"key": "timeStamp",
+						"value": "{{timeStamp}}",
+						"type": "text"
+					},
+					{
+						"key": "sign",
+						"value": "{{sign}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "https://openapi.alphaess.com/api/getEssList",
+					"protocol": "https",
+					"host": [
+						"openapi",
+						"alphaess",
+						"com"
+					],
+					"path": [
+						"api",
+						"getEssList"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "According to SN to get system list data",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "appId",
+						"value": "{{appId}}",
+						"type": "text"
+					},
+					{
+						"key": "timeStamp",
+						"value": "{{timeStamp}}",
+						"type": "text"
+					},
+					{
+						"key": "sign",
+						"value": "{{sign}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "https://openapi.alphaess.com/api/getLastPowerData?sysSn=AL20020171xxxxx",
+					"protocol": "https",
+					"host": [
+						"openapi",
+						"alphaess",
+						"com"
+					],
+					"path": [
+						"api",
+						"getLastPowerData"
+					],
+					"query": [
+						{
+							"key": "sysSn",
+							"value": "AL20020171xxxxx"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "According SN to get system power data",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "appId",
+						"value": "{{appId}}",
+						"type": "text"
+					},
+					{
+						"key": "timeStamp",
+						"value": "{{timeStamp}}",
+						"type": "text"
+					},
+					{
+						"key": "sign",
+						"value": "{{sign}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "https://openapi.alphaess.com/api/getOneDayPowerBySn?queryDate=2023-03-06&sysSn=AL20020171xxxxx",
+					"protocol": "https",
+					"host": [
+						"openapi",
+						"alphaess",
+						"com"
+					],
+					"path": [
+						"api",
+						"getOneDayPowerBySn"
+					],
+					"query": [
+						{
+							"key": "queryDate",
+							"value": "2023-03-06"
+						},
+						{
+							"key": "sysSn",
+							"value": "AL20020171xxxxx"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "According SN to get System Energy Data",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "appId",
+						"value": "{{appId}}",
+						"type": "text"
+					},
+					{
+						"key": "timeStamp",
+						"value": "{{timeStamp}}",
+						"type": "text"
+					},
+					{
+						"key": "sign",
+						"value": "{{sign}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "https://openapi.alphaess.com/api/getOneDateEnergyBySn?queryDate=2023-02-14&sysSn=AL20020171xxxxx",
+					"protocol": "https",
+					"host": [
+						"openapi",
+						"alphaess",
+						"com"
+					],
+					"path": [
+						"api",
+						"getOneDateEnergyBySn"
+					],
+					"query": [
+						{
+							"key": "queryDate",
+							"value": "2023-02-14"
+						},
+						{
+							"key": "sysSn",
+							"value": "AL20020171xxxxx"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "According SN to get charging setting information",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "appId",
+						"value": "{{appId}}",
+						"type": "text"
+					},
+					{
+						"key": "timeStamp",
+						"value": "{{timeStamp}}",
+						"type": "text"
+					},
+					{
+						"key": "sign",
+						"value": "{{sign}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "https://openapi.alphaess.com/api/getChargeConfigInfo?sysSn=AL20020171xxxxx",
+					"protocol": "https",
+					"host": [
+						"openapi",
+						"alphaess",
+						"com"
+					],
+					"path": [
+						"api",
+						"getChargeConfigInfo"
+					],
+					"query": [
+						{
+							"key": "sysSn",
+							"value": "AL20020171xxxxx"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "According SN to Set charging information",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "appId",
+						"value": "{{appId}}",
+						"type": "text"
+					},
+					{
+						"key": "timeStamp",
+						"value": "{{timeStamp}}",
+						"type": "text"
+					},
+					{
+						"key": "sign",
+						"value": "{{sign}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"sysSn\":\"AL20020171xxxxx\",\r\n    \"batHighCap\":\"95\",\r\n    \"gridCharge\":1,\r\n    \"timeChae1\":\"22:15\",\r\n    \"timeChae2\":\"00:00\",\r\n    \"timeChaf1\":\"00:00\",\r\n    \"timeChaf2\":\"01:15\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://openapi.alphaess.com/api/updateChargeConfigInfo",
+					"protocol": "https",
+					"host": [
+						"openapi",
+						"alphaess",
+						"com"
+					],
+					"path": [
+						"api",
+						"updateChargeConfigInfo"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "According to SN discharge setting information",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "appId",
+						"value": "{{appId}}",
+						"type": "text"
+					},
+					{
+						"key": "timeStamp",
+						"value": "{{timeStamp}}",
+						"type": "text"
+					},
+					{
+						"key": "sign",
+						"value": "{{sign}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "https://openapi.alphaess.com/api/getDisChargeConfigInfo?sysSn=AL20020171xxxxx",
+					"protocol": "https",
+					"host": [
+						"openapi",
+						"alphaess",
+						"com"
+					],
+					"path": [
+						"api",
+						"getDisChargeConfigInfo"
+					],
+					"query": [
+						{
+							"key": "sysSn",
+							"value": "AL20020171xxxxx"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "According to SN Set discharge information",
+			"protocolProfileBehavior": {
+				"disabledSystemHeaders": {}
+			},
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "appId",
+						"value": "{{appId}}",
+						"type": "text"
+					},
+					{
+						"key": "timeStamp",
+						"value": "{{timeStamp}}",
+						"type": "text"
+					},
+					{
+						"key": "sign",
+						"value": "{{sign}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"sysSn\":\"AL20020171xxxxx\",\r\n    \"batUseCap\":10,\r\n    \"ctrDis\":0,\r\n    \"timeDise1\":\"00:00\",\r\n    \"timeDise2\":\"00:00\",\r\n    \"timeDisf1\":\"00:00\",\r\n    \"timeDisf2\":\"00:00\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://openapi.alphaess.com/api/updateDisChargeConfigInfo",
+					"protocol": "https",
+					"host": [
+						"openapi",
+						"alphaess",
+						"com"
+					],
+					"path": [
+						"api",
+						"updateDisChargeConfigInfo"
+					]
+				}
+			},
+			"response": []
+		}
+		 
+	]
+}

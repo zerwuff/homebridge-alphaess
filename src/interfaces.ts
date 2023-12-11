@@ -24,3 +24,14 @@ export class PriceTrigger {
     this.date = date;
   }
 }
+
+
+export class AlphaData {
+  soc: number;
+  ppv: number;
+  timeStamp: string;
+  constructor(soc:number, ppv:number, timeStamp: string){
+    this.ppv = ppv;
+    this.soc = soc;
+  }
+}

@@ -1,16 +1,15 @@
 import 'jest';
 
 import { AlphaService, EnergyTriggerPlugin, TibberService } from '../../src/index';
-
 import { Logging } from 'homebridge';
 import { PlatformConfig} from 'homebridge';
-import { API } from 'homebridge';
 import { Mock, Times, It } from 'moq.ts';
+import { API } from 'homebridge';
 import { PriceTrigger } from '../../src/interfaces';
 import { IPrice } from 'tibber-api/lib/src/models/IPrice';
 import { PriceLevel } from 'tibber-api/lib/src/models/enums/PriceLevel';
 
-import { AlphaData, AlphaDetailResponse } from '../../src/alpha/response/AlphaDetailResponse';
+import { AlphaData, AlphaLastPowerDataResponse } from '../../src/alpha/response/AlphaLastPowerDataResponse';
 
 
 const loging = new Mock<Logging>()
@@ -43,8 +42,8 @@ class PriceTestData implements IPrice {
 }
 
 
-const alphaDetailResp = new Promise<AlphaDetailResponse>((resolve) => {
-  const detail = new AlphaDetailResponse();
+const alphaDetailResp = new Promise<AlphaLastPowerDataResponse>((resolve) => {
+  const detail = new AlphaLastPowerDataResponse();
   detail.code = 200;
   detail.data = new AlphaData();
   resolve(detail);
@@ -55,7 +54,7 @@ test('test trigger tibber service via energy plugin - expect triggered ', async 
   const listIprice:IPrice[] = [new PriceTestData(10, '10:00'), new PriceTestData(20, '12:00')];
 
   const alphaService = new Mock<AlphaService>()
-    .setup( instance => instance.getDetailData). returns(() => alphaDetailResp );
+    .setup( instance => instance.getLastPowerData). returns(() => alphaDetailResp );
 
   const tibberServiceOrigin = new TibberService(loging.object(), 'apiKey', 'queryUrl', 0.2, false);
   tibberServiceOrigin.setLogger(loging.object());
@@ -102,7 +101,7 @@ test('test trigger tibber service via energy plugin - expect not triggered', asy
     new PriceTestData(25.0, '12:00')];
 
   const alphaService = new Mock<AlphaService>()
-    .setup( instance => instance.getDetailData). returns(() => alphaDetailResp );
+    .setup( instance => instance.getLastPowerData). returns(() => alphaDetailResp );
 
   const tibberServiceOrigin = new TibberService(loging.object(), 'apiKey', 'queryUrl', 0.5, false);
   tibberServiceOrigin.setLogger(loging.object());
@@ -151,7 +150,7 @@ test('test trigger tibber service via energy plugin - expect no change during ex
     new PriceTestData(25.0, '12:00')];
 
   const alphaService = new Mock<AlphaService>()
-    .setup( instance => instance.getDetailData). returns(() => alphaDetailResp );
+    .setup( instance => instance.getLastPowerData). returns(() => alphaDetailResp );
 
   const tibberServiceOrigin = new TibberService(loging.object(), 'apiKey', 'queryUrl', 0.5, false);
   tibberServiceOrigin.setLogger(loging.object());

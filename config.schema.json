@@ -7,22 +7,22 @@
       "alphaUrl": {
         "title": "Alpha ESS UL",
         "type": "string",
-        "default":"https://www.alphaess-cloud.com/api",
+        "default":"https://openapi.alphaess.com/api",
         "required": true,
         "description" :  "The alpha ess base url"
       },
 
-      "username": {
-        "title": "Username",
+      "appid": {
+        "title": "App Id",
         "type": "string",
         "required": true,
-        "description" :  "the alpha ess username"
+        "description" :  "the alpha ess app id"
       },
-      "password": {
-        "title": "password",
+      "appsecret": {
+        "title": "App Secret", 
         "type": "string",
         "required": true,
-        "description" : "the alpa ess password"
+        "description" : "the alpa ess app secret"
       },
       "serialnumber": {
         "title": "serialnumber",

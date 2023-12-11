@@ -61,14 +61,13 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
     this.setCharacteristics(this.hap, this.config);
 
     this.alphaImageService = new ImageRenderingService();
-    this.alphaService = new AlphaService(this.log, config.username, config.password, config.logrequestdata, config.alphaUrl);
+    this.alphaService = new AlphaService(this.log, config.appid, config.appsecret, config.logrequestdata, config.alphaUrl);
     this.log.debug(config.serialnumber);
-    this.log.debug(config.username);
     this.tibberLoadingMinutes = config.tibberLoadingMinutes;
 
     this.triggerImageFilename = config.triggerImageFilename;
-    if (!config.serialnumber || !config.username || !config.password) {
-      this.log.debug('Alpha ESS trigger is disabled: either serialnumber, password or username not present');
+    if (!config.serialnumber || !config.appid || !config.appsecret) {
+      this.log.debug('Alpha ESS trigger is disabled: either serialnumber, appid or appsecret not present');
     }
 
     if (!config.tibberEnabled ) {
@@ -188,79 +187,68 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
   async calculateAlphaTrigger(serialNumber: string) {
     this.triggerAlpha = false;
     this.log.debug('fetch Alpha ESS Data -> fetch token');
-    await this.alphaService.login().then(loginResponse => {
 
-      if (loginResponse.data !== undefined && loginResponse.data.AccessToken !== undefined) {
-        this.log.debug('Logged in to alpha cloud, trying to fetch detail data');
 
-        const priceIsLow = this.triggerTibber;
-        const socBattery = this.socCurrent;
-        const socBatteryThreshold = this.tibberThresholdSOC;
+    const priceIsLow = this.triggerTibber;
+    const socBattery = this.socCurrent;
+    const socBatteryThreshold = this.tibberThresholdSOC;
 
-        // check battery reloading
+    // check battery reloading
 
-        if (this.config.tibberEnabled && this.tibber.getTibberLoadingBatteryEnabled() ) {
-          this.log.debug('Check reloading of battery triggered ');
-          this.alphaService.checkAndEnableReloading(
-            loginResponse.data.AccessToken,
-            serialNumber,
-            priceIsLow,
-            this.tibberLoadingMinutes,
-            socBattery,
-            socBatteryThreshold).then(
-            () => {
-              this.log.debug('Check reloading if battery from net was done.');
-            },
-          ) .catch(error => {
-            this.log.error('Error Checking Battery Loading via Tibber price trigger ' + error);
-            return;
-          });
+    if (this.config.tibberEnabled && this.tibber.getTibberLoadingBatteryEnabled() ) {
+      this.log.debug('Check reloading of battery triggered ');
+      this.alphaService.checkAndEnableReloading(
+        serialNumber,
+        priceIsLow,
+        this.tibberLoadingMinutes,
+        socBattery,
+        socBatteryThreshold).then(
+        () => {
+          this.log.debug('Check reloading if battery from net was done.');
+        },
+      ) .catch(error => {
+        this.log.error('Error Checking Battery Loading via Tibber price trigger ' + error);
+        return;
+      });
 
-          this.alphaService.isBatteryCurrentlyLoading(loginResponse.data.AccessToken, serialNumber).then(
-            batteryLoading => {
-              this.isBatteryLoadingFromNet = batteryLoading;
-            }).catch(error => {
-            this.isBatteryLoadingFromNet = false;
-            this.log.error('Error Checking Battery currently loading not possible ' + error);
-            return;
-          });
+      this.alphaService.isBatteryCurrentlyLoading(serialNumber).then(
+        batteryLoading => {
+          this.isBatteryLoadingFromNet = batteryLoading;
+        }).catch(error => {
+        this.isBatteryLoadingFromNet = false;
+        this.log.error('Error Checking Battery currently loading not possible ' + error);
+        return;
+      });
 
-        }
+    }
 
-        this.alphaService.getDetailData(loginResponse.data.AccessToken, serialNumber).then(
-          detailData => {
-            if (detailData!==null && detailData.data!==null){
-              this.log.debug('SOC: ' + detailData.data.soc);
-              this.setSocCurrent( detailData.data.soc);
-              this.triggerAlpha= this.alphaService.isTriggered(
-                detailData, this.config.powerLoadingThreshold, this.config.socLoadingThreshold);
+    this.alphaService.getLastPowerData(serialNumber).then(
+      detailData => {
+        if (detailData!==null && detailData.data!==null){
+          this.log.debug('SOC: ' + detailData.data.soc);
+          this.setSocCurrent( detailData.data.soc);
+          this.triggerAlpha= this.alphaService.isTriggered(
+            detailData, this.config.powerLoadingThreshold, this.config.socLoadingThreshold);
 
-              const now = new Date();
-              const hours = now.getHours();
-              const min = now.getMinutes();
-              const index = hours * 4 + Math.round(min/15);
-              this.alphaTriggerMap.set(index, new AlphaTrigger(this.triggerAlpha ? 1:0, this.isBatteryLoadingFromNet, new Date()));
+          const now = new Date();
+          const hours = now.getHours();
+          const min = now.getMinutes();
+          const index = hours * 4 + Math.round(min/15);
+          this.alphaTriggerMap.set(index, new AlphaTrigger(this.triggerAlpha ? 1:0, this.isBatteryLoadingFromNet, new Date()));
 
-              if (this.utils.isNewDate(now, this.lastClearDate)){
-                // day switch, empty cache
-                this.alphaTriggerMap.clear();
-                if (this.tibber !== undefined){
-                  this.tibber.getDailyMap().clear();
-                }
-                this.lastClearDate = now;
-              }
+          if (this.utils.isNewDate(now, this.lastClearDate)){
+            // day switch, empty cache
+            this.alphaTriggerMap.clear();
+            if (this.tibber !== undefined){
+              this.tibber.getDailyMap().clear();
             }
-          },
-        ).catch(error => {
-          this.log.error('Getting Statistics Data from Alpha Ess failed ' + error);
-          return;
-        });
-
-      }else {
-        this.log.error('Could not login to Alpha Cloud, please check username or password');
-      }
-    }).catch(error => {
-      this.log.error('Login to Alpha Ess failed ' + error);
+            this.lastClearDate = now;
+          }
+        }
+      },
+    ).catch(error => {
+      this.log.error('Getting Statistics Data from Alpha Ess failed ' + error);
+      return;
     });
   }
 
