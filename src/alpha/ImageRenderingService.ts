@@ -1,5 +1,4 @@
-import { AlphaStatisticsByDayResponse } from './response/AlphaStatisticsByDayResponse';
-import { AlphaTrigger } from '../interfaces';
+import { AlphaData, AlphaTrigger } from '../interfaces';
 import { PriceTrigger } from '../interfaces';
 
 const sharp = require('sharp');
@@ -315,10 +314,9 @@ export class ImageRenderingService{
     return view;
   }
 
-  async renderImage(power_image_filename:string, statistics:AlphaStatisticsByDayResponse): Promise<boolean>{
+  async renderImage(power_image_filename:string, statistics:Map<number, AlphaData>): Promise<boolean>{
 
-    if (statistics === null || (statistics!==null && statistics.data === null) ||
-        (statistics.data === undefined) || (statistics.data !== undefined && statistics.data.Time === undefined) ){
+    if (statistics === null ){
       console.log('statistics response is empty, skipping image rendering');
       return false;
     }
@@ -327,14 +325,15 @@ export class ImageRenderingService{
     const batteryData = {};
     let cnt = 0;
     const values = [];
-    statistics.data.Time.forEach(timeStamp => {
-      const ppv = statistics.data.Ppv[cnt] * 100;
-      const soc = statistics.data.Cbat[cnt];
-      powerData[timeStamp]= ppv*10;
-      batteryData[timeStamp]= soc;
+    statistics.forEach(element => {
+      const ppv = element.ppv;
+      const soc = element.soc;
+
+      powerData[element.timeStamp]= ppv*10;
+      batteryData[element.timeStamp]= soc;
       cnt++;
       const colorBatteryLoading = colorBattery;
-      const entry = {timeStamp: timeStamp, time:cnt, ppv: ppv*10, soc:soc, colorBattery: colorBatteryLoading};
+      const entry = {timeStamp: element.timeStamp, time:cnt, ppv: ppv*10, soc:soc, colorBattery: colorBatteryLoading};
       values.push(entry);
     });
     this.graphToImageAlpha(power_image_filename, values);

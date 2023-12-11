@@ -23,26 +23,11 @@ export { AlphaService } from './alpha/AlphaService';
 export { AlphaMqttService, MqttTopics } from './alpha/mqtt/AlphaMqttService';
 
 export { AlphaTrigger } from './interfaces';
-
 export { EnergyTriggerPlugin } from './EnergyTriggerPlugin';
-
 export { TibberService } from './tibber/TibberService';
-
 export { ImageRenderingService } from './alpha/ImageRenderingService';
 
 export { Utils } from './util/Utils';
-
-/**
-export = (api: API) => {
-  api.registerPlatform(PLATFORM_NAME, AlphaEssPlatformPlugin);
-
-};**/
-
-
-//&export default (api: API) => {
-//&&  api.registerPlatform(PLATFORM_NAME, AlphaEssPlatformPlugin);
-//};
-
 
 class AlphaEssPlatformPlugin implements StaticPlatformPlugin {
 

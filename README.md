@@ -1,11 +1,11 @@
 
 # Alpha - ESS Homebridge Plugin
 
-Connecting Alpha ESS batteries with your homebridge and automate!
+Connecting Alpha ESS OpenAPI Account with your homebridge and automate!
 
 <img src="Screen.png" width="800"/>
 
-This plugin connects the alpha ess cloud to homebridge and provides 2 accessories:
+This plugin connects the alpha ess open cloud api (https://open.alphaess.com/) to homebridge and provides 2 accessories:
  
  - the alpha ess battery percentage as humidity sensor (0-100)% 
  - a contact sensor that is triggered, when the following thresholds are met:
@@ -42,7 +42,11 @@ Install via plugins in the Homebridge Ui, search for :
  homebridge-alphaess
 ```
 
-Click install and do the following configuration:
+# Installation in Homebridge:
+Register App Id and Secret via 
+
+https://open.alphaess.com/ and use this for the configuration: 
+
 
  # Configuration
 ```js
@@ -50,9 +54,9 @@ Click install and do the following configuration:
      {
             "name": "AlphaEssPlatform",
             "platform": "AlphaEssPlatform",
-            "username": "XXXX",
-            "password": "XXXX",
-            "serialnumber": "AE3100520050057",        
+            "appid": "XXXX", #
+            "appsecret": "XXXX",
+            "serialnumber": "AE31005xxxxxxxx",        
             "logrequestdata": "false",        
             "powerLoadingThreshold": 1500, # generated sun power in watts to enable trigger
             "socLoadingThreshold": 10,    # lower threshold of soc to enable trigger

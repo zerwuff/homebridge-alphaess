@@ -1,11 +1,11 @@
 
 import { Logging } from 'homebridge';
 import crypto from 'crypto';
-import { AlphaLoginResponse } from './response/AlphaLoginResponse';
-import { AlphaDetailResponse } from './response/AlphaDetailResponse';
-import { AlphaStatisticsByDayResponse } from './response/AlphaStatisticsByDayResponse';
+import { AlphaLastPowerDataResponse } from './response/AlphaLastPowerDataResponse';
 import { ObjectMapper } from 'jackson-js';
 import { AlphaSettingsResponse } from './response/AlphaSettingsResponse';
+import { AlphaData } from '../interfaces';
+import { Utils } from '../util/Utils';
 const request = require('request');
 
 const WAIT_LOADING_THRESHOLD_MIN = 9;
@@ -18,19 +18,29 @@ const AUTHSUFFIX = 'ui893ed';
 
 export class AlphaService {
   private logger: Logging;
-  private username;
-  private password;
+  private appid:string;
+  private appsecret:string;
   private logRequestDetails: boolean;
   private baseUrl: string;
   private lastLoadingStart:Date;
+  private dailyMap: Map<number, AlphaData>;
+  private utils: Utils;
+  private lastClearDate: Date ;
 
-  constructor(logger: Logging | undefined, username: string | undefined, password: string, logRequestDetails: boolean, url: string ) {
+  constructor(logger: Logging | undefined, appid: string | undefined, appsecret: string, logRequestDetails: boolean, url: string ) {
     this.logger = logger;
-    this.password = password;
-    this.username = username;
+    this.appid = appid;
+    this.appsecret = appsecret;
     this.logRequestDetails = logRequestDetails;
     this.baseUrl = url;
     this.lastLoadingStart = undefined;
+    this.dailyMap = new Map();
+    this.utils = new Utils();
+    this.lastClearDate = new Date();
+    this.lastClearDate.setHours(0);
+    this.lastClearDate.setMinutes(0);
+    this.lastClearDate.setMinutes(1);
+    this.clearHistoricData();
   }
 
 
@@ -38,48 +48,13 @@ export class AlphaService {
     this.lastLoadingStart = lastLoadingStart ;
   }
 
-  async getDetailData(token, serialNumber): Promise<AlphaDetailResponse> {
-    const authtimestamp = Math.round(new Date().getTime() / 1000).toString();
-    const authsignature = this.getSignature(authtimestamp);
-    const url = this.baseUrl + '/ESS/GetLastPowerDataBySN?noLoading=true&sys_sn=' + serialNumber;
-
-    if (this.logRequestDetails) {
-      this.logRequestData(authsignature, authtimestamp, url, '', token, serialNumber);
-    }
-
-    const req = {
-      method: 'GET',
-      url: url,
-      json: true,
-      gzip: false,
-      headers: {
-        'Content-Type': 'application/json',
-        'Connection': 'keep-alive',
-        'authtimestamp': authtimestamp,
-        'authsignature': authsignature,
-        'Authorization': 'Bearer ' + token,
-      },
-    };
-
-    return new Promise((resolve, reject) => {
-      request(req, (error, response, body) => {
-        if (!error && response.statusCode == 200) {
-          const detailResponse = new ObjectMapper().parse<AlphaDetailResponse>(JSON.stringify(body));
-          return resolve(detailResponse);
-        }
-        return reject(body);
-      },
-      );
-    });
-  }
-
 
   // check if current loading of battery makes sense, and if so trigger it
-  async checkAndEnableReloading(token:string, serialNumber:string, priceIsLow : boolean, numberOfMinutes:number,
+  async checkAndEnableReloading(serialNumber:string, priceIsLow : boolean, numberOfMinutes:number,
     socBattery:number, socLowerThreshold:number):
     Promise <Map<string, unknown>> {
 
-    const settingsData = await this.getSettingsData(token, serialNumber).catch( () => {
+    const settingsData = await this.getSettingsData(serialNumber).catch( () => {
       this.logMsg('could not fetch settings data ');
       const resp = new AlphaSettingsResponse();
       resp.data = new Map<string, undefined> ;
@@ -92,7 +67,7 @@ export class AlphaService {
     // update settings needed
     if (updateSettingsData!==undefined){
       // update required
-      await this.setAlphaSettings(token, serialNumber, updateSettingsData);
+      await this.setAlphaSettings(serialNumber, updateSettingsData);
       return updateSettingsData;
     }
 
@@ -101,9 +76,9 @@ export class AlphaService {
 
 
   // calculate loading settings: if currently loading, continue, else disable loading trigger
-  async isBatteryCurrentlyLoading(token: string, serialNumber:string) : Promise<boolean> {
+  async isBatteryCurrentlyLoading(serialNumber:string) : Promise<boolean> {
 
-    const alphaSettingsResponse = await this.getSettingsData(token, serialNumber).catch( () => {
+    const alphaSettingsResponse = await this.getSettingsData(serialNumber).catch( () => {
       this.logMsg('could not fetch settings data ');
       const resp = new AlphaSettingsResponse();
       resp.data = new Map<string, undefined>;
@@ -112,16 +87,16 @@ export class AlphaService {
 
     const settings = alphaSettingsResponse.data;
     // enable trigger reloading now for one hour, exit
-    const timeLoadingStart = ''+ settings['time_chaf1a'];
+    const timeLoadingStart = ''+ settings['timeChaf1'];
     const hourLoadingStart = parseInt(timeLoadingStart.substring(0, 2));
     const time_active_start = new Date().getHours() >= hourLoadingStart;
 
-    const timeLoadingEnd = ''+ settings['time_chae1a'];
+    const timeLoadingEnd = ''+ settings['timeChae1'];
     const hourLoadingEnd = parseInt(timeLoadingEnd.substring(0, 2));
     const loadingShallEnd = new Date().getHours() > hourLoadingEnd;
 
 
-    const loadingFeatureSet = settings['grid_charge'] === 1;
+    const loadingFeatureSet = settings['gridCharge'] === 1;
     const isCurrentlyLoading = loadingFeatureSet && time_active_start && !loadingShallEnd ;
 
     return isCurrentlyLoading;
@@ -135,7 +110,7 @@ export class AlphaService {
     const batteryLow = socBattery <= socLowerThreshold ;
 
     // enable trigger reloading now for one hour, exit
-    const timeLoadingStart = ''+ newSettingsData['time_chaf1a'];
+    const timeLoadingStart = ''+ newSettingsData['timeChaf1'];
     const hourLoadingStart = parseInt(timeLoadingStart.substring(0, 2));
     const minuteLoadingStart = parseInt(timeLoadingStart.substring(3));
 
@@ -146,7 +121,7 @@ export class AlphaService {
     const now = new Date();
     const diff_to_Start = plannedLoadingDate.getTime() - now.getTime();
     const time_active_start = diff_to_Start < 1000*60*WAIT_LOADING_THRESHOLD_MIN; // start in 9 minutes ?
-    const loadingFeatureSet = newSettingsData['grid_charge'] === 1 ;
+    const loadingFeatureSet = newSettingsData['gridCharge'] === 1 ;
     const isCurrentlyLoading = time_active_start && loadingFeatureSet ;
 
     // add loading minutes to planned end time
@@ -170,15 +145,15 @@ export class AlphaService {
         this.lastLoadingStart = new Date();
         this.logMsg('lets put some energy in this place for minutes: ' + loadingMinutes);
         const now = new Date();
-        newSettingsData['grid_charge'] = 1;
-        newSettingsData['time_chaf1a'] = this.getLoadingHourString(now.getHours(), now.getMinutes());
+        newSettingsData['gridCharge'] = 1;
+        newSettingsData['timeChaf1'] = this.getLoadingHourString(now.getHours(), now.getMinutes());
         let nextHours = now.getHours();
         if (nextHours===23){
           nextHours = 0; // day switch
         }else {
           nextHours = nextHours + 1;
         }
-        newSettingsData['time_chae1a'] = this.getLoadingHourString(nextHours, now.getMinutes());
+        newSettingsData['timeChae1'] = this.getLoadingHourString(nextHours, now.getMinutes());
         this. logMsg('currently not loading detected, enable it via api ');
         return newSettingsData;
       }
@@ -189,9 +164,9 @@ export class AlphaService {
       this.lastLoadingStart = undefined;
       this. logMsg('loading shall stop now, disable it # ');
       // disable loading, set default time values
-      newSettingsData['grid_charge'] = 0;
-      newSettingsData['time_chaf1a'] = '00:00';
-      newSettingsData['time_chae1a'] = '00:00';
+      newSettingsData['gridCharge'] = 0;
+      newSettingsData['timeChaf1'] = '00:00';
+      newSettingsData['timeChae1'] = '00:00';
       return newSettingsData;
     }
     return undefined;
@@ -225,13 +200,22 @@ export class AlphaService {
     return hourString + minuteString;
   }
 
-  async setAlphaSettings(token:string, serialNumber:string, alphaSettingsData:Map<string, unknown> ): Promise<boolean>{
+  async setAlphaSettings(serialNumber:string, alphaSettingsData:Map<string, unknown> ): Promise<boolean>{
     const authtimestamp = Math.round(new Date().getTime() / 1000).toString();
     const authsignature = this.getSignature(authtimestamp);
-    const url = this.baseUrl + '/Account/CustomUseESSSetting';
+    const gridCharge = alphaSettingsData['gridCharge'];
+    const timeChae1 = alphaSettingsData['timeChae1'];
+    const timeChae2 = alphaSettingsData['timeChae2'];
+    const timeChaf1 = alphaSettingsData['timeChaf1'];
+    const timeChaf2 = alphaSettingsData['timeChaf2'];
+
+    const url = this.baseUrl + '/updateChargeConfigInfo?sysSn='+serialNumber+'&batHighCap=100&gridCharge='+gridCharge + '&timeChae1='+timeChae1+ '&timeChae2='+ timeChae2 +'&timeChaf1='+timeChaf1 + '&timeChaf2='+timeChaf2;
     if (this.logRequestDetails) {
-      this.logRequestData(authsignature, authtimestamp, url, '', token, serialNumber);
+      this.logRequestData(authsignature, authtimestamp, url, '', '', serialNumber);
     }
+    //
+    //   params = {"sysSn": sn, "batHighCap": bat_high_cap, "gridCharge": grid_charge, "timeChae1": time_chae1,
+    // "timeChae2": time_chae2, "timeChaf1": time_chaf1, "timeChaf2": time_chaf2}
 
     const req = {
       method: 'POST',
@@ -241,11 +225,10 @@ export class AlphaService {
       headers: {
         'Content-Type': 'application/json',
         'Connection': 'keep-alive',
-        'authtimestamp': authtimestamp,
-        'authsignature': authsignature,
-        'Authorization': 'Bearer ' + token,
+        'appId': this.appid,
+        'timeStamp': authtimestamp,
+        'sign': authsignature,
       },
-      body: alphaSettingsData,
     };
 
     return new Promise((resolve, reject) => {
@@ -260,13 +243,13 @@ export class AlphaService {
   }
 
 
-  async getSettingsData(token:string, serialNumber:string): Promise<AlphaSettingsResponse> {
+  async getSettingsData(serialNumber:string): Promise<AlphaSettingsResponse> {
     const authtimestamp = Math.round(new Date().getTime() / 1000).toString();
     const authsignature = this.getSignature(authtimestamp);
-    const url = this.baseUrl + '/Account/GetCustomUseESSSetting';
+    const url = this.baseUrl + '/getChargeConfigInfo?sysSn='+serialNumber;
 
     if (this.logRequestDetails) {
-      this.logRequestData(authsignature, authtimestamp, url, '', token, serialNumber);
+      this.logRequestData(authsignature, authtimestamp, url, '', '', serialNumber);
     }
 
     const req = {
@@ -277,9 +260,9 @@ export class AlphaService {
       headers: {
         'Content-Type': 'application/json',
         'Connection': 'keep-alive',
-        'authtimestamp': authtimestamp,
-        'authsignature': authsignature,
-        'Authorization': 'Bearer ' + token,
+        'appId': this.appid,
+        'timeStamp': authtimestamp,
+        'sign': authsignature,
       },
     };
 
@@ -287,6 +270,9 @@ export class AlphaService {
       request(req, (error, response, body) => {
         if (!error && response.statusCode == 200) {
           const response = new ObjectMapper().parse<AlphaSettingsResponse>(JSON.stringify(body));
+          if (response.data === undefined || response.code !== 200 ){
+            return reject(body);
+          }
           return resolve(response);
         }
         return reject(body);
@@ -295,41 +281,37 @@ export class AlphaService {
     });
   }
 
-  async getStatisticsData(token:string, serialNumber:string): Promise<AlphaStatisticsByDayResponse> {
+  async getLastPowerData(serialNumber): Promise<AlphaLastPowerDataResponse> {
     const authtimestamp = Math.round(new Date().getTime() / 1000).toString();
     const authsignature = this.getSignature(authtimestamp);
-    const url = this.baseUrl + '/Power/SticsByDay';
-
-    const dateString = new Date().toDateString();
+    const url = this.baseUrl + '/getLastPowerData?sysSn=' + serialNumber;
 
     if (this.logRequestDetails) {
-      this.logRequestData(authsignature, authtimestamp, url, '', token, serialNumber);
+      this.logRequestData(authsignature, authtimestamp, url, '', '', serialNumber);
     }
 
     const req = {
-      method: 'POST',
+      method: 'GET',
       url: url,
       json: true,
       gzip: false,
       headers: {
         'Content-Type': 'application/json',
         'Connection': 'keep-alive',
-        'authtimestamp': authtimestamp,
-        'authsignature': authsignature,
-        'Authorization': 'Bearer ' + token,
-      },
-      body:
-      {
-        sn: serialNumber,
-        szDay: dateString,
+        'appId': this.appid,
+        'timeStamp': authtimestamp,
+        'sign': authsignature,
       },
     };
 
     return new Promise((resolve, reject) => {
       request(req, (error, response, body) => {
         if (!error && response.statusCode == 200) {
-          const response = new ObjectMapper().parse<AlphaStatisticsByDayResponse>(JSON.stringify(body));
-          return resolve(response);
+          const detailResponse = new ObjectMapper().parse<AlphaLastPowerDataResponse>(JSON.stringify(body));
+
+          this.storeData(detailResponse);
+
+          return resolve(detailResponse);
         }
         return reject(body);
       },
@@ -337,54 +319,39 @@ export class AlphaService {
     });
   }
 
-  async login(): Promise<AlphaLoginResponse> {
-    const authtimestamp = Math.round(new Date().getTime() / 1000).toString();
-    const authsignature = this.getSignature(authtimestamp);
-    const url = this.baseUrl + '/Account/Login';
-    if (this.logRequestDetails) {
-      this.logRequestData(authsignature, authtimestamp, url, '', '', '');
+  storeData(resp:AlphaLastPowerDataResponse){
+    const now = new Date();
+    const hours = now.getHours();
+    const min = now.getMinutes();
+    const index = hours * 4 + Math.round(min/15);
+    this.dailyMap.set(index, new AlphaData(resp.data.soc, resp.data.ppv, ''+ index));
+
+    if (this.utils.isNewDate(now, this.lastClearDate)){
+      // day switch, empty cache
+      this.clearHistoricData();
+      this.lastClearDate = now;
     }
-
-    const req = {
-      method: 'POST',
-      url: url,
-      json: true,
-      gzip: false,
-      headers: {
-        'Content-Type': 'application/json',
-        'Connection': 'keep-alive',
-        'authtimestamp': authtimestamp,
-        'authsignature': authsignature,
-      },
-      body:
-            {
-              username: this.username,
-              password: this.password,
-            },
-    };
-
-    return new Promise((resolve, reject) => {
-      request(req, (error, response, body) => {
-        if (!error && response.statusCode == 200) {
-          const loginResponse = new ObjectMapper().parse<AlphaLoginResponse>(JSON.stringify(body));
-          return resolve(loginResponse);
-        }
-        return reject(body);
-      },
-      );
-    });
   }
 
+  clearHistoricData(){
+    this.dailyMap.clear();
+    let clearIndex = 0;
+    while (clearIndex < 96 ) { // 15 min intervall
+      this.dailyMap.set(clearIndex, new AlphaData(0, 0, ''+ clearIndex) ) ;
+      clearIndex++ ;
+    }
+  }
 
-  getTotalPower(detailData: AlphaDetailResponse){
-    const stringPowerTotal = detailData.data.ppv1 + detailData.data.ppv2 +
-    detailData.data.ppv3 + detailData.data.ppv4 +
-    detailData.data.pmeter_dc;
-    return stringPowerTotal;
+  getDailyMap() : Map<number, AlphaData>{
+    return this.dailyMap;
+  }
+
+  getTotalPower(detailData: AlphaLastPowerDataResponse){
+    return detailData.data.ppv;
   }
 
   // calculate the trigger depending on power and socLoading
-  isTriggered(detailData:AlphaDetailResponse, powerLoadingThreshold:number, socLoadingThreshold: number): boolean {
+  isTriggered(detailData:AlphaLastPowerDataResponse, powerLoadingThreshold:number, socLoadingThreshold: number): boolean {
     let trigger = false;
     const soc = detailData.data.soc;
     // power of all strings plus dc power = total energy from the sun into the system
@@ -417,8 +384,8 @@ export class AlphaService {
   }
 
   private getSignature(authtimestamp):string {
-    const gen_hash = crypto.createHash('sha512').update(AUTHCONSTANT + authtimestamp).digest('hex');
-    return AUTHPREFIX + gen_hash + AUTHSUFFIX;
+    const gen_hash = crypto.createHash('sha512').update(this.appid + this.appsecret + authtimestamp).digest('hex');
+    return gen_hash;
   }
 
   logRequestData(authsignature: string, authtimestamp: string, url: string, data: string, token: string, serialNumber) {
