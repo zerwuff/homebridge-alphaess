@@ -33,5 +33,6 @@ export class AlphaData {
   constructor(soc:number, ppv:number, timeStamp: string){
     this.ppv = ppv;
     this.soc = soc;
+    this.timeStamp = timeStamp;
   }
 }

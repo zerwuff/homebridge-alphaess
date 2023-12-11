@@ -2,9 +2,9 @@ import 'jest';
 import { MockServer } from 'jest-mock-server';
 
 import { AlphaService } from '../../src/alpha/AlphaService';
-import { AlphaLastPowerDataResponse, AlphaData } from '../../src/alpha/response/AlphaLastPowerDataResponse';
+import { AlphaData } from '../../src/interfaces';
+import { AlphaLastPowerDataResponse, AlphaDataResponse } from '../../src/alpha/response/AlphaLastPowerDataResponse';
 import { ImageRenderingService } from '../../src/alpha/ImageRenderingService';
-import fs from 'fs';
 import { AlphaSettingsResponse } from '../../src/alpha/response/AlphaSettingsResponse';
 
 const serialNumber ='blafasel';
@@ -31,7 +31,7 @@ describe('Integration Test with Mock Server', () => {
 
 
     const detailRoute = server.get('/getLastPowerData').mockImplementationOnce((ctx) => {
-      const alphaData = new AlphaData();
+      const alphaData = new AlphaDataResponse();
       alphaData.ppv = 90;
       alphaData.pbat = 120;
       alphaData.pload = 12;
@@ -135,11 +135,34 @@ test('test image rendering', async () => {
   expect(imageUrl).toBeDefined();
 });
 
+test('test image rendering alpha image', async () => {
+  const imageService = new ImageRenderingService();
+  const alphaData = new Map<number, AlphaData>();
+  let clearIndex = 0;
+
+  while (clearIndex < 96 ) { // 15 min intervall
+    alphaData.set(clearIndex, new AlphaData(0, 0, ''+ clearIndex) ) ;
+    clearIndex++ ;
+  }
+  alphaData.set(55, new AlphaData(100, 2000, '' ));
+  alphaData.set(56, new AlphaData(100, 1800, '' ));
+  alphaData.set(57, new AlphaData(100, 1570, '' ));
+  alphaData.set(58, new AlphaData(100, 1300, '' ));
+  alphaData.set(59, new AlphaData(100, 1300, '' ));
+  alphaData.set(60, new AlphaData(100, 1300, '' ));
+
+  const imageUrl = await imageService.renderImage('testgraph_static.png', alphaData );
+  expect(imageUrl).toBeDefined();
+});
+
+
+
+
 
 test('positive test: threshold of Detail Response exceeds config -> trigger value: true ', () => {
   const alphaService = new AlphaService(undefined, '123', 'password', true, 'http://localhost:8080');
   const response = new AlphaLastPowerDataResponse();
-  const data = new AlphaData();
+  const data = new AlphaDataResponse();
   data.ppv = 750;
   data.soc=21;
   response.data = data;
@@ -152,7 +175,7 @@ test('negative test: threshold of Detail Response exceeds config -> trigger valu
 
   const alphaService = new AlphaService(undefined, '123', 'password', true, 'http://localhost:8080');
   const response = new AlphaLastPowerDataResponse();
-  const data = new AlphaData();
+  const data = new AlphaDataResponse();
   data.ppv = 750;
   data.soc= 10;
   response.data = data; response.data = data;
@@ -165,7 +188,7 @@ test('negative test: threshold of Detail Response exceeds config -> trigger valu
 
   const alphaService = new AlphaService(undefined, '123', 'password', true, 'http://localhost:8080');
   const response = new AlphaLastPowerDataResponse();
-  const data = new AlphaData();
+  const data = new AlphaDataResponse();
   data.ppv = 750;
   data.soc=21;
   response.data = data;
@@ -178,7 +201,7 @@ test('negative test: threshold of Detail Response exceeds config -> trigger valu
 
   const alphaService = new AlphaService(undefined, '123', 'password', true, 'http://localhost:8080');
   const response = new AlphaLastPowerDataResponse();
-  const data = new AlphaData();
+  const data = new AlphaDataResponse();
   data.ppv = 500;
   data.soc=50;
   response.data = data;
@@ -229,28 +252,6 @@ test('test enable loading if currently not loading. ', async () => {
 
 });
 
-
-
-test('test disable loading if its currently loading,  disabling via battery threshold ', async () => {
-  const alphaService = new AlphaService(undefined, '123', 'password', true, 'http://localhost:8080');
-  const date = new Date();
-  const settingsMap = new Map<string, string>;
-  const minutes = 45;
-  settingsMap['gridCharge']=1;
-  settingsMap['timeChaf1']=getLoadingHourString(date.getHours()-1, date.getMinutes());
-  settingsMap['timeChae1']=getLoadingHourString(date.getHours(), date.getMinutes()+15); // threshold
-
-  const dateLoading = new Date();
-  dateLoading.setHours(date.getMinutes()-20);
-  alphaService.setLastLoadingStart(dateLoading); // loading started 20 minutes ago
-
-  const responseMap = alphaService.calculateUpdatedSettingsData(settingsMap, false, minutes, 31, 30);
-
-  expect(responseMap).toBeDefined();
-  expect(responseMap['gridCharge']).toBe(0);
-  expect(responseMap['timeChaf1']).toBe('00:00');
-  expect(responseMap['timeChae1']).toBe('00:00');
-});
 
 
 

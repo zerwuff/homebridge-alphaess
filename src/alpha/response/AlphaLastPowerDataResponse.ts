@@ -1,7 +1,7 @@
 
 import { JsonProperty, JsonClassType } from 'jackson-js';
 
-export class AlphaData {
+export class AlphaDataResponse {
 
   @JsonProperty() @JsonClassType({type: () => [Number]})
     code: number;
@@ -65,8 +65,8 @@ export class AlphaLastPowerDataResponse {
   @JsonProperty() @JsonClassType({type: () => [Number]})
     code: number;
 
-  @JsonProperty() @JsonClassType({type: () => [AlphaData]})
-    data: AlphaData;
+  @JsonProperty() @JsonClassType({type: () => [AlphaDataResponse]})
+    data: AlphaDataResponse;
 
   @JsonProperty() @JsonClassType({type: () => [String]})
     info: string;

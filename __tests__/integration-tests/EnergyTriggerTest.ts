@@ -9,7 +9,7 @@ import { PriceTrigger } from '../../src/interfaces';
 import { IPrice } from 'tibber-api/lib/src/models/IPrice';
 import { PriceLevel } from 'tibber-api/lib/src/models/enums/PriceLevel';
 
-import { AlphaData, AlphaLastPowerDataResponse } from '../../src/alpha/response/AlphaLastPowerDataResponse';
+import { AlphaDataResponse, AlphaLastPowerDataResponse } from '../../src/alpha/response/AlphaLastPowerDataResponse';
 
 
 const loging = new Mock<Logging>()
@@ -45,7 +45,7 @@ class PriceTestData implements IPrice {
 const alphaDetailResp = new Promise<AlphaLastPowerDataResponse>((resolve) => {
   const detail = new AlphaLastPowerDataResponse();
   detail.code = 200;
-  detail.data = new AlphaData();
+  detail.data = new AlphaDataResponse();
   resolve(detail);
 });
 
