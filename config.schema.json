@@ -5,24 +5,24 @@
   "schema": {
     "properties": {
       "alphaUrl": {
-        "title": "Alpha ESS UL",
+        "title": "Alpha ESS OpenAPI Url",
         "type": "string",
         "default":"https://openapi.alphaess.com/api",
         "required": true,
-        "description" :  "The alpha ess base url"
+        "description" :  "The Alpha ESS OPEN API URL"
       },
 
       "appid": {
         "title": "App Id",
         "type": "string",
         "required": true,
-        "description" :  "the alpha ess app id"
+        "description" :  "The alpha ess open api appId"
       },
       "appsecret": {
         "title": "App Secret", 
         "type": "string",
         "required": true,
-        "description" : "the alpa ess app secret"
+        "description" : "The alpha ess open api appId"
       },
       "serialnumber": {
         "title": "serialnumber",

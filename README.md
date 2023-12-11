@@ -54,6 +54,7 @@ https://open.alphaess.com/ and use this for the configuration:
      {
             "name": "AlphaEssPlatform",
             "platform": "AlphaEssPlatform",
+            "alphaUrl":"https://openapi.alphaess.com/api",
             "appid": "XXXX", #
             "appsecret": "XXXX",
             "serialnumber": "AE31005xxxxxxxx",        
