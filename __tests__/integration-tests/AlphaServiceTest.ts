@@ -144,11 +144,11 @@ test('test image rendering alpha image', async () => {
     alphaData.set(clearIndex, new AlphaData(0, 0, ''+ clearIndex) ) ;
     clearIndex++ ;
   }
-  alphaData.set(55, new AlphaData(100, 2000, '' ));
-  alphaData.set(56, new AlphaData(100, 1800, '' ));
-  alphaData.set(57, new AlphaData(100, 1570, '' ));
-  alphaData.set(58, new AlphaData(100, 1300, '' ));
-  alphaData.set(59, new AlphaData(100, 1300, '' ));
+  alphaData.set(55, new AlphaData(60, 2000, '' ));
+  alphaData.set(56, new AlphaData(80, 1800, '' ));
+  alphaData.set(57, new AlphaData(85, 1570, '' ));
+  alphaData.set(58, new AlphaData(95, 1300, '' ));
+  alphaData.set(59, new AlphaData(98, 1300, '' ));
   alphaData.set(60, new AlphaData(100, 1300, '' ));
 
   const imageUrl = await imageService.renderImage('testgraph_static.png', alphaData );

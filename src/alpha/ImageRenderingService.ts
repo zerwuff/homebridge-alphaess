@@ -328,12 +328,11 @@ export class ImageRenderingService{
     statistics.forEach(element => {
       const ppv = element.ppv;
       const soc = element.soc;
-
-      powerData[element.timeStamp]= ppv*10;
+      powerData[element.timeStamp]= ppv;
       batteryData[element.timeStamp]= soc;
       cnt++;
       const colorBatteryLoading = colorBattery;
-      const entry = {timeStamp: element.timeStamp, time:cnt, ppv: ppv*10, soc:soc, colorBattery: colorBatteryLoading};
+      const entry = {timeStamp: element.timeStamp, time:cnt, ppv: ppv, soc:soc, colorBattery: colorBatteryLoading};
       values.push(entry);
     });
     this.graphToImageAlpha(power_image_filename, values);
