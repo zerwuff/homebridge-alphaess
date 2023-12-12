@@ -30,7 +30,7 @@ describe('Integration Test with Mock Server', () => {
     const mockServerUrl ='http://localhost:' + server.getURL().port;
 
 
-    const detailRoute = server.get('/getLastPowerData').mockImplementationOnce((ctx) => {
+    const lastPowerRoute = server.get('/getLastPowerData').mockImplementationOnce((ctx) => {
       const alphaData = new AlphaDataResponse();
       alphaData.ppv = 90;
       alphaData.pbat = 120;
@@ -43,19 +43,19 @@ describe('Integration Test with Mock Server', () => {
     });
 
     const alphaService = new AlphaService(undefined, appid, secret, logRequestData, mockServerUrl );
-    const details = await alphaService.getLastPowerData(serialNumber);
-    expect(details.data).toBeDefined();
-    expect(details.data.soc).toBeDefined();
+    const lastPowerData = await alphaService.getLastPowerData(serialNumber);
+    expect(lastPowerData.data).toBeDefined();
+    expect(lastPowerData.data.soc).toBeDefined();
 
-    expect(details.data).toBeDefined();
-    expect(details.data.ppv).toEqual(90);
-    expect(details.data.pbat).toEqual(120);
-    expect(details.data.soc).toEqual(44);
-    expect(detailRoute).toHaveBeenCalledTimes(1);
+    expect(lastPowerData.data).toBeDefined();
+    expect(lastPowerData.data.ppv).toEqual(90);
+    expect(lastPowerData.data.pbat).toEqual(120);
+    expect(lastPowerData.data.soc).toEqual(44);
+    expect(lastPowerRoute).toHaveBeenCalledTimes(1);
   });
 
 
-  it('positive test: enable loading  when currently not loading ', async () => {
+  it('positive test: enable loading when currently not loading ', async () => {
 
     const mockServerUrl ='http://localhost:' + server.getURL().port;
     const settingsPost = server.post('/updateChargeConfigInfo').mockImplementation((ctx) => {
@@ -76,7 +76,7 @@ describe('Integration Test with Mock Server', () => {
     const alphaService = new AlphaService(undefined, appid, secret, logRequestData, mockServerUrl );
 
     // when
-    const batteryChargeResult = await alphaService.checkAndEnableReloading('serialNumeber123', true, minutes, 10, 20);
+    const batteryChargeResult = await alphaService.checkAndEnableReloading('serialNumber', true, minutes, 10, 20);
 
     //then
     expect(settingsGetNotLoading).toHaveBeenCalledTimes(1);

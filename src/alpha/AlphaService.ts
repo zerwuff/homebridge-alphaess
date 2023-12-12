@@ -146,6 +146,7 @@ export class AlphaService {
         this.logMsg('lets put some energy in this place for minutes: ' + loadingMinutes);
         const now = new Date();
         newSettingsData['gridCharge'] = 1;
+        newSettingsData['batHighCap'] = 95;
         newSettingsData['timeChaf1'] = this.getLoadingHourString(now.getHours(), now.getMinutes());
         let nextHours = now.getHours();
         if (nextHours===23){
@@ -203,19 +204,34 @@ export class AlphaService {
   async setAlphaSettings(serialNumber:string, alphaSettingsData:Map<string, unknown> ): Promise<boolean>{
     const authtimestamp = Math.round(new Date().getTime() / 1000).toString();
     const authsignature = this.getSignature(authtimestamp);
-    const gridCharge = alphaSettingsData['gridCharge'];
-    const timeChae1 = alphaSettingsData['timeChae1'];
-    const timeChae2 = alphaSettingsData['timeChae2'];
-    const timeChaf1 = alphaSettingsData['timeChaf1'];
-    const timeChaf2 = alphaSettingsData['timeChaf2'];
+    let timeChae1 = alphaSettingsData['timeChae1'];
+    let timeChae2 = alphaSettingsData['timeChae2'];
+    let timeChaf1 = alphaSettingsData['timeChaf1'];
+    let timeChaf2 = alphaSettingsData['timeChaf2'];
+    alphaSettingsData['sysSn'] = serialNumber;
 
-    const url = this.baseUrl + '/updateChargeConfigInfo?sysSn='+serialNumber+'&batHighCap=100&gridCharge='+gridCharge + '&timeChae1='+timeChae1+ '&timeChae2='+ timeChae2 +'&timeChaf1='+timeChaf1 + '&timeChaf2='+timeChaf2;
+    if (timeChaf2===undefined){
+      timeChaf2='00:00';
+      alphaSettingsData['timeChaf2'] = timeChaf2;
+    }
+    if (timeChaf1===undefined){
+      timeChaf1='00:00';
+      alphaSettingsData['timeChaf1'] = timeChaf1;
+    }
+    if (timeChae1===undefined){
+      timeChae1='00:00';
+      alphaSettingsData['timeChae1'] = timeChae1;
+    }
+    if (timeChae2===undefined){
+      alphaSettingsData['timeChae2'] = timeChae2;
+      timeChae2='00:00';
+    }
+
+    const urlPart = '/updateChargeConfigInfo';//  +'&batHighCap=100&gridCharge='+gridCharge + '&timeChae1='+timeChae1+ '&timeChaf1='+timeChaf1 ;//  +'&timeChae2='+ timeChae2 + '&timeChaf2='+timeChaf2;
+    const url = this.baseUrl + urlPart;
     if (this.logRequestDetails) {
       this.logRequestData(authsignature, authtimestamp, url, '', '', serialNumber);
     }
-    //
-    //   params = {"sysSn": sn, "batHighCap": bat_high_cap, "gridCharge": grid_charge, "timeChae1": time_chae1,
-    // "timeChae2": time_chae2, "timeChaf1": time_chaf1, "timeChaf2": time_chaf2}
 
     const req = {
       method: 'POST',
@@ -223,19 +239,27 @@ export class AlphaService {
       json: true,
       gzip: false,
       headers: {
-        'Content-Type': 'application/json',
+        // 'Content-Type': 'text/plain',
         'Connection': 'keep-alive',
         'appId': this.appid,
         'timeStamp': authtimestamp,
         'sign': authsignature,
       },
+      body: alphaSettingsData,
     };
 
     return new Promise((resolve, reject) => {
-      request(req, (error, response) => {
+      request(req, (error, response, body ) => {
         if (!error && response.statusCode === 200) {
+          const response = new ObjectMapper().parse<AlphaSettingsResponse>(JSON.stringify(body));
+          if (response.data === undefined || (response.code !== 200 && response.code !== 201 )) {
+            console.error(response);
+            console.error('could not start loading the battery : ' + response.code + ' -> ' + response.msg);
+            return reject(body);
+          }
           return resolve(true);
         }
+        console.error('could not start loading the battery :' + response);
         return reject(false);
       },
       );
@@ -329,7 +353,7 @@ export class AlphaService {
     if (this.utils.isNewDate(now, this.lastClearDate)){
       // day switch, empty cache
       this.clearHistoricData();
-      this.lastClearDate = now;
+      this.lastClearDate = new Date();
     }
   }
 
