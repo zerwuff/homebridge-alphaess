@@ -161,7 +161,7 @@ export class AlphaService {
     }
 
     // disable loading after time is up or price goes up
-    if (loadingShallEndByTime){
+    if (loadingShallEndByTime || !batteryLow ){
       this.lastLoadingStart = undefined;
       this. logMsg('loading shall stop now, disable it # ');
       // disable loading, set default time values

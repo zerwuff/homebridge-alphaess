@@ -58,16 +58,20 @@ describe('Integration Test with Mock Server', () => {
   it('positive test: enable loading when currently not loading ', async () => {
 
     const mockServerUrl ='http://localhost:' + server.getURL().port;
+
     const settingsPost = server.post('/updateChargeConfigInfo').mockImplementation((ctx) => {
+      const alphaSettingsPostResponse = new AlphaSettingsResponse();
+      alphaSettingsPostResponse.code = 200;
+      alphaSettingsPostResponse.data = new Map<string, unknown>();
       ctx.status = 200;
       ctx.response.status = 200;
-      ctx.response.body= '';
+      ctx.response.body=JSON.stringify(alphaSettingsPostResponse);
     });
 
     const settingsGetNotLoading = server.get('/getChargeConfigInfo').mockImplementation((ctx) => {
-      const data = new Map<string, string>;
       const alphaSettings = new AlphaSettingsResponse();
-      alphaSettings.data = data;
+      alphaSettings.data = new Map<string, string>;
+      alphaSettings.code = 200;
       ctx.response.body = JSON.stringify(alphaSettings);
       ctx.status = 200;
     });
@@ -249,10 +253,32 @@ test('test enable loading if currently not loading. ', async () => {
   expect(responseMap['gridCharge']).toBe(1);
   settingsMap['timeChaf1']=getLoadingHourString(date.getHours(), date.getMinutes());
   settingsMap['timeChae1']=getLoadingHourString(date.getHours(), date.getMinutes());
-
 });
 
 
+
+test('test disable loading if its currently loading,  disabling via battery threshold ', async () => {
+  const alphaService = new AlphaService(undefined, '123', 'password', true, 'http://localhost:8080');
+  const date = new Date();
+  const settingsMap = new Map<string, string>;
+  const minutes = 45;
+  // given currently loading
+  settingsMap['gridCharge']=1;
+  settingsMap['timeChaf1']=getLoadingHourString(date.getHours()-1, date.getMinutes());
+  settingsMap['timeChae1']=getLoadingHourString(date.getHours(), date.getMinutes()+15); // threshold
+  const dateLoading = new Date();
+  dateLoading.setHours(date.getMinutes()-20);
+  alphaService.setLastLoadingStart(dateLoading); // loading started 20 minutes ago
+
+  // trigger with battery is over threshold
+  const responseMap = alphaService.calculateUpdatedSettingsData(settingsMap, false, minutes, 31, 30);
+
+  // expect: loading disabled
+  expect(responseMap).toBeDefined();
+  expect(responseMap['gridCharge']).toBe(0);
+  expect(responseMap['timeChaf1']).toBe('00:00');
+  expect(responseMap['timeChae1']).toBe('00:00');
+});
 
 
 test('test disable loading if when currently loading because time is up ', async () => {

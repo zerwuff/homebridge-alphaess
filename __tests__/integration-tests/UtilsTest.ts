@@ -4,7 +4,7 @@ import {Utils} from '../../src/util/Utils';
 
 
 const sut = new Utils();
-test('check is new date', () => {
+test('check is new date - 24 hrs diff ', () => {
   const now = new Date();
   const old = new Date();
   old.setHours(now.getHours()-24);
@@ -13,7 +13,7 @@ test('check is new date', () => {
 });
 
 
-test('check is new date', () => {
+test('check is new date - 25 hrs diff', () => {
   const now = new Date();
   const old = new Date();
   old.setHours(now.getHours()-25);

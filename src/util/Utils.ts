@@ -7,7 +7,11 @@ export class Utils {
     if (now === undefined || old === undefined) {
       return false;
     }
-    return old.getHours() > now.getHours() ;
+    const diff = new Date (now.getTime() - old.getTime());
+
+    const dateDiff = diff.getUTCDate();
+    const isNew = dateDiff > 1 ;
+    return isNew ;
   }
 
 }

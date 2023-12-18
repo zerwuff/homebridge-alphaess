@@ -38,7 +38,7 @@ More features:
 # Installation in Homebridge:
 
 Install via plugins in the Homebridge Ui, search for :
-```
+``` 
  homebridge-alphaess
 ```
 
