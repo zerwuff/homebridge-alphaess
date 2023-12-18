@@ -54,10 +54,10 @@ https://open.alphaess.com/ and use this for the configuration:
      {
             "name": "AlphaEssPlatform",
             "platform": "AlphaEssPlatform",
-            "alphaUrl":"https://openapi.alphaess.com/api",
-            "appid": "XXXX", #
-            "appsecret": "XXXX",
-            "serialnumber": "AE31005xxxxxxxx",        
+            "alphaUrl":"https://openapi.alphaess.com/api", 
+            "appid": "XXXX",  # https://open.alphaess.com/ -> App Id 
+            "appsecret": "XXXX",  # https://open.alphaess.com/ -> App Secret 
+            "serialnumber": "AE31005xxxxxxxx",    # your Serial number
             "logrequestdata": "false",        
             "powerLoadingThreshold": 1500, # generated sun power in watts to enable trigger
             "socLoadingThreshold": 10,    # lower threshold of soc to enable trigger
