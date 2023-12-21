@@ -55,7 +55,7 @@ export class AlphaService {
     Promise <Map<string, unknown>> {
 
     const settingsData = await this.getSettingsData(serialNumber).catch( () => {
-      this.logMsg('could not fetch settings data ');
+      this.logMsg('Could not fetch settings data ');
       const resp = new AlphaSettingsResponse();
       resp.data = new Map<string, undefined> ;
       return resp;
@@ -120,7 +120,7 @@ export class AlphaService {
 
     const now = new Date();
     const diff_to_Start = plannedLoadingDate.getTime() - now.getTime();
-    const time_active_start = diff_to_Start < 1000*60*WAIT_LOADING_THRESHOLD_MIN; // start in 9 minutes ?
+    const time_active_start = diff_to_Start < 1000*60*WAIT_LOADING_THRESHOLD_MIN; // start in x minutes from now (+threshold )
     const loadingFeatureSet = newSettingsData['gridCharge'] === 1 ;
     const isCurrentlyLoading = time_active_start && loadingFeatureSet ;
 
@@ -155,7 +155,9 @@ export class AlphaService {
           nextHours = nextHours + 1;
         }
         newSettingsData['timeChae1'] = this.getLoadingHourString(nextHours, now.getMinutes());
-        this. logMsg('currently not loading detected, enable it via api ');
+        newSettingsData['timeChaf2'] = '00:00';
+        newSettingsData['timeChae2'] = '00:00';
+        this.logMsg('currently not loading detected, enable it via api ');
         return newSettingsData;
       }
     }
@@ -168,6 +170,8 @@ export class AlphaService {
       newSettingsData['gridCharge'] = 0;
       newSettingsData['timeChaf1'] = '00:00';
       newSettingsData['timeChae1'] = '00:00';
+      newSettingsData['timeChaf2'] = '00:00';
+      newSettingsData['timeChae2'] = '00:00';
       return newSettingsData;
     }
     return undefined;
@@ -227,7 +231,7 @@ export class AlphaService {
       timeChae2='00:00';
     }
 
-    const urlPart = '/updateChargeConfigInfo';//  +'&batHighCap=100&gridCharge='+gridCharge + '&timeChae1='+timeChae1+ '&timeChaf1='+timeChaf1 ;//  +'&timeChae2='+ timeChae2 + '&timeChaf2='+timeChaf2;
+    const urlPart = '/updateChargeConfigInfo';
     const url = this.baseUrl + urlPart;
     if (this.logRequestDetails) {
       this.logRequestData(authsignature, authtimestamp, url, '', '', serialNumber);
@@ -248,19 +252,24 @@ export class AlphaService {
       body: alphaSettingsData,
     };
 
+    if (this.logRequestDetails) {
+      this.logMsg('set battery loading data: ' +req);
+    }
+
     return new Promise((resolve, reject) => {
       request(req, (error, response, body ) => {
-        if (!error && response.statusCode === 200) {
+        if (!error && (response.statusCode === 200 || response.code == 201) ) {
           const response = new ObjectMapper().parse<AlphaSettingsResponse>(JSON.stringify(body));
-          if (response.data === undefined || (response.code !== 200 && response.code !== 201 )) {
+          if (response.data === undefined) {
             console.error(response);
-            console.error('could not start loading the battery : ' + response.code + ' -> ' + response.msg);
+            this.logMsg('could not start loading the battery : ' + response.code + ' -> ' + response.msg);
             return reject(body);
           }
           return resolve(true);
+        } else {
+          this.logMsg('could not start loading the battery because of error or wrong response code : ' + error);
+          return reject(false);
         }
-        console.error('could not start loading the battery :' + response);
-        return reject(false);
       },
       );
     });

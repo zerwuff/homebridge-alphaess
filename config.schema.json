@@ -41,7 +41,7 @@
         "title": "socLoadingThreshold",
         "type": "integer",
         "required": false,
-        "default":50,
+        "default": 50,
         "description" : "the soc threshold to enable the trigger"
       },
       "refreshTimerInterval": {

@@ -186,7 +186,7 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
 
   async calculateAlphaTrigger(serialNumber: string) {
     this.triggerAlpha = false;
-    this.log.debug('fetch Alpha ESS Data -> fetch token');
+    this.log.debug('calculateAlphaTrigger called.');
 
 
     const priceIsLow = this.triggerTibber;
@@ -196,7 +196,7 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
     // check battery reloading
 
     if (this.config.tibberEnabled && this.tibber.getTibberLoadingBatteryEnabled() ) {
-      this.log.debug('Check reloading of battery triggered ');
+      this.log.debug('Check reloading of battery triggered');
       this.alphaService.checkAndEnableReloading(
         serialNumber,
         priceIsLow,
@@ -214,6 +214,7 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
       this.alphaService.isBatteryCurrentlyLoading(serialNumber).then(
         batteryLoading => {
           this.isBatteryLoadingFromNet = batteryLoading;
+          this.log.debug('Battery Loading from Net:' + batteryLoading);
         }).catch(error => {
         this.isBatteryLoadingFromNet = false;
         this.log.error('Error Checking Battery currently loading not possible ' + error);

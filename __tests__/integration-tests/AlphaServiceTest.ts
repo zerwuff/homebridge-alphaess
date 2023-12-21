@@ -248,11 +248,13 @@ test('test enable loading if currently not loading. ', async () => {
   settingsMap['gridCharge']=0;
 
   const responseMap = alphaService.calculateUpdatedSettingsData(settingsMap, true, minutes, 30, 30);
-  const date = new Date();
+
   expect(responseMap).toBeDefined();
   expect(responseMap['gridCharge']).toBe(1);
-  settingsMap['timeChaf1']=getLoadingHourString(date.getHours(), date.getMinutes());
-  settingsMap['timeChae1']=getLoadingHourString(date.getHours(), date.getMinutes());
+  expect(responseMap['timeChaf1']).toBeDefined();
+  expect(responseMap['timeChae1']).toBeDefined();
+  expect(responseMap['timeChaf2']).toBe('00:00');
+  expect(responseMap['timeChae2']).toBe('00:00');
 });
 
 
@@ -278,6 +280,8 @@ test('test disable loading if its currently loading,  disabling via battery thre
   expect(responseMap['gridCharge']).toBe(0);
   expect(responseMap['timeChaf1']).toBe('00:00');
   expect(responseMap['timeChae1']).toBe('00:00');
+  expect(responseMap['timeChaf2']).toBe('00:00');
+  expect(responseMap['timeChae2']).toBe('00:00');
 });
 
 
@@ -301,6 +305,9 @@ test('test disable loading if when currently loading because time is up ', async
   expect(responseMap['gridCharge']).toBe(0);
   expect(responseMap['timeChaf1']).toBe('00:00');
   expect(responseMap['timeChae1']).toBe('00:00');
+  expect(responseMap['timeChaf2']).toBe('00:00');
+  expect(responseMap['timeChae2']).toBe('00:00');
+
 });
 
 test('test disable loading if its currently loading. do not change settings, since loading via time not expired (first start)', async () => {
