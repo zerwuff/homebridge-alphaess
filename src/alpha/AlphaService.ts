@@ -163,9 +163,9 @@ export class AlphaService {
     }
 
     // disable loading after time is up or price goes up
-    if (loadingShallEndByTime || !batteryLow ){
+    if (loadingShallEndByTime ){
       this.lastLoadingStart = undefined;
-      this. logMsg('loading shall stop now, disable it # ');
+      this.logMsg('loading shall stop now, disable it now');
       // disable loading, set default time values
       newSettingsData['gridCharge'] = 0;
       newSettingsData['timeChaf1'] = '00:00';
