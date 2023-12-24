@@ -216,7 +216,6 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
           this.isBatteryLoadingFromNet = batteryLoading;
           this.log.debug('Battery Loading from Net:' + batteryLoading);
         }).catch(error => {
-        this.isBatteryLoadingFromNet = false;
         this.log.error('Error Checking Battery currently loading not possible ' + error);
         return;
       });

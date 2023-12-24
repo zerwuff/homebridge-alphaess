@@ -80,9 +80,7 @@ export class AlphaService {
 
     const alphaSettingsResponse = await this.getSettingsData(serialNumber).catch( () => {
       this.logMsg('could not fetch settings data ');
-      const resp = new AlphaSettingsResponse();
-      resp.data = new Map<string, undefined>;
-      return resp;
+      return undefined;
     } );
 
     const settings = alphaSettingsResponse.data;

@@ -188,3 +188,6 @@ test('test trigger tibber service via energy plugin - expect no change during ex
   expect(result).toBeTruthy();
 });
 
+
+
+
