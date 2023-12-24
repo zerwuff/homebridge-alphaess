@@ -253,7 +253,7 @@ export class AlphaService {
     };
 
     if (this.logRequestDetails) {
-      this.logMsg('set battery loading data: ' +req);
+      this.logMsg('Set battery loading data: ' +JSON.stringify(req));
     }
 
     return new Promise((resolve, reject) => {
@@ -306,6 +306,7 @@ export class AlphaService {
           if (response.data === undefined || response.code !== 200 ){
             return reject(body);
           }
+          this.logMsg('Get Settings Response:' + JSON.stringify(body));
           return resolve(response);
         }
         return reject(body);
