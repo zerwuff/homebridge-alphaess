@@ -120,16 +120,21 @@ export class AlphaService {
     const diff_to_Start = plannedLoadingDate.getTime() - now.getTime();
     const time_active_start = diff_to_Start < 1000*60*WAIT_LOADING_THRESHOLD_MIN; // start in x minutes from now (+threshold )
     const loadingFeatureSet = newSettingsData['gridCharge'] === 1 ;
-    const isCurrentlyLoading = time_active_start && loadingFeatureSet ;
+    let isCurrentlyLoading = time_active_start && loadingFeatureSet ;
 
     // add loading minutes to planned end time
     let loadingShallEndByTime = false;
 
-    if (this.lastLoadingStart!==undefined){ // loading has started
+    if (this.lastLoadingStart!==undefined){ // loadin g has started
       const lastLoadingStartMillis = this.lastLoadingStart.getTime();
       const minLoadingMillis = loadingMinutes * 1000 * 60;
       loadingShallEndByTime = new Date().getTime() > (lastLoadingStartMillis + minLoadingMillis);
-      this.logMsg('lastLoadingStartMillis: ' + lastLoadingStartMillis + ' minLoadingMillis:' +minLoadingMillis + ' loadingShallEndByTime: ' + loadingShallEndByTime);
+
+      const diff_to_Start = this.lastLoadingStart.getTime() - now.getTime();
+      const time_active_start = diff_to_Start < 1000*60*WAIT_LOADING_THRESHOLD_MIN; // start in x minutes from now (+threshold )
+      this.logMsg('lastLoadingStartMillis: ' + lastLoadingStartMillis + ' minLoadingMillis:' +minLoadingMillis + ' loadingShallEndByTime: ' + loadingShallEndByTime + ' isCurrentlyLoading (before): '+ isCurrentlyLoading);
+      isCurrentlyLoading = time_active_start;
+      this.logMsg(' isCurrentlyLoading (after): '+ isCurrentlyLoading);
 
     }
 
