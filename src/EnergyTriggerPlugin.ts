@@ -207,7 +207,7 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
           this.log.debug('Check reloading if battery from net was done.');
         },
       ) .catch(error => {
-        this.log.error('Error Checking Battery Loading via Tibber price trigger ' + error);
+        this.log.error('Error Checking Battery Loading via Tibber price trigger: ' + error);
         return;
       });
 

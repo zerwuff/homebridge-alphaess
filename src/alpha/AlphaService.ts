@@ -6,6 +6,7 @@ import { ObjectMapper } from 'jackson-js';
 import { AlphaSettingsResponse } from './response/AlphaSettingsResponse';
 import { AlphaData } from '../interfaces';
 import { Utils } from '../util/Utils';
+
 const request = require('request');
 
 const WAIT_LOADING_THRESHOLD_MIN = 9;
@@ -55,10 +56,7 @@ export class AlphaService {
     Promise <Map<string, unknown>> {
 
     const settingsData = await this.getSettingsData(serialNumber).catch( () => {
-      this.logMsg('Could not fetch settings data ');
-      const resp = new AlphaSettingsResponse();
-      resp.data = new Map<string, undefined> ;
-      return resp;
+      throw new Error('Could not fetch settings data to check and enable reloading');
     });
 
     const updateSettingsData = this.calculateUpdatedSettingsData(settingsData.data, priceIsLow,
@@ -79,9 +77,8 @@ export class AlphaService {
   async isBatteryCurrentlyLoading(serialNumber:string) : Promise<boolean> {
 
     const alphaSettingsResponse = await this.getSettingsData(serialNumber).catch( () => {
-      this.logMsg('could not fetch settings data ');
-      return undefined;
-    } );
+      throw new Error('could not fetch settings data to check if battery currently loading');
+    });
 
     const settings = alphaSettingsResponse.data;
     // enable trigger reloading now for one hour, exit
