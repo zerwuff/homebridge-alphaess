@@ -68,13 +68,6 @@ describe('Integration Test with Mock Server', () => {
       ctx.response.body=JSON.stringify(alphaSettingsPostResponse);
     });
 
-    const settingsGetNotLoading = server.get('/getChargeConfigInfo').mockImplementation((ctx) => {
-      const alphaSettings = new AlphaSettingsResponse();
-      alphaSettings.data = new Map<string, string>;
-      alphaSettings.code = 200;
-      ctx.response.body = JSON.stringify(alphaSettings);
-      ctx.status = 200;
-    });
 
     const minutes = 45 ;
     const alphaService = new AlphaService(undefined, appid, secret, logRequestData, mockServerUrl );
@@ -83,7 +76,6 @@ describe('Integration Test with Mock Server', () => {
     const batteryChargeResult = await alphaService.checkAndEnableReloading('serialNumber', true, minutes, 10, 20);
 
     //then
-    expect(settingsGetNotLoading).toHaveBeenCalledTimes(1);
     expect(settingsPost).toHaveBeenCalledTimes(1);
 
     expect(batteryChargeResult).toBeDefined();
@@ -243,11 +235,9 @@ function getLoadingHourString(hour:number, minute:number ): string {
 
 test('test enable loading if currently not loading. ', async () => {
   const alphaService = new AlphaService(undefined, '123', 'password', true, 'http://localhost:8080');
-  const settingsMap = new Map<string, string>;
   const minutes = 45;
-  settingsMap['gridCharge']=0;
 
-  const responseMap = alphaService.calculateUpdatedSettingsData(settingsMap, true, minutes, 30, 30);
+  const responseMap = alphaService.calculateUpdatedSettingsData(true, minutes, 30, 30);
 
   expect(responseMap).toBeDefined();
   expect(responseMap['gridCharge']).toBe(1);
@@ -260,19 +250,13 @@ test('test enable loading if currently not loading. ', async () => {
 
 test('test disable loading if when currently loading because time is up ', async () => {
   const alphaService = new AlphaService(undefined, '123', 'password', true, 'http://localhost:8080');
-  const settingsMap = new Map<string, string>;
-  const date = new Date();
   const minutesToLoadMaximum = 10;
-
-  settingsMap['gridCharge']=1;
-  settingsMap['timeChaf1']=getLoadingHourString(date.getHours()-2, date.getMinutes()); // starting 2 minutes ago
-  settingsMap['timeChae1']=getLoadingHourString(date.getHours(), date.getMinutes()+20); // end in 20 minutes
 
   const dateBegin = new Date();
   dateBegin.setMinutes(new Date().getMinutes()-15);
   alphaService.setLastLoadingStart(dateBegin); // last loading started 15 minutes ago
 
-  const responseMap = alphaService.calculateUpdatedSettingsData(settingsMap, true, minutesToLoadMaximum, 30, 30);
+  const responseMap = alphaService.calculateUpdatedSettingsData(true, minutesToLoadMaximum, 30, 30);
 
   expect(responseMap).toBeDefined();
   expect(responseMap['gridCharge']).toBe(0);
@@ -283,36 +267,32 @@ test('test disable loading if when currently loading because time is up ', async
 
 });
 
-test('test disable loading if its currently loading. do not change settings, since loading via time not expired (first start)', async () => {
+test('test disable loading if its currently loading. stop loading because time expired', async () => {
   const alphaService = new AlphaService(undefined, '123', 'password', true, 'http://localhost:8080');
-  const settingsMap = new Map<string, string>;
-  const date = new Date();
-  const minutes = 45;
+  const minutesToLoadMaximum = 45;
+  const dateBegin = new Date();
+  dateBegin.setMinutes(new Date().getMinutes()-55);
+  alphaService.setLastLoadingStart(dateBegin);
 
-  settingsMap['gridCharge']=1;
-  settingsMap['timeChaf1']=getLoadingHourString(date.getHours()-2, date.getMinutes()); //loading start 2 hours ago
-  settingsMap['timeChae1']=getLoadingHourString(date.getHours(), date.getMinutes()+2); // loading shall end in 15 minutes
-
-  const responseMap = alphaService.calculateUpdatedSettingsData(settingsMap, true, minutes, 30, 30);
-  expect(responseMap).toBeUndefined(); // undefined - no stopping of loading triggered
+  const responseMap = alphaService.calculateUpdatedSettingsData(true, minutesToLoadMaximum, 30, 30);
+  expect(responseMap).toBeDefined(); // undefined - no stopping of loading triggered
+  expect(responseMap['gridCharge']).toBe(0);
+  expect(responseMap['timeChaf1']).toBe('00:00');
+  expect(responseMap['timeChae1']).toBe('00:00');
+  expect(responseMap['timeChaf2']).toBe('00:00');
+  expect(responseMap['timeChae2']).toBe('00:00');
 });
 
 
 test('test disable loading if its currently loading. do not change settings, since loading via time not expired (already loading)', async () => {
   const alphaService = new AlphaService(undefined, '123', 'password', true, 'http://localhost:8080');
-  const settingsMap = new Map<string, string>;
-  const date = new Date();
   const loadingMinutes = 44; // loading minutes shall last 44 minutes
 
-  settingsMap['gridCharge']=1;
-  settingsMap['timeChaf1']=getLoadingHourString(date.getHours()-2, date.getMinutes()); //loading start 2 hours ago
-  settingsMap['timeChae1']=getLoadingHourString(date.getHours(), date.getMinutes()+2); // loading shall end in 15 minutes
-
   const dateBegin = new Date();
-  dateBegin.setMinutes(new Date().getMinutes()-42);
+  dateBegin.setMinutes(new Date().getMinutes()-30);
   alphaService.setLastLoadingStart(dateBegin); // last loading started 42 minutes ago
 
-  const responseMap = alphaService.calculateUpdatedSettingsData(settingsMap, true, loadingMinutes, 30, 30);
+  const responseMap = alphaService.calculateUpdatedSettingsData(true, loadingMinutes, 30, 30);
   expect(responseMap).toBeUndefined(); // undefined - no stopping of loading triggered
 });
 // get the string of the current hour

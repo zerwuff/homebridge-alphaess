@@ -59,7 +59,7 @@ export class AlphaPlugin implements AccessoryPlugin {
     if (!config.refreshTimerInterval ) {
       this.log.error('refreshTimerInterval is not set, not refreshing trigger data ');
     } else {
-      this.refreshTimerInterval = config.refreshTimerInterval;
+      this.refreshTimerInterval = config.refreshTimerInterval + Math.floor(Math.random() * 10000) ;
       // auto refresh statistics
       setInterval(() => {
         this.log.debug('Running Timer to check trigger every  ' + config.refreshTimerInterval + ' ms ');

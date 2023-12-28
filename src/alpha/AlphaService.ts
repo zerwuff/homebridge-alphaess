@@ -55,17 +55,17 @@ export class AlphaService {
     socBattery:number, socLowerThreshold:number):
     Promise <Map<string, unknown>> {
 
-    const settingsData = await this.getSettingsData(serialNumber).catch( () => {
-      throw new Error('Could not fetch settings data to check and enable reloading');
-    });
-
-    const updateSettingsData = this.calculateUpdatedSettingsData(settingsData.data, priceIsLow,
+    const updateSettingsData = this.calculateUpdatedSettingsData(priceIsLow,
       numberOfMinutes, socBattery, socLowerThreshold);
 
     // update settings needed
     if (updateSettingsData!==undefined){
       // update required
-      await this.setAlphaSettings(serialNumber, updateSettingsData);
+      await this.setAlphaSettings(serialNumber, updateSettingsData).catch(() => {
+        this.setLastLoadingStart(undefined);
+        throw new Error('could not fetch settings data to check if battery currently loading');
+      });
+
       return updateSettingsData;
     }
 
@@ -98,49 +98,34 @@ export class AlphaService {
   }
 
   // calculate loading settings: if currently loading, continue, else disable loading trigger
-  calculateUpdatedSettingsData(newSettingsData: Map<string, unknown>, priceIsLow : boolean, loadingMinutes:number,
+  calculateUpdatedSettingsData(priceIsLow : boolean, loadingMinutes:number,
     socBattery:number, socLowerThreshold:number):
      Map<string, unknown> {
-
+    const newSettingsData = new Map<string, unknown> ();
     const batteryLow = socBattery <= socLowerThreshold ;
 
-    // enable trigger reloading now for one hour, exit
-    const timeLoadingStart = ''+ newSettingsData['timeChaf1'];
-    const hourLoadingStart = parseInt(timeLoadingStart.substring(0, 2));
-    const minuteLoadingStart = parseInt(timeLoadingStart.substring(3));
-
-    const plannedLoadingDate = new Date();
-    plannedLoadingDate.setHours(hourLoadingStart);
-    plannedLoadingDate.setMinutes(minuteLoadingStart);
-
-    const now = new Date();
-    const diff_to_Start = plannedLoadingDate.getTime() - now.getTime();
-    const time_active_start = diff_to_Start < 1000*60*WAIT_LOADING_THRESHOLD_MIN; // start in x minutes from now (+threshold )
-    const loadingFeatureSet = newSettingsData['gridCharge'] === 1 ;
-    let isCurrentlyLoading = time_active_start && loadingFeatureSet ;
 
     // add loading minutes to planned end time
+    let timeToStartLoading = false;
     let loadingShallEndByTime = false;
+    const isCurrentlyLoading = this.lastLoadingStart !== undefined ;
 
-    if (this.lastLoadingStart!==undefined){ // loadin g has started
+    if (this.lastLoadingStart!==undefined){ // loadins started, check if we need to stop it
       const lastLoadingStartMillis = this.lastLoadingStart.getTime();
       const minLoadingMillis = loadingMinutes * 1000 * 60;
       loadingShallEndByTime = new Date().getTime() > (lastLoadingStartMillis + minLoadingMillis);
-
-      const diff_to_Start = this.lastLoadingStart.getTime() - now.getTime();
-      const time_active_start = diff_to_Start < 1000*60*WAIT_LOADING_THRESHOLD_MIN; // start in x minutes from now (+threshold )
-      this.logMsg('lastLoadingStartMillis: ' + lastLoadingStartMillis + ' minLoadingMillis:' +minLoadingMillis + ' loadingShallEndByTime: ' + loadingShallEndByTime + ' isCurrentlyLoading (before): '+ isCurrentlyLoading);
-      isCurrentlyLoading = time_active_start;
-      this.logMsg(' isCurrentlyLoading (after): '+ isCurrentlyLoading);
-
+      this.logMsg('lastLoadingStartMillis: ' + lastLoadingStartMillis + ' minLoadingMillis:' + minLoadingMillis + ' loadingShallEndByTime: ' + loadingShallEndByTime);
+    } else {
+      timeToStartLoading = true;
+      this.logMsg('timeToStartLoading: ' + timeToStartLoading);
     }
 
-    this.logMsg('calculate new loading isCurrentlyLoading: ' + isCurrentlyLoading + ' time_active_start:' +
-    time_active_start +' loadingShallEndByTime:' + loadingShallEndByTime);
+    this.logMsg('calculate new loading isCurrentlyLoading: ' + isCurrentlyLoading );
 
     //shall load initially
-    if (batteryLow && priceIsLow ){
-      // -> if not loading, start it with hours = now plus one hour
+    if (batteryLow && priceIsLow && timeToStartLoading ){
+      const newSettingsData = new Map<string, unknown> ();
+
       if (!isCurrentlyLoading){
         this.lastLoadingStart = new Date();
         this.logMsg('lets put some energy in this place for minutes: ' + loadingMinutes);

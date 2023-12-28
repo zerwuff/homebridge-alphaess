@@ -81,12 +81,12 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
     if (!config.refreshTimerInterval ) {
       this.log.error('refreshTimerInterval is not set, not refreshing trigger data ');
     } else {
-      this.refreshTimerInterval = config.refreshTimerInterval;
+      this.refreshTimerInterval = config.refreshTimerInterval + Math.floor(Math.random() * 10000) ;
       // auto refresh statistics
       setInterval(() => {
         this.log.debug('Running Timer to check trigger every  ' + config.refreshTimerInterval + ' ms ');
         this.calculateCombinedTriggers(config);
-      }, this.refreshTimerInterval);
+      }, this.refreshTimerInterval );
     }
 
     this.calculateCombinedTriggers(config);
@@ -214,7 +214,7 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
       this.alphaService.isBatteryCurrentlyLoading(serialNumber).then(
         batteryLoading => {
           this.isBatteryLoadingFromNet = batteryLoading;
-          this.log.debug('Battery Loading from Net:' + batteryLoading);
+          this.log.debug('Loading Battery Satus from Net:' + batteryLoading);
         }).catch(error => {
         this.log.error('Error Checking Battery currently loading not possible ' + error);
         return;
