@@ -9,12 +9,6 @@ import { Utils } from '../util/Utils';
 
 const request = require('request');
 
-const WAIT_LOADING_THRESHOLD_MIN = 9;
-
-const AUTHPREFIX = 'al8e4s';
-const AUTHCONSTANT = 'LS885ZYDA95JVFQKUIUUUV7PQNODZRDZIS4ERREDS0EED8BCWSS';
-const AUTHSUFFIX = 'ui893ed';
-
 // see https://github.com/CharlesGillanders/alphaess
 
 export class AlphaService {
@@ -74,27 +68,11 @@ export class AlphaService {
 
 
   // calculate loading settings: if currently loading, continue, else disable loading trigger
-  async isBatteryCurrentlyLoading(serialNumber:string) : Promise<boolean> {
-
-    const alphaSettingsResponse = await this.getSettingsData(serialNumber).catch( () => {
-      throw new Error('could not fetch settings data to check if battery currently loading');
-    });
-
-    const settings = alphaSettingsResponse.data;
-    // enable trigger reloading now for one hour, exit
-    const timeLoadingStart = ''+ settings['timeChaf1'];
-    const hourLoadingStart = parseInt(timeLoadingStart.substring(0, 2));
-    const time_active_start = new Date().getHours() >= hourLoadingStart;
-
-    const timeLoadingEnd = ''+ settings['timeChae1'];
-    const hourLoadingEnd = parseInt(timeLoadingEnd.substring(0, 2));
-    const loadingShallEnd = new Date().getHours() > hourLoadingEnd;
-
-
-    const loadingFeatureSet = settings['gridCharge'] === 1;
-    const isCurrentlyLoading = loadingFeatureSet && time_active_start && !loadingShallEnd ;
-
-    return isCurrentlyLoading;
+  isBatteryCurrentlyLoading(): boolean {
+    if (this.lastLoadingStart!==undefined) {
+      return new Date() > this.lastLoadingStart;
+    }
+    return false ;
   }
 
   // calculate loading settings: if currently loading, continue, else disable loading trigger
@@ -243,14 +221,15 @@ export class AlphaService {
 
     return new Promise((resolve, reject) => {
       request(req, (error, response, body ) => {
-        if (!error && (response.statusCode === 200 || response.code == 201) ) {
+        if (!error && (response.statusCode === 200 || response.code === 201) ) {
           const response = new ObjectMapper().parse<AlphaSettingsResponse>(JSON.stringify(body));
-          if (response.data === undefined) {
+          if (response.data === undefined || response.data === null || ( response.code !== 200 && response.code !==201) ) {
             console.error(response);
             this.logMsg('could not start loading the battery : ' + response.code + ' -> ' + response.msg);
             return reject(body);
           }
           return resolve(true);
+
         } else {
           this.logMsg('could not start loading the battery because of error or wrong response code : ' + error);
           return reject(false);
@@ -286,7 +265,7 @@ export class AlphaService {
 
     return new Promise((resolve, reject) => {
       request(req, (error, response, body) => {
-        if (!error && response.statusCode == 200) {
+        if (!error && response.statusCode === 200) {
           const response = new ObjectMapper().parse<AlphaSettingsResponse>(JSON.stringify(body));
           if (response.data === undefined || response.code !== 200 ){
             return reject(body);

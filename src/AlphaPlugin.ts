@@ -62,7 +62,7 @@ export class AlphaPlugin implements AccessoryPlugin {
       this.refreshTimerInterval = config.refreshTimerInterval + Math.floor(Math.random() * 10000) ;
       // auto refresh statistics
       setInterval(() => {
-        this.log.debug('Running Timer to check trigger every  ' + config.refreshTimerInterval + ' ms ');
+        this.log.debug('Running Timer to check trigger every  ' + this.refreshTimerInterval + ' ms ');
         this.fetchAlphaEssData(config.serialnumber);
       }, this.refreshTimerInterval);
     }
