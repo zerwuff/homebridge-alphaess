@@ -60,8 +60,8 @@ https://open.alphaess.com/ and use this for the configuration:
             "serialnumber": "AE31005xxxxxxxx",    # your Serial number
             "logrequestdata": "false",        
             "powerLoadingThreshold": 1500, # generated sun power in watts to enable trigger
-            "socLoadingThreshold": 10,    # lower threshold of soc to enable trigger
-            "refreshTimerInterval": 60000,  # refresh time intervall in ms       
+            "socLoadingThreshold": 42,     # lower threshold of soc to enable trigger. 
+            "refreshTimerInterval": 300000,  # refresh time intervall in ms. too low time will block requests by alpha backend.  
             "mqtt_url": "http://localhost:bla"
             "mqtt_status_topic": "/topic_for_alpha_ess_status_information",  # 
             "mqtt_trigger_topic_true": "/topic/to/on",
@@ -74,10 +74,9 @@ https://open.alphaess.com/ and use this for the configuration:
             "tibberEnabled": true,
             "tibberUrl": "https://api.tibber.com/v1-beta/gql",
             "tibberAPIKey": "<your tibber api key>",
-            "tibberThresholdSOC": 60,  // threshold on below that tibber is triggered. 
+            "tibberThresholdSOC": 60,  // battery threshold on below that tibber loading is triggered. 
             "tibberThresholdEur": 0.02,  // tibber threshold (+/-) in euro that will still enable the tibber trigger. e.g. current tibber price is 20 cents,  [18...22] cents will trigger it  
-            "triggerImageFilename": "/tmp/tibber_image.png", // rendering image of alpha and tibber trigger
-            "tibberHomeId": // tibber home Id, or if none the first one is used.
+            "triggerImageFilename": "/tmp/tibber_image.png" // rendering image of alpha and tibber trigger          
         }
     ],
 

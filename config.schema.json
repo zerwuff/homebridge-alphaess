@@ -130,17 +130,7 @@
           "functionBody": "return model.tibberEnabled === true;"
         }
       },
-      "tibberHomeId": {
-        "title": "Tibber API Home Id",
-        "type": "string",
-        "required": false,
-        "default":"",
-        "description" : "the the tibber home id",
-        "condition": {
-          "functionBody": "return model.tibberEnabled === true;"
-        }
-      },
-
+  
       "tibberLoadBatteryEnabled": {
         "title": "Enable Battery loading w/ tibber ",
         "type": "boolean",
