@@ -233,18 +233,51 @@ function getLoadingHourString(hour:number, minute:number ): string {
 }
 
 
-test('test enable loading if currently not loading. ', async () => {
+test('test enable loading if currently not loading, verify loading minutes (45)', async () => {
   const alphaService = new AlphaService(undefined, '123', 'password', true, 'http://localhost:8080');
-  const minutes = 45;
+  const loadingMinutes = 45;
 
-  const responseMap = alphaService.calculateUpdatedSettingsData(true, minutes, 30, 30);
+  const startedDate = new Date();
+  const endDate = new Date();
+  endDate.setMinutes(startedDate.getMinutes() + loadingMinutes);
 
+  const responseMap = alphaService.calculateUpdatedSettingsData(true, loadingMinutes, 30, 30);
   expect(responseMap).toBeDefined();
   expect(responseMap['gridCharge']).toBe(1);
   expect(responseMap['timeChaf1']).toBeDefined();
   expect(responseMap['timeChae1']).toBeDefined();
   expect(responseMap['timeChaf2']).toBe('00:00');
   expect(responseMap['timeChae2']).toBe('00:00');
+
+  const expectedLoadingHours = alphaService.getLoadingHourString(startedDate.getHours(), startedDate.getMinutes());
+  expect(responseMap['timeChaf1']).toBe(expectedLoadingHours);
+  const expectedLoadingHoursEnd = alphaService.getLoadingHourString(endDate.getHours(), endDate.getMinutes());
+  expect(responseMap['timeChae1']).toBe(expectedLoadingHoursEnd);
+
+});
+
+
+test('test enable loading if currently not loading, verify loading minutes (90) ', async () => {
+  const alphaService = new AlphaService(undefined, '123', 'password', true, 'http://localhost:8080');
+  const loadingMinutes = 90;
+
+  const startedDate = new Date();
+  const endDate = new Date();
+  endDate.setMinutes(startedDate.getMinutes() + loadingMinutes);
+
+  const responseMap = alphaService.calculateUpdatedSettingsData(true, loadingMinutes, 30, 30);
+  expect(responseMap).toBeDefined();
+  expect(responseMap['gridCharge']).toBe(1);
+  expect(responseMap['timeChaf1']).toBeDefined();
+  expect(responseMap['timeChae1']).toBeDefined();
+  expect(responseMap['timeChaf2']).toBe('00:00');
+  expect(responseMap['timeChae2']).toBe('00:00');
+
+  const expectedLoadingHours = alphaService.getLoadingHourString(startedDate.getHours(), startedDate.getMinutes());
+  expect(responseMap['timeChaf1']).toBe(expectedLoadingHours);
+  const expectedLoadingHoursEnd = alphaService.getLoadingHourString(endDate.getHours(), endDate.getMinutes());
+  expect(responseMap['timeChae1']).toBe(expectedLoadingHoursEnd);
+
 });
 
 
@@ -264,7 +297,6 @@ test('test disable loading if when currently loading because time is up ', async
   expect(responseMap['timeChae1']).toBe('00:00');
   expect(responseMap['timeChaf2']).toBe('00:00');
   expect(responseMap['timeChae2']).toBe('00:00');
-
 });
 
 test('test disable loading if its currently loading. stop loading because time expired', async () => {

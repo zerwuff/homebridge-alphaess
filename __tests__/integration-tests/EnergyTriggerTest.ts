@@ -143,7 +143,7 @@ test('test trigger tibber service via energy plugin - expect not triggered', asy
 });
 
 
-test('test trigger tibber service via energy plugin - expect no change during execption', async () => {
+test('test trigger tibber service via energy plugin - expect no change during execption on getTodaysEnergyPrices', async () => {
   const currentPrice = 27.0;
   const listIprice:IPrice[] = [new PriceTestData(34.0, '10:00'),
     new PriceTestData(currentPrice, '14:00'),
@@ -179,7 +179,6 @@ test('test trigger tibber service via energy plugin - expect no change during ex
 
   // when
   const result = await sut.calculateTibberTrigger(tibberServiceMock.object());
-
 
   // then
   tibberServiceMock.verify(instance => instance.isTriggered, Times.Exactly(1));

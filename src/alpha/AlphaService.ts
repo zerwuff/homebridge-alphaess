@@ -59,7 +59,6 @@ export class AlphaService {
         this.setLastLoadingStart(undefined);
         throw new Error('could not fetch settings data to check if battery currently loading');
       });
-
       return updateSettingsData;
     }
 
@@ -108,16 +107,13 @@ export class AlphaService {
         this.lastLoadingStart = new Date();
         this.logMsg('lets put some energy in this place for minutes: ' + loadingMinutes);
         const now = new Date();
+        const newEndDate = new Date();
+        newEndDate.setMinutes(now.getMinutes() + loadingMinutes);
+
         newSettingsData['gridCharge'] = 1;
         newSettingsData['batHighCap'] = 95;
         newSettingsData['timeChaf1'] = this.getLoadingHourString(now.getHours(), now.getMinutes());
-        let nextHours = now.getHours();
-        if (nextHours===23){
-          nextHours = 0; // day switch
-        }else {
-          nextHours = nextHours + 1;
-        }
-        newSettingsData['timeChae1'] = this.getLoadingHourString(nextHours, now.getMinutes());
+        newSettingsData['timeChae1'] = this.getLoadingHourString(newEndDate.getHours(), newEndDate.getMinutes());
         newSettingsData['timeChaf2'] = '00:00';
         newSettingsData['timeChae2'] = '00:00';
         this.logMsg('currently not loading detected, enable it via api ');
@@ -206,7 +202,7 @@ export class AlphaService {
       json: true,
       gzip: false,
       headers: {
-        // 'Content-Type': 'text/plain',
+        'Content-Type': 'application/json',
         'Connection': 'keep-alive',
         'appId': this.appid,
         'timeStamp': authtimestamp,

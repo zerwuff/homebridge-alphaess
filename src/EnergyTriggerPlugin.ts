@@ -173,11 +173,12 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
 
   async calculateTibberTrigger(tibber: TibberService) {
     try {
-      await tibber.isTriggered(this.socCurrent, this.tibberThresholdSOC).then(result => {
-        this.setTibberTrigger(result);
-      }).catch(() => {
-        this.log.error('could not fetch trigger result ');
-      });
+      await tibber.isTriggered(this.socCurrent, this.tibberThresholdSOC).
+        then(result => {
+          this.setTibberTrigger(result);
+        }).catch(() => {
+          this.log.error('could not fetch trigger result ');
+        });
     } catch (err){
       this.log.error('' + err);
     }
