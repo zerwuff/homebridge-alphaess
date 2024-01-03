@@ -39,6 +39,7 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
   private tibber: TibberService;
   private isBatteryLoadingFromNet = false;
   private tibberLoadingMinutes: number;
+  private dailyLoadingFromNetReset : boolean;
 
   constructor (log: Logging, config: PlatformConfig, api: API) {
     this.hap = api.hap;
@@ -56,6 +57,7 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
     this.lastClearDate.setMinutes(0);
     this.lastClearDate.setMinutes(1);
     this.isBatteryLoadingFromNet = false;
+    this.dailyLoadingFromNetReset = false;
 
     log.debug('EnergyTriggerPlugin plugin loaded');
     this.setCharacteristics(this.hap, this.config);
@@ -214,6 +216,14 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
 
       this.isBatteryLoadingFromNet = this.alphaService.isBatteryCurrentlyLoading();
 
+      if (this.tibber !== undefined){
+        if (this.tibber.getIsTriggeredToday()===false && this.dailyLoadingFromNetReset === false ){
+          this.log.debug('no loading possible today, stop eventually existing loading');
+          this.alphaService.stopLoading(serialNumber);
+          this.tibber.setIsTriggeredToday(undefined);
+          this.dailyLoadingFromNetReset = true;
+        }
+      }
     }
 
     this.alphaService.getLastPowerData(serialNumber).then(
@@ -235,6 +245,8 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
             this.alphaTriggerMap.clear();
             if (this.tibber !== undefined){
               this.tibber.getDailyMap().clear();
+              this.tibber.setIsTriggeredToday(undefined);
+              this.dailyLoadingFromNetReset = false; // allow new daily loading reset
             }
             this.lastClearDate = now;
           }

@@ -76,11 +76,25 @@ export class AlphaService {
   // calculate loading settings: if currently loading, continue, else disable loading trigger
   isBatteryCurrentlyLoading(): boolean {
 
-
     if (this.lastLoadingStart!==undefined) {
       return new Date() > this.lastLoadingStart;
     }
     return false ;
+  }
+
+  // hard reset loading
+  async stopLoading(serialNumber:string){
+    const newSettingsData = new Map<string, unknown> ();
+    newSettingsData['gridCharge'] = 0;
+    newSettingsData['timeChaf1'] = '00:00';
+    newSettingsData['timeChae1'] = '00:00';
+    newSettingsData['timeChaf2'] = '00:00';
+    newSettingsData['timeChae2'] = '00:00';
+
+    await this.setAlphaSettings(serialNumber, newSettingsData).catch((error) => {
+      this.setLastLoadingStart(undefined); // mark as not loading
+      this.logMsg('could not finish loading :' + error);
+    });
   }
 
   // calculate loading settings: if currently loading, continue, else disable loading trigger

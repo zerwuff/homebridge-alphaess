@@ -12,6 +12,7 @@ export class TibberService {
   private lowestPriceHours: number ;
   private tibberLoadBatteryEnabled: boolean;
   private thresholdEur: number ;
+  private triggerdToday: boolean;
 
   constructor(logger:Logging, tibberApiKey:string, tibberQueryUrl:string, thresholdEur: number,
     tibberLoadBatteryEnabled:boolean, tibberHomeId?: string){
@@ -34,6 +35,7 @@ export class TibberService {
     this.pricePoint = 0;
     this.lowestPriceHours = undefined;
     this.tibberLoadBatteryEnabled = tibberLoadBatteryEnabled;
+    this.triggerdToday = undefined;
   }
 
   getLogger() : Logging{
@@ -117,6 +119,7 @@ export class TibberService {
     socCurrent: number /** Current SOC of battery */,
     socLowerThreshold: number /** SOC of battery to be trigger */): Promise<boolean> {
     return new Promise((resolve, reject) => {
+      this.setIsTriggeredToday(false);
       this.findCurrentPrice().then( currentPrice => {
         this.getTodaysEnergyPrices().then(todaysEnergyPrices => {
           const todaysLowestIPrice = this.findLowestPrice(todaysEnergyPrices);
@@ -141,6 +144,9 @@ export class TibberService {
             const hours = date.getHours();
             const min = date.getMinutes();
             const index = hours * 4 + Math.round(min/15);
+            if (isTriggered){
+              this.setIsTriggeredToday(true);
+            }
             this.getDailyMap().set(index, new PriceTrigger(cents, isTriggered && index === currentIndex ?1:0, date));
           });
           return resolve(isTriggered);
@@ -166,6 +172,14 @@ export class TibberService {
 
   getThresholdEur(){
     return this.thresholdEur;
+  }
+
+  getIsTriggeredToday(){
+    return this. triggerdToday;
+  }
+
+  setIsTriggeredToday(trigger:boolean){
+    this.triggerdToday = trigger;
   }
 
   // check if we have the lowest energy price for today - if yes, raise the trigger
