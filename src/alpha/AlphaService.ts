@@ -39,8 +39,8 @@ export class AlphaService {
   }
 
 
-  setLastLoadingStart(lastLoadingStart:Date ){
-    this.lastLoadingStart = lastLoadingStart ;
+  setLastLoadingStart(loadStart:Date ){
+    this.lastLoadingStart = loadStart ;
   }
 
 
@@ -54,10 +54,17 @@ export class AlphaService {
 
     // update settings needed
     if (updateSettingsData!==undefined){
-      // update required
+      // update required, either load or unload battery
       await this.setAlphaSettings(serialNumber, updateSettingsData).catch(() => {
-        this.setLastLoadingStart(undefined);
-        throw new Error('could not fetch settings data to check if battery currently loading');
+        if (updateSettingsData['gridCharge'] === 1){ // try to load
+          this.setLastLoadingStart(undefined); // mark as not loading, try again later
+          throw new Error('could not set update battery loading ');
+        }
+
+        if (updateSettingsData['gridCharge'] === 0){ // try to unload
+          this.setLastLoadingStart(undefined); // mark as not loading
+          throw new Error('could not set update battery loading ');
+        }
       });
       return updateSettingsData;
     }
@@ -68,6 +75,8 @@ export class AlphaService {
 
   // calculate loading settings: if currently loading, continue, else disable loading trigger
   isBatteryCurrentlyLoading(): boolean {
+
+
     if (this.lastLoadingStart!==undefined) {
       return new Date() > this.lastLoadingStart;
     }
@@ -96,7 +105,6 @@ export class AlphaService {
       timeToStartLoading = true;
       this.logMsg('timeToStartLoading: ' + timeToStartLoading);
     }
-
     this.logMsg('calculate new loading isCurrentlyLoading: ' + isCurrentlyLoading );
 
     //shall load initially
