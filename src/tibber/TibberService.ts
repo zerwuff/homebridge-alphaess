@@ -75,6 +75,9 @@ export class TibberService {
   findLowestPrice(prices: IPrice[]): IPrice {
     let lowest = undefined;
     let lowestIPrice = undefined;
+    if (prices===undefined){
+      return undefined;
+    }
     prices.forEach(price => {
       price.total;
       if (lowest===undefined){
@@ -122,6 +125,10 @@ export class TibberService {
       this.setIsTriggeredToday(false);
       this.findCurrentPrice().then( currentPrice => {
         this.getTodaysEnergyPrices().then(todaysEnergyPrices => {
+          if (todaysEnergyPrices===undefined){
+            this.getLogger().debug('Could not fetch todays prices, response is empty');
+            return reject(false);
+          }
           const todaysLowestIPrice = this.findLowestPrice(todaysEnergyPrices);
           const todaysLowestTime = todaysLowestIPrice.startsAt;
           const dateObject = new Date(todaysLowestTime);

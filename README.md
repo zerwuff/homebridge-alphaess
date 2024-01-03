@@ -111,6 +111,43 @@ following parameters are ignored.
 
 
 
+## Image Rendering
+If you would like to see the rendered images on your home app, please install the Camera FFMpeg plugin which will show the images as cameras and extend the plattforms configuration like this: 
+
+```
+    plattforms: [
+  {
+  // alpha ess configuration
+  },
+
+ {
+            "name": "Camera FFmpeg",
+            "videoProcessor": "/usr/local/bin/ffmpeg",
+            "cameras": [
+                {
+                    "name": "AlphaESS",
+                    "unbridge": false,
+                    "videoConfig": {
+                        "source": "-f image2 -loop 1 -s 640x360 -pix_fmt yuvj422p -i /tmp/alpha_power_image.png",
+                        "stillImageSource": "-i file:///tmp/alpha_power_image.png",
+                        "audio": false
+                    }
+                },
+                {
+                    "name": "Trigger",
+                    "unbridge": false,
+                    "videoConfig": {
+                        "source": "-f image2 -loop 1 -s 640x360 -pix_fmt yuvj422p -i /tmp/tibber_image.png",
+                        "stillImageSource": "-i file:///tmp/tibber_image.png",
+                        "audio": false
+                    }
+                }
+            ],
+            "platform": "Camera-ffmpeg"
+        }
+]
+```
+
 ##  Tibber is new experimental:
 
 Provides a new combined trigger that is raised if Alpha or Tibber trigger is fired. Also, rendering for that trigger is possible.
