@@ -1,5 +1,7 @@
+import { Logger } from 'homebridge';
 import { AlphaData, AlphaTrigger } from '../interfaces';
 import { PriceTrigger } from '../interfaces';
+import { logger } from 'vega';
 
 const sharp = require('sharp');
 const vega = require('vega');
@@ -14,8 +16,8 @@ const IMAGE_INDEX_LENGHT = 96;
 const colorPower = '#ff6a2f'; // orange
 const colorBattery = '#85C5A6';  //light green
 const colorTibber = '#3277a8'; // blue
-const colorTriggerTibber = '#80ff99'; // strong green
-const colorTriggerAlpha = '#f54242';  // blue
+const colorTriggerTibber = '#1b6a2f'; // strong green
+const colorTriggerAlpha = '#ff6a2f';  // orange
 const colorTibberPricePoint= '#1b6a2f'; // dark green
 const colorTibberPricePointAndLoading = '#8d32a8'; // violet
 
@@ -150,8 +152,12 @@ export class ImageRenderingService{
         {
           mark: {
             type: 'line',
-            strokeWidth: 4,
+            strokeWidth: 5,
             color:  colorTriggerTibber,
+            //color: {
+            // value: colorTriggerTibber,
+            //condition: {test: 'datum[\'triggerTibber\'] === 1 && datum[\'triggerAlpha\'] ===1 ', value: 'blue'},
+            //},
           },
           title:'Trigger Tibber',
           encoding: {
@@ -164,14 +170,15 @@ export class ImageRenderingService{
               },
             },
             y: {
-              sort:'ascending',
               field: 'triggerTibber',
               title: 'Trigger Tibber ',
-              axis: {'orient':'right', 'format':'~s', 'grid': true, 'ticks': false, labelPadding:20, labelSeparation:500, titleColor: colorTriggerTibber },
+              axis: {'orient':'right', 'format':'~s', 'grid': false, labels:false, 'ticks': true, labelPadding:40, labelSeparation:0, titleColor: colorTriggerTibber },
               values: [0, 1],
-              type: 'nominal',
-              scale: {'domain': [1, 0]},
+              type: 'quantitative',
             },
+          //  color: {
+            //  'condition': {'test': 'datum[\'triggerTibber\'] > 0', value:'black' }, value:colorTriggerTibber,
+            //},
           },
 
         },
@@ -179,7 +186,7 @@ export class ImageRenderingService{
           mark: {
             type: 'line',
             color:  colorTriggerAlpha,
-            strokeWidth: 4,
+            strokeWidth: 5,
           },
           encoding: {
             x: {
@@ -187,22 +194,21 @@ export class ImageRenderingService{
               type: 'nominal',
               title: '24 hrs',
               axis: {
-                labels: true,
+                labels: false,
               },
             },
             y: {
-              sort:'ascending',
               field: 'triggerAlpha',
               title: 'TriggerAlpha',
-              axis: {'orient':'right', 'format':'~s', 'grid': true, 'ticks': false, labelPadding:45, titleColor: colorTriggerAlpha },
+              axis: {'orient':'right', 'grid': false, 'format':'~s', 'ticks': true, labelPadding:20, titleColor: colorTriggerAlpha },
               values: [0, 1],
-              type: 'nominal',
-              scale: {'domain': [1, 0]},
+              type: 'quantitative',
             },
           },
         },
       ],
     };
+
 
     const vegaspec = lite.compile(vlSpecTibber).spec;
     const view = new vega.View(vega.parse(vegaspec), {renderer: 'none'});
