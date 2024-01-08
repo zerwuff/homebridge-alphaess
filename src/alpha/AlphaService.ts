@@ -241,11 +241,7 @@ export class AlphaService {
       request(req, (error, response, body ) => {
         if (!error && (response.statusCode === 200 || response.code === 201) ) {
           const response = new ObjectMapper().parse<AlphaSettingsResponse>(JSON.stringify(body));
-          if (response.data === undefined || response.data === null || ( response.code !== 200 && response.code !==201) ) {
-            console.error(response);
-            this.logMsg('could not start loading the battery : ' + response.code + ' -> ' + response.msg);
-            return reject(body);
-          }
+          this.logMsg('successfully loading the battery : ' + response.code + ' -> ' + response.msg);
           return resolve(true);
 
         } else {
