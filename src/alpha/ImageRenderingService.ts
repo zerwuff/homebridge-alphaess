@@ -1,7 +1,5 @@
-import { Logger } from 'homebridge';
 import { AlphaData, AlphaTrigger } from '../interfaces';
 import { PriceTrigger } from '../interfaces';
-import { logger } from 'vega';
 
 const sharp = require('sharp');
 const vega = require('vega');
