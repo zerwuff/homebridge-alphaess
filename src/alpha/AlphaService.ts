@@ -239,13 +239,13 @@ export class AlphaService {
 
     return new Promise((resolve, reject) => {
       request(req, (error, response, body ) => {
-        if (!error && (response.statusCode === 200 || response.code === 201) ) {
+        if (!error && (response.code === 200 || response.code === 201) ) {
           const response = new ObjectMapper().parse<AlphaSettingsResponse>(JSON.stringify(body));
-          this.logMsg('successfully loading the battery : ' + response.code + ' -> ' + response.msg);
+          this.logMsg('successfully loading/unloading the battery : ' + response.code + ' -> ' + response.msg);
           return resolve(true);
 
         } else {
-          this.logMsg('could not start loading the battery because of error or wrong response code : ' + error);
+          this.logMsg('error loading/unlading: response code : ' + response.code + ' response msg ' + response.msg + ', error: ' + error );
           return reject(false);
         }
       },
