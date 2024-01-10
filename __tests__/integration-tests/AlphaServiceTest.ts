@@ -62,10 +62,12 @@ describe('Integration Test with Mock Server', () => {
     const settingsPost = server.post('/updateChargeConfigInfo').mockImplementation((ctx) => {
       const alphaSettingsPostResponse = new AlphaSettingsResponse();
       alphaSettingsPostResponse.code = 200;
+      alphaSettingsPostResponse.msg= 'ok';
       alphaSettingsPostResponse.data = new Map<string, unknown>();
       ctx.status = 200;
       ctx.response.status = 200;
-      ctx.response.body=JSON.stringify(alphaSettingsPostResponse);
+      const json = JSON.stringify(alphaSettingsPostResponse);
+      ctx.response.body= json;
     });
 
 

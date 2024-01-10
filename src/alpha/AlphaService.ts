@@ -239,13 +239,17 @@ export class AlphaService {
 
     return new Promise((resolve, reject) => {
       request(req, (error, response, body ) => {
-        if (!error && (response.code === 200 || response.code === 201) ) {
-          const response = new ObjectMapper().parse<AlphaSettingsResponse>(JSON.stringify(body));
-          this.logMsg('successfully loading/unloading the battery : ' + response.code + ' -> ' + response.msg);
-          return resolve(true);
-
+        if (!error && (response.statusCode === 200 || response.statusCode === 201) ) {
+          const alphaSettingsResp = new ObjectMapper().parse<AlphaSettingsResponse>(JSON.stringify(body));
+          if (alphaSettingsResp.code === 200 || alphaSettingsResp.code === 201) {
+            this.logMsg('successfully loading/unloading the battery : ' + alphaSettingsResp.code + ' -> ' + alphaSettingsResp.msg);
+            return resolve(true);
+          } else {
+            this.logMsg('error loading/unloading: response code : ' + response + ', error: ' + error );
+            return resolve(false);
+          }
         } else {
-          this.logMsg('error loading/unlading: response code : ' + response.code + ' response msg ' + response.msg + ', error: ' + error );
+          this.logMsg('error loading/unloading: response code : ' + response + ', error: ' + error );
           return reject(false);
         }
       },
@@ -318,7 +322,7 @@ export class AlphaService {
 
     return new Promise((resolve, reject) => {
       request(req, (error, response, body) => {
-        if (!error && response.statusCode == 200) {
+        if (!error && response.statusCode === 200) {
           const detailResponse = new ObjectMapper().parse<AlphaLastPowerDataResponse>(JSON.stringify(body));
 
           this.storeData(detailResponse);
