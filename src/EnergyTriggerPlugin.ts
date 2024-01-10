@@ -214,7 +214,17 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
         return;
       });
 
-      this.isBatteryLoadingFromNet = this.alphaService.isBatteryCurrentlyLoading();
+      this.alphaService.isBatteryCurrentlyLoadingCheckNet(serialNumber).then(
+        batteryLoading => {
+          this.isBatteryLoadingFromNet = batteryLoading;
+          this.log.debug('Loading Battery Satus from Net:' + batteryLoading);
+        }).catch(error => {
+        this.log.error('Error Checking Battery currently loading not possible' + error);
+        this.isBatteryLoadingFromNet = this.alphaService.isBatteryCurrentlyLoading();
+
+        return;
+      });
+
 
       if (this.tibber !== undefined){
         if (this.tibber.getIsTriggeredToday()===false && this.dailyLoadingFromNetReset === false ){

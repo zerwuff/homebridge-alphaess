@@ -170,7 +170,7 @@ export class ImageRenderingService{
             y: {
               field: 'triggerTibber',
               title: 'Trigger Tibber ',
-              axis: {'orient':'right', 'format':'~s', 'grid': false, labels:false, 'ticks': true, labelPadding:40, labelSeparation:0, titleColor: colorTriggerTibber },
+              axis: {'orient':'right', 'format':'', 'grid': false, 'ticks': true, labelPadding:50, labelSeparation:150, titleColor: colorTriggerTibber },
               values: [0, 1],
               type: 'quantitative',
             },
@@ -192,13 +192,13 @@ export class ImageRenderingService{
               type: 'nominal',
               title: '24 hrs',
               axis: {
-                labels: false,
+                labels: true,
               },
             },
             y: {
               field: 'triggerAlpha',
               title: 'TriggerAlpha',
-              axis: {'orient':'right', 'grid': false, 'format':'~s', 'ticks': true, labelPadding:20, titleColor: colorTriggerAlpha },
+              axis: {'orient':'right', 'grid': false, 'format':'~s', 'ticks': false, labelPadding:20, titleColor: colorTriggerAlpha },
               values: [0, 1],
               type: 'quantitative',
             },

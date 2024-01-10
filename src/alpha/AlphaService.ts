@@ -73,6 +73,44 @@ export class AlphaService {
   }
 
 
+
+  // calculate loading settings: if currently loading
+  async isBatteryCurrentlyLoadingCheckNet(serialNumber:string) : Promise<boolean> {
+
+    const alphaSettingsResponse = await this.getSettingsData(serialNumber).catch( () => {
+      throw new Error('could not fetch settings data to check if battery currently loading');
+    });
+
+    const settings = alphaSettingsResponse.data;
+    // enable trigger reloading now for one hour, exit
+    const timeLoadingStart = ''+ settings['timeChaf1'];
+    const hourLoadingStart = parseInt(timeLoadingStart.substring(0, 2));
+    const minLoadingStart = parseInt(timeLoadingStart.substring(3, 5));
+
+    const timeLoadingEnd = ''+ settings['timeChae1'];
+    const hourLoadingEnd = parseInt(timeLoadingEnd.substring(0, 2));
+    const minLoadingEnd = parseInt(timeLoadingEnd.substring(3, 5));
+
+    const startDate = new Date();
+    startDate.setHours(hourLoadingStart);
+    startDate.setMinutes(minLoadingStart);
+    startDate.setSeconds(0);
+
+    const endDate = new Date();
+    endDate.setHours(hourLoadingEnd);
+    endDate.setMinutes(minLoadingEnd);
+    endDate.setSeconds(0);
+
+    const loadingFeatureSet = settings['gridCharge'] === 1;
+
+    const now = new Date();
+
+    const afterNow = now.getTime() > startDate.getTime();
+    const beforeEnd = now.getTime() < endDate.getTime();
+    const isCurrentlyLoadingFromNet = loadingFeatureSet && afterNow && beforeEnd;
+    return isCurrentlyLoadingFromNet;
+  }
+
   // calculate loading settings: if currently loading, continue, else disable loading trigger
   isBatteryCurrentlyLoading(): boolean {
 

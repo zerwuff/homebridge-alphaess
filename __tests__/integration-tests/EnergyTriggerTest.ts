@@ -8,9 +8,7 @@ import { API } from 'homebridge';
 import { PriceTrigger } from '../../src/interfaces';
 import { IPrice } from 'tibber-api/lib/src/models/IPrice';
 import { PriceLevel } from 'tibber-api/lib/src/models/enums/PriceLevel';
-
 import { AlphaDataResponse, AlphaLastPowerDataResponse } from '../../src/alpha/response/AlphaLastPowerDataResponse';
-import { resolve } from 'path';
 
 
 const loging = new Mock<Logging>()
@@ -55,7 +53,8 @@ test('test trigger tibber service via energy plugin - expect triggered ', async 
   const listIprice:IPrice[] = [new PriceTestData(10, '10:00'), new PriceTestData(20, '12:00')];
 
   const alphaService = new Mock<AlphaService>()
-    .setup( instance => instance.getLastPowerData). returns(() => alphaDetailResp );
+    .setup( instance => instance.getLastPowerData). returns(() => alphaDetailResp )
+    .setup( instance => instance.isBatteryCurrentlyLoading). returns(() => true );
 
   const tibberServiceOrigin = new TibberService(loging.object(), 'apiKey', 'queryUrl', 0.2, false);
   tibberServiceOrigin.setLogger(loging.object());
@@ -142,6 +141,7 @@ test('test trigger tibber service via energy plugin -  expect stop battery loadi
 
 });
 
+
 test('test trigger tibber service via energy plugin - expect not triggered', async () => {
   const currentPrice = 27.0;
   const listIprice:IPrice[] = [new PriceTestData(34.0, '10:00'),
@@ -149,7 +149,8 @@ test('test trigger tibber service via energy plugin - expect not triggered', asy
     new PriceTestData(25.0, '12:00')];
 
   const alphaService = new Mock<AlphaService>()
-    .setup( instance => instance.getLastPowerData). returns(() => alphaDetailResp );
+    .setup( instance => instance.getLastPowerData). returns(() => alphaDetailResp )
+    .setup (instance => instance.isBatteryCurrentlyLoading).returns( () => true ) ;
 
   const tibberServiceOrigin = new TibberService(loging.object(), 'apiKey', 'queryUrl', 0.5, false);
   tibberServiceOrigin.setLogger(loging.object());
@@ -198,12 +199,16 @@ test('test trigger tibber service via energy plugin - expect not triggered', asy
 
 
 
-
 test('test trigger tibber service via energy plugin - expect triggered despite of exception ', async () => {
   const listIprice:IPrice[] = [new PriceTestData(10, '10:00'), new PriceTestData(20, '12:00')];
 
   const alphaService = new Mock<AlphaService>()
     .setup( instance => instance.getLastPowerData). returns(() => alphaDetailResp )
+    .setup( instance => instance.isBatteryCurrentlyLoadingCheckNet).returns( () => new Promise<boolean>((resolve => {
+      resolve(true);
+    }
+    )))
+    .setup( instance => instance.isBatteryCurrentlyLoading). returns(() => true )
     .setup( instance => instance.getSettingsData). throws(() => new Error('Could not load data') );
 
   const tibberServiceOrigin = new TibberService(loging.object(), 'apiKey', 'queryUrl', 0.2, false);

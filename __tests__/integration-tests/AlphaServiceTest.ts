@@ -13,6 +13,34 @@ const secret = 'AE1234';
 const logRequestData = false;
 
 
+
+// next hour loading string
+function getLoadingHourString(hour:number, minute:number ): string {
+  let minuteString = ':15';
+  let hourString = new String(hour);
+
+  if (minute> 15){
+    minuteString = ':30';
+  }
+  if (minute> 30){
+    minuteString = ':45';
+  }
+  if (minute>=45){
+    minuteString = ':00';
+    hour = hour + 1;
+    hourString = new String(hour);
+    if (hour >=24 ){
+      hour = 0;
+      hourString = '00';
+    }
+  }
+  if (hour < 10){
+    hourString = '0' + hour;
+  }
+  return hourString + minuteString;
+}
+
+
 describe('Integration Test with Mock Server', () => {
 
 
@@ -70,7 +98,6 @@ describe('Integration Test with Mock Server', () => {
       ctx.response.body= json;
     });
 
-
     const minutes = 45 ;
     const alphaService = new AlphaService(undefined, appid, secret, logRequestData, mockServerUrl );
 
@@ -88,7 +115,107 @@ describe('Integration Test with Mock Server', () => {
 
 
 
+  it('positive test: check battery is currrently loading ', async () => {
 
+    const mockServerUrl ='http://localhost:' + server.getURL().port;
+
+    const now = new Date();
+
+    const settingsGet = server.get('/getChargeConfigInfo').mockImplementation((ctx) => {
+      const alphaSettingsResponse = new AlphaSettingsResponse();
+      alphaSettingsResponse.code = 200;
+      alphaSettingsResponse.msg= 'ok';
+      const loadingSettings = new Map<string, unknown>();
+      loadingSettings['timeChaf1'] = now.getHours()+ ':' + (now.getMinutes()-2);
+      loadingSettings['timeChae1'] = now.getHours()+ ':' + (now.getMinutes()+2);
+      loadingSettings['gridCharge'] = 1;
+      alphaSettingsResponse.data = loadingSettings;
+
+      ctx.status = 200;
+      ctx.response.status = 200;
+      const json = JSON.stringify(alphaSettingsResponse);
+      ctx.response.body= json;
+    });
+
+    const alphaService = new AlphaService(undefined, appid, secret, logRequestData, mockServerUrl );
+
+    // when
+    const batteryChargeResult = await alphaService.isBatteryCurrentlyLoadingCheckNet('blafasel');
+
+    //then
+    expect(settingsGet).toHaveBeenCalledTimes(1);
+
+    expect(batteryChargeResult).toBeTruthy();
+  });
+
+
+
+  it('negative test: n battery is currrently loading, feature disabled ', async () => {
+
+    const mockServerUrl ='http://localhost:' + server.getURL().port;
+
+    const now = new Date();
+
+    const settingsGet = server.get('/getChargeConfigInfo').mockImplementation((ctx) => {
+      const alphaSettingsResponse = new AlphaSettingsResponse();
+      alphaSettingsResponse.code = 200;
+      alphaSettingsResponse.msg= 'ok';
+      const loadingSettings = new Map<string, unknown>();
+      loadingSettings['timeChaf1'] = now.getHours()+ ':' + (now.getMinutes()-2);
+      loadingSettings['timeChae1'] = now.getHours()+ ':' + (now.getMinutes()+2);
+      loadingSettings['gridCharge'] = 0;
+      alphaSettingsResponse.data = loadingSettings;
+
+      ctx.status = 200;
+      ctx.response.status = 200;
+      const json = JSON.stringify(alphaSettingsResponse);
+      ctx.response.body= json;
+    });
+
+    const alphaService = new AlphaService(undefined, appid, secret, logRequestData, mockServerUrl );
+
+    // when
+    const batteryChargeResult = await alphaService.isBatteryCurrentlyLoadingCheckNet('blafasel');
+
+    //then
+    expect(settingsGet).toHaveBeenCalledTimes(1);
+
+    expect(batteryChargeResult).toBeFalsy();
+  });
+
+
+  it('negative test: check battery is currrently loading, beginning too far in future  ', async () => {
+
+    const mockServerUrl ='http://localhost:' + server.getURL().port;
+
+    const now = new Date();
+
+    const settingsGet = server.get('/getChargeConfigInfo').mockImplementation((ctx) => {
+      const alphaSettingsResponse = new AlphaSettingsResponse();
+      alphaSettingsResponse.code = 200;
+      alphaSettingsResponse.msg= 'ok';
+      const loadingSettings = new Map<string, unknown>();
+      loadingSettings['timeChaf1'] = now.getHours()+ ':' + (now.getMinutes()+5);
+      loadingSettings['timeChae1'] = now.getHours()+ ':' + (now.getMinutes()+10);
+      loadingSettings['gridCharge'] = 1;
+      alphaSettingsResponse.data = loadingSettings;
+
+      ctx.status = 200;
+      ctx.response.status = 200;
+      const json = JSON.stringify(alphaSettingsResponse);
+      ctx.response.body= json;
+    });
+
+    const alphaService = new AlphaService(undefined, appid, secret, logRequestData, mockServerUrl );
+
+    // when
+    const batteryChargeResult = await alphaService.isBatteryCurrentlyLoadingCheckNet('blafasel');
+
+    //then
+    expect(settingsGet).toHaveBeenCalledTimes(1);
+
+    expect(batteryChargeResult).toBeFalsy();
+  });
 
 });
 
@@ -207,32 +334,6 @@ test('negative test: threshold of Detail Response exceeds config -> trigger valu
   expect(trigger).toEqual(false);
 });
 
-
-// next hour loading string
-function getLoadingHourString(hour:number, minute:number ): string {
-  let minuteString = ':15';
-  let hourString = new String(hour);
-
-  if (minute> 15){
-    minuteString = ':30';
-  }
-  if (minute> 30){
-    minuteString = ':45';
-  }
-  if (minute>=45){
-    minuteString = ':00';
-    hour = hour + 1;
-    hourString = new String(hour);
-    if (hour >=24 ){
-      hour = 0;
-      hourString = '00';
-    }
-  }
-  if (hour < 10){
-    hourString = '0' + hour;
-  }
-  return hourString + minuteString;
-}
 
 
 test('test enable loading if currently not loading, verify loading minutes (45)', async () => {
