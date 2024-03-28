@@ -363,6 +363,10 @@ export class AlphaService {
         if (!error && response.statusCode === 200) {
           const detailResponse = new ObjectMapper().parse<AlphaLastPowerDataResponse>(JSON.stringify(body));
 
+          if (detailResponse.data === undefined){
+            return reject('could not parse response, missing data in response :' + JSON.stringify(body) );
+          }
+
           this.storeData(detailResponse);
 
           return resolve(detailResponse);

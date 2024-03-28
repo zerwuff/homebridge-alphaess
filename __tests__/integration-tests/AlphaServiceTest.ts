@@ -43,9 +43,7 @@ function getLoadingHourString(hour:number, minute:number ): string {
 
 describe('Integration Test with Mock Server', () => {
 
-
   const server = new MockServer();
-
 
   afterAll(() => server.stop());
 
@@ -56,7 +54,6 @@ describe('Integration Test with Mock Server', () => {
 
   it('Test Get Alpha Data ', async () => {
     const mockServerUrl ='http://localhost:' + server.getURL().port;
-
 
     const lastPowerRoute = server.get('/getLastPowerData').mockImplementationOnce((ctx) => {
       const alphaData = new AlphaDataResponse();
@@ -70,7 +67,7 @@ describe('Integration Test with Mock Server', () => {
       ctx.status = 200;
     });
 
-    const alphaService = new AlphaService(undefined, appid, secret, logRequestData, mockServerUrl );
+    const alphaService = new AlphaService(undefined, 'goodAppId', secret, logRequestData, mockServerUrl );
     const lastPowerData = await alphaService.getLastPowerData(serialNumber);
     expect(lastPowerData.data).toBeDefined();
     expect(lastPowerData.data.soc).toBeDefined();
@@ -80,6 +77,20 @@ describe('Integration Test with Mock Server', () => {
     expect(lastPowerData.data.pbat).toEqual(120);
     expect(lastPowerData.data.soc).toEqual(44);
     expect(lastPowerRoute).toHaveBeenCalledTimes(1);
+
+    server.get('/getLastPowerData').mockImplementationOnce((ctx) => {
+      const detailResponse = new AlphaLastPowerDataResponse();
+      ctx.response.body = JSON.stringify(detailResponse);
+      ctx.status = 200;
+    });
+
+
+    try {
+      await alphaService.getLastPowerData(serialNumber);
+    } catch (err) {
+      expect(err).toBeDefined();
+      expect(err).toContain('could not parse response, missing data in response :');
+    }
   });
 
 
@@ -87,6 +98,7 @@ describe('Integration Test with Mock Server', () => {
 
     const mockServerUrl ='http://localhost:' + server.getURL().port;
 
+    server.reset();
     const settingsPost = server.post('/updateChargeConfigInfo').mockImplementation((ctx) => {
       const alphaSettingsPostResponse = new AlphaSettingsResponse();
       alphaSettingsPostResponse.code = 200;
