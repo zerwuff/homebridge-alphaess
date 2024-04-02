@@ -78,9 +78,23 @@ describe('Integration Test with Mock Server', () => {
     expect(lastPowerData.data.soc).toEqual(44);
     expect(lastPowerRoute).toHaveBeenCalledTimes(1);
 
+    // bad response returned
     server.get('/getLastPowerData').mockImplementationOnce((ctx) => {
       const detailResponse = new AlphaLastPowerDataResponse();
       ctx.response.body = JSON.stringify(detailResponse);
+      ctx.status = 200;
+    });
+
+    try {
+      await alphaService.getLastPowerData(serialNumber);
+    } catch (err) {
+      expect(err).toBeDefined();
+      expect(err).toContain('could not parse response, missing data in response :');
+    }
+
+    // partial response returned
+    server.get('/getLastPowerData').mockImplementationOnce((ctx) => {
+      ctx.response.body = '{ \'code\':\'23\' , \'data\':\'xx\' }' ;
       ctx.status = 200;
     });
 
@@ -90,6 +104,34 @@ describe('Integration Test with Mock Server', () => {
     } catch (err) {
       expect(err).toBeDefined();
       expect(err).toContain('could not parse response, missing data in response :');
+    }
+
+    // bad response returned
+    server.get('/getLastPowerData').mockImplementationOnce((ctx) => {
+      ctx.response.body = '{}' ;
+      ctx.status = 200;
+    });
+
+
+    try {
+      await alphaService.getLastPowerData(serialNumber);
+    } catch (err) {
+      expect(err).toBeDefined();
+      expect(err).toContain('could not parse response, missing data in response :');
+    }
+
+    // empty response returned
+    server.get('/getLastPowerData').mockImplementationOnce((ctx) => {
+      ctx.response.body = '' ;
+      ctx.status = 200;
+    });
+
+
+    try {
+      await alphaService.getLastPowerData(serialNumber);
+    } catch (err) {
+      expect(err).toBeDefined();
+      expect(err).toContain('could not parse response since it was empty');
     }
   });
 

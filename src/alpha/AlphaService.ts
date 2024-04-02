@@ -361,9 +361,14 @@ export class AlphaService {
     return new Promise((resolve, reject) => {
       request(req, (error, response, body) => {
         if (!error && response.statusCode === 200) {
+
+          if (body===undefined || body===''){
+            return reject('could not parse response since it was empty.');
+          }
+
           const detailResponse = new ObjectMapper().parse<AlphaLastPowerDataResponse>(JSON.stringify(body));
 
-          if (detailResponse.data === undefined){
+          if (detailResponse.data === undefined || detailResponse.data === null ){
             return reject('could not parse response, missing data in response :' + JSON.stringify(body) );
           }
 
