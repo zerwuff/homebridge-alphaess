@@ -61,7 +61,6 @@ export class AlphaDataResponse {
 
 export class AlphaLastPowerDataResponse {
 
-
   @JsonProperty() @JsonClassType({type: () => [Number]})
     code: number;
 
@@ -70,5 +69,16 @@ export class AlphaLastPowerDataResponse {
 
   @JsonProperty() @JsonClassType({type: () => [String]})
     info: string;
+
+}
+
+
+
+// Only to provide null check Test
+export class AlphaLastPowerDataResponseWithNullTestingOnly {
+
+  @JsonProperty() @JsonClassType({type: () => [AlphaDataResponse]})
+    data: AlphaDataResponse | null;
+
 
 }

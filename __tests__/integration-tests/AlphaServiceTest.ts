@@ -3,7 +3,7 @@ import { MockServer } from 'jest-mock-server';
 
 import { AlphaService } from '../../src/alpha/AlphaService';
 import { AlphaData } from '../../src/interfaces';
-import { AlphaLastPowerDataResponse, AlphaDataResponse } from '../../src/alpha/response/AlphaLastPowerDataResponse';
+import { AlphaLastPowerDataResponse, AlphaDataResponse, AlphaLastPowerDataResponseWithNullTestingOnly } from '../../src/alpha/response/AlphaLastPowerDataResponse';
 import { ImageRenderingService } from '../../src/alpha/ImageRenderingService';
 import { AlphaSettingsResponse } from '../../src/alpha/response/AlphaSettingsResponse';
 
@@ -11,7 +11,6 @@ const serialNumber ='blafasel';
 const appid = 'bla';
 const secret = 'AE1234';
 const logRequestData = false;
-
 
 
 // next hour loading string
@@ -71,7 +70,6 @@ describe('Integration Test with Mock Server', () => {
     const lastPowerData = await alphaService.getLastPowerData(serialNumber);
     expect(lastPowerData.data).toBeDefined();
     expect(lastPowerData.data.soc).toBeDefined();
-
     expect(lastPowerData.data).toBeDefined();
     expect(lastPowerData.data.ppv).toEqual(90);
     expect(lastPowerData.data.pbat).toEqual(120);
@@ -92,13 +90,27 @@ describe('Integration Test with Mock Server', () => {
       expect(err).toContain('could not parse response, missing data in response :');
     }
 
+    server.get('/getLastPowerData').mockImplementationOnce((ctx) => {
+      const detailResponse = new AlphaLastPowerDataResponseWithNullTestingOnly();
+      detailResponse.data = null;
+      ctx.response.body = JSON.stringify(detailResponse);
+      ctx.status = 200;
+    });
+
+    try {
+      await alphaService.getLastPowerData(serialNumber);
+    } catch (err) {
+      expect(err).toBeDefined();
+      expect(err).toContain('could not parse response, missing data in response :');
+    }
+
     // partial response returned
     server.get('/getLastPowerData').mockImplementationOnce((ctx) => {
       ctx.response.body = '{ \'code\':\'23\' , \'data\':\'xx\' }' ;
       ctx.status = 200;
     });
 
-
+    //
     try {
       await alphaService.getLastPowerData(serialNumber);
     } catch (err) {
