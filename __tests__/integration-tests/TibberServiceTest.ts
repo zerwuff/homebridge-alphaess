@@ -148,17 +148,11 @@ test('test image rendering from tibber test data json', async () => {
     date.setHours(fullhours);
     date.setMinutes(remainder);
 
-    //const entry = {time: date.toISOString(), cnt: cnt, triggerTibber:triggerTibber, triggerAlpha:triggerAlpha};
-    //values.push(entry);
-
     const tibberEntry = new PriceTrigger(price, triggerTibber, date);
     tibberMap.set(cnt, tibberEntry);
 
     const alphaEntry = new AlphaTrigger(triggerAlpha, false, date);
     alphaMap.set(cnt, alphaEntry);
-
-
-    console.debug(date);
 
   }
   const imageUrl = await imageService.renderTriggerImage('image_rendered_tibber.png', tibberMap, alphaMap, 0.5 );

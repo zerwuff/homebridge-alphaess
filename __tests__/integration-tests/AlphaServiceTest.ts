@@ -3,7 +3,8 @@ import { MockServer } from 'jest-mock-server';
 
 import { AlphaService } from '../../src/alpha/AlphaService';
 import { AlphaData } from '../../src/interfaces';
-import { AlphaLastPowerDataResponse, AlphaDataResponse, AlphaLastPowerDataResponseWithNullTestingOnly } from '../../src/alpha/response/AlphaLastPowerDataResponse';
+import { AlphaLastPowerDataResponse, AlphaDataResponse,
+  AlphaLastPowerDataResponseWithNullTestingOnly } from '../../src/alpha/response/AlphaLastPowerDataResponse';
 import { ImageRenderingService } from '../../src/alpha/ImageRenderingService';
 import { AlphaSettingsResponse } from '../../src/alpha/response/AlphaSettingsResponse';
 
@@ -11,34 +12,6 @@ const serialNumber ='blafasel';
 const appid = 'bla';
 const secret = 'AE1234';
 const logRequestData = false;
-
-
-// next hour loading string
-function getLoadingHourString(hour:number, minute:number ): string {
-  let minuteString = ':15';
-  let hourString = new String(hour);
-
-  if (minute> 15){
-    minuteString = ':30';
-  }
-  if (minute> 30){
-    minuteString = ':45';
-  }
-  if (minute>=45){
-    minuteString = ':00';
-    hour = hour + 1;
-    hourString = new String(hour);
-    if (hour >=24 ){
-      hour = 0;
-      hourString = '00';
-    }
-  }
-  if (hour < 10){
-    hourString = '0' + hour;
-  }
-  return hourString + minuteString;
-}
-
 
 describe('Integration Test with Mock Server', () => {
 
@@ -180,14 +153,11 @@ describe('Integration Test with Mock Server', () => {
 
 
 
-
   it('positive test: check battery is currrently loading ', async () => {
-
     const mockServerUrl ='http://localhost:' + server.getURL().port;
-
     const now = new Date();
 
-    const settingsGet = server.get('/getChargeConfigInfo').mockImplementation((ctx) => {
+    const settingsGet = server.get('/getChargeConfigInfo').mockImplementationOnce((ctx) => {
       const alphaSettingsResponse = new AlphaSettingsResponse();
       alphaSettingsResponse.code = 200;
       alphaSettingsResponse.msg= 'ok';
@@ -206,7 +176,7 @@ describe('Integration Test with Mock Server', () => {
     const alphaService = new AlphaService(undefined, appid, secret, logRequestData, mockServerUrl );
 
     // when
-    const batteryChargeResult = await alphaService.isBatteryCurrentlyLoadingCheckNet('blafasel');
+    const batteryChargeResult = await alphaService.isBatteryCurrentlyLoadingCheckNet('checkBatteryLoadingOK');
 
     //then
     expect(settingsGet).toHaveBeenCalledTimes(1);

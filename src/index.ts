@@ -1,5 +1,7 @@
 import { API, PlatformConfig, Logging, StaticPlatformPlugin, AccessoryPlugin } from 'homebridge';
-import { AlphaPlugin } from './AlphaPlugin';
+import { AlphaLightPlugin } from './AlphaLightPlugin';
+import { AlphaHumidityPlugin } from './AlphaHumidityPlugin';
+
 import { EnergyTriggerPlugin } from './EnergyTriggerPlugin';
 
 const PLATFORM_NAME = 'AlphaEssPlatform';
@@ -18,7 +20,7 @@ const fun = (api: API) => {
 };
 export default fun;
 
-export { AlphaPlugin } from './AlphaPlugin';
+export { AlphaLightPlugin } from './AlphaLightPlugin';
 export { AlphaService } from './alpha/AlphaService';
 export { AlphaMqttService, MqttTopics } from './alpha/mqtt/AlphaMqttService';
 
@@ -47,7 +49,8 @@ class AlphaEssPlatformPlugin implements StaticPlatformPlugin {
   // Register 2 Alpha ESS Plugins
   accessories(callback: (foundAccessories: AccessoryPlugin[]) => void): void {
     callback([
-      new AlphaPlugin(this.log, this.config, this.api),
+      new AlphaLightPlugin(this.log, this.config, this.api),
+      new AlphaHumidityPlugin(this.log, this.config, this.api),
       new EnergyTriggerPlugin(this.log, this.config, this.api),
     ]);
   }

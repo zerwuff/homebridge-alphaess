@@ -4,7 +4,7 @@ import { AlphaService } from './index';
 import { AlphaMqttService, MqttTopics } from './index';
 import { ImageRenderingService } from './index';
 
-export class AlphaPlugin implements AccessoryPlugin {
+export class AlphaHumidityPlugin implements AccessoryPlugin {
 
   private alphaService: AlphaService;
   private informationService: Service;
@@ -17,7 +17,6 @@ export class AlphaPlugin implements AccessoryPlugin {
 
   private serialnumber: string;
   private refreshTimerInterval: number; // timer milliseconds to check timer
-
   private power_image_filename; // filename for image rendering
 
   // alpha ess status variables
@@ -32,21 +31,21 @@ export class AlphaPlugin implements AccessoryPlugin {
     this.log = log;
     this.batteryLevel = 0;
     this.refreshTimerInterval = 10000;
-    this.name= 'AlphaEssBattery';
+    this.name= 'AlphaEssBatteryHumidity';
 
     log.debug('Alpha ESS Accessory Loaded');
     this.alphaImageService = new ImageRenderingService();
     this.informationService = new this.hap.Service.AccessoryInformation()
-      .setCharacteristic(this.hap.Characteristic.Manufacturer, 'Alpha Ess Homebridge Percentage Plugin by Jens Zeidler')
+      .setCharacteristic(this.hap.Characteristic.Manufacturer, 'Alpha Ess Homebridge Humidity Percentage Plugin by Jens Zeidler')
       .setCharacteristic(this.hap.Characteristic.SerialNumber, config.serialnumber)
-      .setCharacteristic(this.hap.Characteristic.Model, 'Alpha ESS Battery Storage ');
+      .setCharacteristic(this.hap.Characteristic.Model, 'Alpha ESS Battery Storage');
+
 
     this.service = new this.hap.Service.HumiditySensor(this.name);
 
     // create handlers for required characteristics
     this.service.getCharacteristic(this.hap.Characteristic.CurrentRelativeHumidity)
       .onGet(this.handleCurrentRelativeHumidityGet.bind(this));
-
 
     this.serialnumber = config.serialnumber;
     this.power_image_filename = config.power_image_filename;
@@ -103,8 +102,6 @@ export class AlphaPlugin implements AccessoryPlugin {
     await this.alphaImageService.renderImage(this.power_image_filename, this.alphaService.getDailyMap());
 
   }
-
-
 
 
   getServices() {

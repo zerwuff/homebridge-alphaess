@@ -78,7 +78,7 @@ export class AlphaService {
   async isBatteryCurrentlyLoadingCheckNet(serialNumber:string) : Promise<boolean> {
 
     const alphaSettingsResponse = await this.getSettingsData(serialNumber).catch( () => {
-      throw new Error('could not fetch settings data to check if battery currently loading');
+      throw new Error('could not fetch settings data to check if battery currently loading for serial number: ' + serialNumber);
     });
 
     const settings = alphaSettingsResponse.data;
@@ -108,6 +108,9 @@ export class AlphaService {
     const afterNow = now.getTime() > startDate.getTime();
     const beforeEnd = now.getTime() < endDate.getTime();
     const isCurrentlyLoadingFromNet = loadingFeatureSet && afterNow && beforeEnd;
+
+    this.logMsg('isCurrentlyLoadingfromNet: ' + isCurrentlyLoadingFromNet + ' for serial number: ' + serialNumber);
+
     return isCurrentlyLoadingFromNet;
   }
 
