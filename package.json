@@ -2,14 +2,14 @@
   "private": false,
   "strictNullChecks": false,
   "name": "homebridge-alphaess",
-  "version": "2.86.0",
+  "version": "2.87.0",
   "description": "Homebridge Alpha ESS plugin",
   "license": "Apache License",
   "keywords": [
     "homebridge-plugin",
     "alpha ess",
     "energy",
-    "smart energy"  
+    "smart energy"
   ],
   "repository": {
     "type": "git",
