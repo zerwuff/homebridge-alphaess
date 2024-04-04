@@ -2,6 +2,7 @@
   "pluginAlias": "AlphaEssPlatform",
   "pluginType": "platform",
   "singular": true,
+  "name":"Configuration for Alpha Ess",
   "schema": {
     "properties": {
       "alphaUrl": {

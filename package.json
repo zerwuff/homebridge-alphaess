@@ -6,7 +6,10 @@
   "description": "Homebridge Alpha ESS plugin",
   "license": "Apache License",
   "keywords": [
-    "homebridge-plugin"
+    "homebridge-plugin",
+    "alpha ess",
+    "energy",
+    "smart energy"  
   ],
   "repository": {
     "type": "git",
