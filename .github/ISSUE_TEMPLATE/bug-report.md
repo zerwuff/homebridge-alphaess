@@ -21,7 +21,9 @@ assignees: ''
 **Logs:**
 
 ```
+Please enable Debug Mode (-D)  in Homebridge to see more details about the homebridge-alphaess plugin  
 Show the Homebridge logs here, remove any sensitive information.
+
 ```
 
 **Plugin Config:**
