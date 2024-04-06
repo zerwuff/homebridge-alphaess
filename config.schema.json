@@ -4,7 +4,12 @@
   "singular": true,
   "name":"Configuration for Alpha Ess",
   "schema": {
-    "properties": {
+    "name": {
+      "type": "string",
+      "title": "Plugin Name",
+      "default": "Alpha ESS Homebridge Plugin"
+    },
+    "properties": {    
       "alphaUrl": {
         "title": "Alpha ESS OpenAPI Url",
         "type": "string",
@@ -12,7 +17,6 @@
         "required": true,
         "description" :  "The Alpha ESS OPEN API URL"
       },
-
       "appid": {
         "title": "App Id",
         "type": "string",
