@@ -10,6 +10,11 @@
       "default": "Alpha ESS Homebridge Plugin"
     },
     "properties": {    
+      "name": {
+        "type": "string",
+        "title": "Plugin Name",
+        "default": "Alpha ESS Homebridge Plugin"
+      },
       "alphaUrl": {
         "title": "Alpha ESS OpenAPI Url",
         "type": "string",
