@@ -2,7 +2,7 @@
   "private": false,
   "strictNullChecks": false,
   "name": "homebridge-alphaess",
-  "version": "2.93.0",
+  "version": "2.94.0",
   "description": "Homebridge Alpha ESS plugin",
   "license": "Apache License",
   "keywords": [
@@ -22,12 +22,12 @@
     "node": ">=18.15.0 || >=20.7.0",
     "homebridge": ">=1.3.5"
   },
-  "funding":[
+  "funding": [
     {
-    "type": "ko-fi",
-    "url": "https://ko-fi.com/zerwuff"
+      "type": "ko-fi",
+      "url": "https://ko-fi.com/zerwuff"
     }
-    ],
+  ],
   "main": "dist/index.js",
   "scripts": {
     "lint": "eslint src/**.ts --max-warnings=0",
