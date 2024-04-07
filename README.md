@@ -3,6 +3,8 @@
 
 Connecting Alpha ESS OpenAPI Account with your homebridge and automate!
 
+[![verified-by-homebridge](https://badgen.net/badge/homebridge/verified/purple)](https://github.com/homebridge/homebridge/wiki/Verified-Plugins)
+
 <img src="Screen.png" width="800"/>
 
 This plugin connects the alpha ess open cloud api (https://open.alphaess.com/) to homebridge and provides 2 accessories:
