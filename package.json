@@ -33,8 +33,6 @@
   },
   "dependencies": {
     "@homebridge/plugin-ui-utils": "0.0.18",
-    "cairo": "^0.1.0-alpha.3",
-    "g": "^2.0.1",
     "jackson-js": "^1.1.0",
     "mqtt": "^4.3.7",
     "node-pre-gyp": "^0.17.0",
