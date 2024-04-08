@@ -26,6 +26,10 @@
     {
       "type": "ko-fi",
       "url": "https://ko-fi.com/zerwuff"
+    },
+    {
+      "type": "paypal",
+      "url": " https://paypal.me/jenshalde"
     }
   ],
   "main": "dist/index.js",
