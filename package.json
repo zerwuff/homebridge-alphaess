@@ -29,7 +29,7 @@
     },
     {
       "type": "paypal",
-      "url": " https://paypal.me/jenshalde"
+      "url": "https://paypal.me/jenshalde"
     }
   ],
   "main": "dist/index.js",
