@@ -74,6 +74,7 @@ export class AlphaLightPlugin implements AccessoryPlugin {
           this.log.debug('SOC: ' + detailData.data.soc);
           const totalPower = this.alphaService.getTotalPower(detailData);
           this.totalPower = totalPower;
+          this.service.getCharacteristic(this.hap.Characteristic.CurrentAmbientLightLevel).updateValue(totalPower);
         }
       },
     ).catch(error => {
