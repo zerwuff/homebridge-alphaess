@@ -1,6 +1,5 @@
 
 import { HAP, API, AccessoryPlugin, Logging, PlatformConfig, Service, Characteristic } from 'homebridge';
-import {ContactSensorState } from Characteristic;
 import { AlphaTrigger } from './index';
 import { ImageRenderingService } from './index';
 import { Utils } from './index';
@@ -22,7 +21,6 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
   private config: PlatformConfig;
   private name: string; // REQUIRED !!
   private refreshTimerInterval: number; // timer milliseconds to check timer
-  private sensorCharecteristics;
 
   private triggerTotal: boolean;
   private triggerAlpha : boolean;
