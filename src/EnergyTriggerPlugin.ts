@@ -1,5 +1,6 @@
 
-import { HAP, API, AccessoryPlugin, Logging, PlatformConfig, Service } from 'homebridge';
+import { HAP, API, AccessoryPlugin, Logging, PlatformConfig, Service, Characteristic } from 'homebridge';
+import {ContactSensorState } from Characteristic;
 import { AlphaTrigger } from './index';
 import { ImageRenderingService } from './index';
 import { Utils } from './index';
@@ -21,6 +22,7 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
   private config: PlatformConfig;
   private name: string; // REQUIRED !!
   private refreshTimerInterval: number; // timer milliseconds to check timer
+  private sensorCharecteristics;
 
   private triggerTotal: boolean;
   private triggerAlpha : boolean;
@@ -131,6 +133,7 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
   }
 
   setCharacteristics(hap:HAP, config:PlatformConfig){
+
     if (hap !== undefined){
       this.informationService = new hap.Service.AccessoryInformation()
         .setCharacteristic(this.hap.Characteristic.Manufacturer, 'EnergyTriggerPlugin by Jens Zeidler')
@@ -138,6 +141,7 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
         .setCharacteristic(this.hap.Characteristic.Model, 'Alpha ESS // Tibber combined Trigger Plugin');
 
       this.service = new this.hap.Service.ContactSensor(config.name);
+
       this.service.getCharacteristic(this.hap.Characteristic.ContactSensorState)
         .onGet(this.handleContactSensorStateGet.bind(this));
     }
@@ -161,7 +165,9 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
       const triggerValue = this.triggerTotal === false ? this.hap.Characteristic.ContactSensorState.CONTACT_DETECTED :
         this.hap.Characteristic.ContactSensorState.CONTACT_NOT_DETECTED;
 
-      this.service.getCharacteristic(this.hap.Characteristic.ContactSensorState.On).updateValue(triggerValue);
+      this.log.debug('Updating sensor status to: ' + triggerValue);
+
+      this.service.getCharacteristic(this.hap.Characteristic.ContactSensorState).updateValue(triggerValue);
     }
 
     // render image
