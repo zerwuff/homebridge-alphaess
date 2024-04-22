@@ -138,7 +138,6 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
         .setCharacteristic(this.hap.Characteristic.Model, 'Alpha ESS // Tibber combined Trigger Plugin');
 
       this.service = new this.hap.Service.ContactSensor(config.name);
-
       this.service.getCharacteristic(this.hap.Characteristic.ContactSensorState)
         .onGet(this.handleContactSensorStateGet.bind(this));
     }
@@ -156,6 +155,16 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
       });
     }
 
+    //refresh combined trigger
+    if (this.hap !== undefined){
+      this.handleContactSensorStateGet();
+      const triggerValue = this.triggerTotal === false ? this.hap.Characteristic.ContactSensorState.CONTACT_DETECTED :
+        this.hap.Characteristic.ContactSensorState.CONTACT_NOT_DETECTED;
+
+      this.service.getCharacteristic(this.hap.Characteristic.ContactSensorState.On).updateValue(triggerValue);
+    }
+
+    // render image
     let tibberMap = new Map();
     let tibberPricePoint = -1 ;
     if (this.tibber !== undefined){
@@ -191,7 +200,6 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
     this.triggerAlpha = false;
     this.log.debug('calculateAlphaTrigger called.');
 
-
     const priceIsLow = this.triggerTibber;
     const socBattery = this.socCurrent;
     const socBatteryThreshold = this.tibberThresholdSOC;
@@ -221,7 +229,6 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
         }).catch(error => {
         this.log.error('Error Checking Battery currently loading not possible' + error);
         this.isBatteryLoadingFromNet = this.alphaService.isBatteryCurrentlyLoading();
-
         return;
       });
 
