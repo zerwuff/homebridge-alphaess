@@ -89,6 +89,10 @@ export class AlphaHumidityPlugin implements AccessoryPlugin {
           if (this.mqtt !== undefined) {
             this.mqtt.pushStatusMsg(totalPower, detailData.data.soc);
           }
+
+          if (this.hap !== undefined){
+            this.service.getCharacteristic(this.hap.Characteristic.CurrentRelativeHumidity).updateValue(this.batteryLevel);
+          }
         }
       },
     ).catch(error => {

@@ -162,9 +162,7 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
       this.handleContactSensorStateGet();
       const triggerValue = this.triggerTotal === false ? this.hap.Characteristic.ContactSensorState.CONTACT_DETECTED :
         this.hap.Characteristic.ContactSensorState.CONTACT_NOT_DETECTED;
-
       this.log.debug('Updating sensor status to: ' + triggerValue);
-
       this.service.getCharacteristic(this.hap.Characteristic.ContactSensorState).updateValue(triggerValue);
     }
 
