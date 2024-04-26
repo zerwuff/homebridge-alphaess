@@ -154,6 +154,7 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
   }
 
   calculateCombinedTriggers(config: PlatformConfig){
+
     this.calculateAlphaTrigger(config.serialnumber).catch(error => {
       this.log(error);
     });
@@ -301,6 +302,7 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
   }
 
   handleContactSensorStateGet() {
+    this.triggerTotal = this.triggerAlpha || this.triggerTibber;
     this.log.debug('Trigger: alpha ess: '+ this.triggerAlpha + ' tibber: ' + this.triggerTibber + ' total:'+this.triggerTotal);
     this.log.debug('Triggered GET ContactSensorState');
     this.pushMqtt(this.triggerTotal);
