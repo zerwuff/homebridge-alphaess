@@ -192,35 +192,35 @@
         "default":"/tmp/tibber_image.png",
         "description" :  "The filename where the alpha and tibber trigger image is rendered to "
       }
-    },
-    "layout": [
-      {
+    }
+  },
+  "layout": [
+    {
+      "type": "fieldset",
+      "expandable": true,
+      "title": "MQTT Settings",        
+      "items": [
+          "mqtt_url",
+          "mqtt_trigger_topic_true",
+          "mqtt_trigger_topic_false",
+          "mqtt_trigger_message_true",
+          "mqtt_trigger_message_false"        
+      ]
+  },
+    {
         "type": "fieldset",
         "expandable": true,
-        "title": "MQTT Settings",        
+        "title": "Tibber Settings",        
         "items": [
-            "mqtt_url",
-            "mqtt_trigger_topic_true",
-            "mqtt_trigger_topic_false",
-            "mqtt_trigger_message_true",
-            "mqtt_trigger_message_false"        
+            "tibberEnabled",
+            "tibberUrl",
+            "tibberAPIKey",
+            "tibberLoadBatteryEnabled",
+            "tibberLoadingMinutes",
+            "tibberThresholdSOC",
+            "tibberThresholdSOC"            
         ]
-    },
-      {
-          "type": "fieldset",
-          "expandable": true,
-          "title": "Tibber Settings",        
-          "items": [
-              "tibberEnabled",
-              "tibberUrl",
-              "tibberAPIKey",
-              "tibberLoadBatteryEnabled",
-              "tibberLoadingMinutes",
-              "tibberThresholdSOC",
-              "tibberThresholdSOC"            
-          ]
-      }
-    ]
-  }
+    }
+  ]
   
 }
