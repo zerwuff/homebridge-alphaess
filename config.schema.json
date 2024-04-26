@@ -3,6 +3,8 @@
   "pluginType": "platform",
   "singular": true,
   "name":"Configuration for Alpha Ess",
+  "headerDisplay": "Please [read the documentation](https://github.com/zerwuff/homebridge-alphaess) of the plugin for more informations and step by step instructions on how to configure it.",
+
   "schema": {
     "name": {
       "type": "string",
@@ -195,6 +197,23 @@
     }
   },
   "layout": [
+ 
+    {
+      "type": "fieldset",
+      "expandable": true,
+      "title": "Alpha ESS Settings",        
+      "expanded": true,
+      "items": [
+          "name",
+          "alphaUrl",
+          "appid",
+          "appsecret",
+          "serialnumber",
+          "powerLoadingThreshold",   
+          "socLoadingThreshold",    
+          "refreshTimerInterval" 
+      ]
+  },
     {
       "type": "fieldset",
       "expandable": true,
