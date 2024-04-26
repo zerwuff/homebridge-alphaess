@@ -91,7 +91,9 @@ export class AlphaHumidityPlugin implements AccessoryPlugin {
           }
 
           if (this.hap !== undefined){
-            this.service.getCharacteristic(this.hap.Characteristic.CurrentRelativeHumidity).updateValue(this.batteryLevel);
+            if (this.batteryLevel !== undefined && this.batteryLevel !== null) {
+              this.service.getCharacteristic(this.hap.Characteristic.CurrentRelativeHumidity).updateValue(this.batteryLevel);
+            }
           }
         }
       },
