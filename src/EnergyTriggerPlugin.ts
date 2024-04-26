@@ -1,5 +1,5 @@
 
-import { HAP, API, AccessoryPlugin, Logging, PlatformConfig, Service, Characteristic } from 'homebridge';
+import { HAP, API, AccessoryPlugin, Logging, PlatformConfig, Service } from 'homebridge';
 import { AlphaTrigger } from './index';
 import { ImageRenderingService } from './index';
 import { Utils } from './index';
@@ -58,6 +58,10 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
     this.lastClearDate.setMinutes(1);
     this.isBatteryLoadingFromNet = false;
     this.dailyLoadingFromNetReset = false;
+    this.triggerTotal = false;
+    this.triggerAlpha = false;
+    this.triggerTibber = false;
+
 
     log.debug('EnergyTriggerPlugin plugin loaded');
     this.setCharacteristics(this.hap, this.config);
@@ -145,10 +149,16 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
     }
   }
 
-  async calculateCombinedTriggers(config: PlatformConfig){
+  getTriggerTotal(){
+    return this.triggerTotal;
+  }
+
+  calculateCombinedTriggers(config: PlatformConfig){
     this.calculateAlphaTrigger(config.serialnumber).catch(error => {
       this.log(error);
     });
+
+    this.triggerTotal = this.triggerAlpha || this.triggerTibber;
 
     if (config.tibberEnabled ) {
       this.tibberThresholdSOC = config.tibberThresholdSOC;
@@ -157,13 +167,17 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
       });
     }
 
+
+    this.triggerTotal = this.triggerAlpha || this.triggerTibber;
+    this.log.debug('Calculated triggers: alpa ess: '+ this.triggerAlpha + ' tibber: ' + this.triggerTibber +
+            ' triggerTotal :'+this.triggerTotal);
+
     //refresh combined trigger
     if (this.hap !== undefined){
       this.handleContactSensorStateGet();
-      const triggerValue = this.triggerTotal === false ? this.hap.Characteristic.ContactSensorState.CONTACT_DETECTED :
-        this.hap.Characteristic.ContactSensorState.CONTACT_NOT_DETECTED;
-      this.log.debug('Updating sensor status to: ' + triggerValue);
-      this.service.getCharacteristic(this.hap.Characteristic.ContactSensorState).updateValue(triggerValue);
+      this.log.debug('Updating sensor status to: ' + this.triggerTotal);
+      this.pushMqtt(this.triggerTotal);
+      this.service.getCharacteristic(this.hap.Characteristic.ContactSensorState).updateValue(this.getContactSensorState(this.triggerTotal));
     }
 
     // render image
@@ -175,7 +189,7 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
     }
 
     if (this.triggerImageFilename!==undefined){
-      await this.alphaImageService.renderTriggerImage(this.triggerImageFilename, tibberMap,
+      this.alphaImageService.renderTriggerImage(this.triggerImageFilename, tibberMap,
         this.alphaTriggerMap, tibberPricePoint,
       ).catch(error => {
         this.log.error('error rendering image: ', error);
@@ -287,17 +301,21 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
   }
 
   handleContactSensorStateGet() {
-    this.triggerTotal = this.triggerAlpha || this.triggerTibber;
     this.log.debug('Trigger: alpha ess: '+ this.triggerAlpha + ' tibber: ' + this.triggerTibber + ' total:'+this.triggerTotal);
     this.log.debug('Triggered GET ContactSensorState');
+    this.pushMqtt(this.triggerTotal);
+    return this.getContactSensorState(this.triggerTotal);
+  }
 
-    // set this to a valid value for ContactSensorState
+  pushMqtt(triggerTotal: boolean){
     if (this.mqtt !== undefined) {
-      this.mqtt.pushTriggerMessage(this.triggerTotal);
+      this.mqtt.pushTriggerMessage(triggerTotal);
     }
+  }
 
-    if (this.hap!== undefined){
-      if (this.triggerTotal === false){
+  getContactSensorState(triggerTotal : boolean) {
+    if (this.hap !== undefined){
+      if (triggerTotal === false){
         this.log.debug('trigger not fired -> status CONTACT_DETECTED');
         return this.hap.Characteristic.ContactSensorState.CONTACT_DETECTED;
       }

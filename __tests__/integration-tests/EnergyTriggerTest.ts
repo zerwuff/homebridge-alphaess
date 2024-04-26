@@ -92,6 +92,10 @@ test('test trigger tibber service via energy plugin - expect triggered ', async 
   tibberServiceMock.verify(instance => instance.getTodaysEnergyPrices, Times.Once());
 
   expect(result).toBeTruthy();
+
+  sut.calculateCombinedTriggers( new PFConfig());
+  expect(sut.getTriggerTotal()).toBeTruthy();
+
 });
 
 
@@ -139,6 +143,9 @@ test('test trigger tibber service via energy plugin -  expect stop battery loadi
   alphaService.verify(instance => instance.stopLoading, Times.Never());
   alphaService.verify(instance => instance.checkAndEnableReloading, Times.Never());
 
+  sut.calculateCombinedTriggers( new PFConfig());
+  expect(sut.getTriggerTotal()).toBeFalsy();
+
 });
 
 
@@ -183,8 +190,8 @@ test('test trigger tibber service via energy plugin - expect not triggered', asy
 
   // then
   tibberServiceMock.verify(instance => instance.isTriggered, Times.Exactly(1));
-  tibberServiceMock.verify(instance => instance.findCurrentPrice, Times.Once());
-  tibberServiceMock.verify(instance => instance.getTodaysEnergyPrices, Times.Once());
+  tibberServiceMock.verify(instance => instance.findCurrentPrice, Times.Exactly(1));
+  tibberServiceMock.verify(instance => instance.getTodaysEnergyPrices, Times.Exactly(1));
   expect(result).toBeFalsy();
 
   // when
@@ -192,9 +199,12 @@ test('test trigger tibber service via energy plugin - expect not triggered', asy
   tibberServiceMock.setup(instance => instance.getIsTriggeredToday).mimics(tibberServiceOrigin);
 
   // then no stopping loading
-  tibberServiceMock.verify(instance => instance.isTriggered, Times.Once());
+  tibberServiceMock.verify(instance => instance.isTriggered, Times.Exactly(1));
   alphaService.verify(instance => instance.checkAndEnableReloading, Times.Never());
   alphaService.verify(instance => instance.stopLoading, Times.Never());
+
+  sut.calculateCombinedTriggers( new PFConfig());
+  expect(sut.getTriggerTotal()).toBeFalsy();
 });
 
 
@@ -239,12 +249,14 @@ test('test trigger tibber service via energy plugin - expect triggered despite o
 
   // when
   const result = await sut.calculateTibberTrigger(tibberServiceMock.object());
-
-
   // then
   tibberServiceMock.verify(instance => instance.isTriggered, Times.Exactly(1));
   tibberServiceMock.verify(instance => instance.findCurrentPrice, Times.Once());
   tibberServiceMock.verify(instance => instance.getTodaysEnergyPrices, Times.Once());
 
   expect(result).toBeTruthy();
+
+  sut.calculateCombinedTriggers( new PFConfig());
+  expect(sut.getTriggerTotal()).toBeTruthy();
+
 });
