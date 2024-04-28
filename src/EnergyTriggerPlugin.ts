@@ -154,7 +154,6 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
   }
 
   calculateCombinedTriggers(config: PlatformConfig){
-
     this.calculateAlphaTrigger(config.serialnumber).catch(error => {
       this.log(error);
     });
@@ -214,9 +213,7 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
   }
 
   async calculateAlphaTrigger(serialNumber: string) {
-    this.triggerAlpha = false;
     this.log.debug('calculateAlphaTrigger called.');
-
     const priceIsLow = this.triggerTibber;
     const socBattery = this.socCurrent;
     const socBatteryThreshold = this.tibberThresholdSOC;
@@ -242,12 +239,13 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
       this.alphaService.isBatteryCurrentlyLoadingCheckNet(serialNumber).then(
         batteryLoading => {
           this.isBatteryLoadingFromNet = batteryLoading;
-          this.log.debug('Loading Battery Satus from Net:' + batteryLoading);
-        }).catch(error => {
-        this.log.error('Error Checking Battery currently loading not possible' + error);
-        this.isBatteryLoadingFromNet = this.alphaService.isBatteryCurrentlyLoading();
-        return;
-      });
+          this.log.debug('Loading Battery Status from Net:' + batteryLoading);
+        }).
+        catch(error => {
+          this.log.error('Error Checking Battery currently loading not possible' + error);
+          this.isBatteryLoadingFromNet = this.alphaService.isBatteryCurrentlyLoading();
+          return;
+        });
 
 
       if (this.tibber !== undefined){
@@ -264,9 +262,9 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
       detailData => {
         if (detailData!==null && detailData.data!==null){
           this.log.debug('SOC: ' + detailData.data.soc);
-          this.setSocCurrent( detailData.data.soc);
-          this.triggerAlpha= this.alphaService.isTriggered(
-            detailData, this.config.powerLoadingThreshold, this.config.socLoadingThreshold);
+          this.setSocCurrent(detailData.data.soc);
+
+          this.triggerAlpha= this.alphaService.isTriggered(detailData, this.config.powerLoadingThreshold, this.config.socLoadingThreshold);
 
           const now = new Date();
           const hours = now.getHours();
@@ -284,6 +282,8 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
             }
             this.lastClearDate = now;
           }
+        } else {
+          this.log.error('Response from Alpha Ess did not contain any good information. Response was: ' + detailData);
         }
       },
     ).catch(error => {
@@ -305,7 +305,6 @@ export class EnergyTriggerPlugin implements AccessoryPlugin {
     this.triggerTotal = this.triggerAlpha || this.triggerTibber;
     this.log.debug('Trigger: alpha ess: '+ this.triggerAlpha + ' tibber: ' + this.triggerTibber + ' total:'+this.triggerTotal);
     this.log.debug('Triggered GET ContactSensorState');
-    this.pushMqtt(this.triggerTotal);
     return this.getContactSensorState(this.triggerTotal);
   }
 

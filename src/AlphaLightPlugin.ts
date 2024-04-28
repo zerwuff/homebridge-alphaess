@@ -1,7 +1,6 @@
 
 import { HAP, API, AccessoryPlugin, PlatformConfig, Service, Logging, Topics } from 'homebridge';
 import { AlphaService } from './index';
-import { AlphaMqttService, MqttTopics } from './index';
 import { ImageRenderingService } from './index';
 
 export class AlphaLightPlugin implements AccessoryPlugin {
@@ -17,7 +16,6 @@ export class AlphaLightPlugin implements AccessoryPlugin {
 
   private serialnumber: string;
   private refreshTimerInterval: number; // timer milliseconds to check timer
-  private power_image_filename; // filename for image rendering
 
   // alpha ess status variables
   private totalPower: number;
@@ -44,7 +42,6 @@ export class AlphaLightPlugin implements AccessoryPlugin {
 
 
     this.serialnumber = config.serialnumber;
-    this.power_image_filename = config.power_image_filename;
     this.alphaService = new AlphaService(this.log, config.appid, config.appsecret, config.logrequestdata, config.alphaUrl);
 
     if (!config.serialnumber || !config.appid || !config.appsecret) {

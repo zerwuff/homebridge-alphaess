@@ -62,12 +62,12 @@ export class AlphaMqttService {
       this.log.debug('connected to mqtt');
       this.log.debug('trigger value: ' + trigger);
       if (trigger===false){
-        this.log.debug('sending message trigger false: ' + this.topics.mqtt_trigger_message_false + 'on topic: ' + this.topics.mqtt_trigger_topic_false);
+        this.log.debug('sending message trigger false: ' + this.topics.mqtt_trigger_message_false + ' on topic: ' + this.topics.mqtt_trigger_topic_false);
         client.publish(this.topics.mqtt_trigger_topic_false, this.topics.mqtt_trigger_message_false);
         client.end();
         return;
       } else {
-        this.log.debug('sending message trigger true: ' + this.topics.mqtt_trigger_message_true + 'on topic: ' + this.topics.mqtt_trigger_topic_true);
+        this.log.debug('sending message trigger true: ' + this.topics.mqtt_trigger_message_true + ' on topic: ' + this.topics.mqtt_trigger_topic_true);
         client.publish(this.topics.mqtt_trigger_topic_true, this.topics.mqtt_trigger_message_true);
         client.end();
         return;
