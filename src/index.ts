@@ -4,6 +4,7 @@ import { AlphaHumidityPlugin } from './AlphaHumidityPlugin';
 
 import { EnergyTriggerPlugin } from './EnergyTriggerPlugin';
 import { AlphaService } from './alpha/AlphaService';
+import { AlphaLoadPlugin } from './AlphaLoadPlugin';
 
 const PLATFORM_NAME = 'AlphaEssPlatform';
 
@@ -24,7 +25,6 @@ export default fun;
 export { AlphaLightPlugin } from './AlphaLightPlugin';
 export { AlphaService } from './alpha/AlphaService';
 export { AlphaMqttService, MqttTopics } from './alpha/mqtt/AlphaMqttService';
-
 export { AlphaTrigger } from './interfaces';
 export { EnergyTriggerPlugin } from './EnergyTriggerPlugin';
 export { TibberService } from './tibber/TibberService';
@@ -76,6 +76,8 @@ class AlphaEssPlatformPlugin implements StaticPlatformPlugin {
       new AlphaLightPlugin(this.log, this.config, this.api, this.alphaService),
       new AlphaHumidityPlugin(this.log, this.config, this.api, this.alphaService),
       new EnergyTriggerPlugin(this.log, this.config, this.api, this.alphaService),
+      new AlphaLoadPlugin(this.log, this.config, this.api, this.alphaService),
+
     ]);
   }
 

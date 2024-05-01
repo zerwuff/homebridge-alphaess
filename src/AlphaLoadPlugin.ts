@@ -5,7 +5,7 @@ import { ImageRenderingService } from './index';
 import { AlphaServiceEventListener } from './interfaces';
 import { AlphaLastPowerDataResponse } from './alpha/response/AlphaLastPowerDataResponse';
 
-export class AlphaLightPlugin implements AccessoryPlugin, AlphaServiceEventListener<AlphaLastPowerDataResponse> {
+export class AlphaLoadPlugin implements AccessoryPlugin, AlphaServiceEventListener<AlphaLastPowerDataResponse> {
 
   private alphaService: AlphaService;
   private informationService: Service;
@@ -14,18 +14,16 @@ export class AlphaLightPlugin implements AccessoryPlugin, AlphaServiceEventListe
   private hap: HAP ;
   private log: Logging;
   private name: string; // this attribute is required for registreing the accessoryplugin
-
-  // alpha ess status variables
-  private totalPower: number;
+  private load: number;
 
   // Alpha ESS Battery Percentage Plugin
   constructor (log: Logging, config: PlatformConfig, api: API, alphaService: AlphaService) {
     this.hap = api.hap;
     this.log = log;
-    this.totalPower = 1;
-    this.name= 'AlphaEssBatteryLightLevel';
-
-    log.debug('Alpha ESS Accessory Loaded: ' + this.getName());
+    this.load = 0;
+    this.name= 'AlphaEssBatteryLoadPlugin';
+    log.debug('Alpha ESS Accessory Loaded: ' + this.getName())
+    ;
     this.informationService = new this.hap.Service.AccessoryInformation()
       .setCharacteristic(this.hap.Characteristic.Manufacturer, 'Alpha Ess Homebridge Plugin by Jens Zeidler')
       .setCharacteristic(this.hap.Characteristic.SerialNumber, config.serialnumber)
@@ -44,10 +42,10 @@ export class AlphaLightPlugin implements AccessoryPlugin, AlphaServiceEventListe
   }
 
   onResponse(detailData: AlphaLastPowerDataResponse) {
-    const totalPower = this.alphaService.getTotalPower(detailData);
-    this.totalPower = (totalPower !== undefined && totalPower !== null) ? totalPower : 1;
-    if (this.totalPower !== undefined && this.totalPower !== null) {
-      this.service.getCharacteristic(this.hap.Characteristic.CurrentAmbientLightLevel).updateValue(this.totalPower);
+    const load = detailData.data.pload;
+    this.load = (load !== undefined && load !== null) ? load : 1;
+    if (this.load !== undefined && this.load !== null) {
+      this.service.getCharacteristic(this.hap.Characteristic.CurrentAmbientLightLevel).updateValue(this.load);
     }
   }
 
@@ -63,7 +61,7 @@ export class AlphaLightPlugin implements AccessoryPlugin, AlphaServiceEventListe
   }
 
   handleCurrentLightLevelGet(){
-    return this.totalPower;
+    return this.load;
   }
 
 }
