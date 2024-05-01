@@ -5,6 +5,7 @@ import { AlphaHumidityPlugin } from './AlphaHumidityPlugin';
 import { EnergyTriggerPlugin } from './EnergyTriggerPlugin';
 import { AlphaService } from './alpha/AlphaService';
 import { AlphaLoadPlugin } from './AlphaLoadPlugin';
+import { AlphaFeedInplugin } from './AlphaFeedInPlugin';
 
 const PLATFORM_NAME = 'AlphaEssPlatform';
 
@@ -70,13 +71,14 @@ class AlphaEssPlatformPlugin implements StaticPlatformPlugin {
     }
   }
 
-  // Register 2 Alpha ESS Plugins
+  // Register All Alpha ESS Plugins
   accessories(callback: (foundAccessories: AccessoryPlugin[]) => void): void {
     callback([
       new AlphaLightPlugin(this.log, this.config, this.api, this.alphaService),
       new AlphaHumidityPlugin(this.log, this.config, this.api, this.alphaService),
       new EnergyTriggerPlugin(this.log, this.config, this.api, this.alphaService),
       new AlphaLoadPlugin(this.log, this.config, this.api, this.alphaService),
+      new AlphaFeedInplugin(this.log, this.config, this.api, this.alphaService),
 
     ]);
   }

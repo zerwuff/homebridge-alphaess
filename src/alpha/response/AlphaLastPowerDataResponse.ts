@@ -19,6 +19,12 @@ export class AlphaDataResponse {
   @JsonProperty() @JsonClassType({type: () => [Number]})
     pload: number; // battery load
 
+  @JsonProperty() @JsonClassType({type: () => [Number]})
+    pgrid: number; // Feed In-In/Out from the Net + -> get from the net ,  - feed into the net
+
+
+
+
   /**
    *
    *  *

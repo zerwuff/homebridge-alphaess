@@ -102,7 +102,6 @@ export class EnergyTriggerPlugin implements AccessoryPlugin, AlphaServiceEventLi
   }
 
   onResponse(alphaLastPowerDataResponse: AlphaLastPowerDataResponse) {
-    this.log.debug('response captured');
     this.calculateCombinedTriggers(this.config, alphaLastPowerDataResponse);
   }
 

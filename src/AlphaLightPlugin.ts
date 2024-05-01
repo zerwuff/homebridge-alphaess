@@ -1,7 +1,6 @@
 
 import { HAP, API, AccessoryPlugin, PlatformConfig, Service, Logging, Topics } from 'homebridge';
 import { AlphaService } from './index';
-import { ImageRenderingService } from './index';
 import { AlphaServiceEventListener } from './interfaces';
 import { AlphaLastPowerDataResponse } from './alpha/response/AlphaLastPowerDataResponse';
 import { MANUFACTURER } from './settings';
@@ -19,12 +18,12 @@ export class AlphaLightPlugin implements AccessoryPlugin, AlphaServiceEventListe
   // alpha ess status variables
   private totalPower: number;
 
-  // Alpha ESS Battery Percentage Plugin
+  // Alpha ESS Battery Light Total Power Plugin
   constructor (log: Logging, config: PlatformConfig, api: API, alphaService: AlphaService) {
     this.hap = api.hap;
     this.log = log;
     this.totalPower = 0;
-    this.name= 'AlphaEssBatteryLightLevel';
+    this.name= 'AlphaEssTotalPowerPlugin';
 
     log.debug('Alpha ESS Accessory Loaded: ' + this.getName());
     this.informationService = new this.hap.Service.AccessoryInformation()
@@ -48,7 +47,7 @@ export class AlphaLightPlugin implements AccessoryPlugin, AlphaServiceEventListe
 
   onResponse(detailData: AlphaLastPowerDataResponse) {
     const totalPower = this.alphaService.getTotalPower(detailData);
-    this.totalPower = (totalPower !== undefined && totalPower !== null) ? totalPower : 1;
+    this.totalPower = (totalPower !== undefined && totalPower !== null) ? totalPower : 0;
     if (this.totalPower !== undefined && this.totalPower !== null) {
       this.service.getCharacteristic(this.hap.Characteristic.CurrentAmbientLightLevel).updateValue(this.totalPower);
     }
