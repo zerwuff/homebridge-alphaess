@@ -4,6 +4,7 @@ import { AlphaService } from './index';
 import { ImageRenderingService } from './index';
 import { AlphaServiceEventListener } from './interfaces';
 import { AlphaLastPowerDataResponse } from './alpha/response/AlphaLastPowerDataResponse';
+import { MANUFACTURER } from './settings';
 
 export class AlphaLoadPlugin implements AccessoryPlugin, AlphaServiceEventListener<AlphaLastPowerDataResponse> {
 
@@ -20,12 +21,12 @@ export class AlphaLoadPlugin implements AccessoryPlugin, AlphaServiceEventListen
   constructor (log: Logging, config: PlatformConfig, api: API, alphaService: AlphaService) {
     this.hap = api.hap;
     this.log = log;
-    this.load = 1;
+    this.load = 0;
     this.name= 'AlphaEssBatteryLoadPlugin';
     log.debug('Alpha ESS Accessory Loaded: ' + this.getName())
     ;
     this.informationService = new this.hap.Service.AccessoryInformation()
-      .setCharacteristic(this.hap.Characteristic.Manufacturer, 'Alpha Ess Homebridge Plugin by Jens Zeidler')
+      .setCharacteristic(this.hap.Characteristic.Manufacturer, MANUFACTURER)
       .setCharacteristic(this.hap.Characteristic.SerialNumber, config.serialnumber)
       .setCharacteristic(this.hap.Characteristic.Model, this.getName());
 

@@ -5,6 +5,7 @@ import { AlphaMqttService, MqttTopics } from './index';
 import { ImageRenderingService } from './index';
 import { AlphaServiceEventListener } from './interfaces';
 import { AlphaLastPowerDataResponse } from './alpha/response/AlphaLastPowerDataResponse';
+import { MANUFACTURER } from './settings';
 
 export class AlphaHumidityPlugin implements AccessoryPlugin, AlphaServiceEventListener<AlphaLastPowerDataResponse> {
 
@@ -38,9 +39,9 @@ export class AlphaHumidityPlugin implements AccessoryPlugin, AlphaServiceEventLi
     log.debug('Alpha ESS Accessory Loaded');
     this.alphaImageService = new ImageRenderingService();
     this.informationService = new this.hap.Service.AccessoryInformation()
-      .setCharacteristic(this.hap.Characteristic.Manufacturer, 'Alpha Ess Homebridge Humidity Percentage Plugin by Jens Zeidler')
+      .setCharacteristic(this.hap.Characteristic.Manufacturer, MANUFACTURER)
       .setCharacteristic(this.hap.Characteristic.SerialNumber, config.serialnumber)
-      .setCharacteristic(this.hap.Characteristic.Model, 'Alpha ESS Battery Storage');
+      .setCharacteristic(this.hap.Characteristic.Model, this.getName());
 
     this.service = new this.hap.Service.HumiditySensor(this.name);
 

@@ -14,3 +14,5 @@ export const ACCESSORY_NAME = 'homebridge-alphaess-accessory';
 // the trigger accessory
 export const PLUGIN_NAME_TRIGGER = 'homebridge-alphaess-trigger';
 export const ACCESSORY_NAME_TRIGGER = 'homebridge-alphaess-accessory-trigger';
+
+export const MANUFACTURER = 'Alpha ESS Homebridge Plugin by Jens Zeidler';
