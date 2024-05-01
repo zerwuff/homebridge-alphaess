@@ -28,40 +28,41 @@
         "title": "App Id",
         "type": "string",
         "required": true,
-        "description" :  "The alpha ess open api appId"
+        "description" :  "The Alpha ESS OPEN API appId"
       },
       "appsecret": {
         "title": "App Secret", 
         "type": "string",
         "required": true,
-        "description" : "The alpha ess open api appId"
+        "description" : "The alpha ESS OPEN API appSecret"
       },
       "serialnumber": {
         "title": "serialnumber",
         "type": "string",
         "required": true,
-        "description" : "the alpa ess serial number, eg. AE...."
+        "description" : "The Alpha ESS Serial number, eg. AE...."
       },
+
       "powerLoadingThreshold": {
         "title": "powerLoadingThreshold",
         "type": "integer",
         "required": false,
         "default":1500,
-        "description" : "the power threshold to enable the trigger"
+        "description" : "The pv power threshold to enable the trigger"
       },
       "socLoadingThreshold": {
         "title": "socLoadingThreshold",
         "type": "integer",
         "required": false,
         "default": 50,
-        "description" : "the soc threshold to enable the trigger"
+        "description" : "The battery SOC threshold to enable the trigger"
       },
       "refreshTimerInterval": {
         "title": "refreshTimerInterval",
         "type": "integer",
         "required": false,
         "default":60000,
-        "description" : "the refresh timer interval in ms "
+        "description" : "The refresh timer interval in ms to update system values"
       },
       "mqtt_url": {
         "title": "mqtt_url",
@@ -208,12 +209,22 @@
           "alphaUrl",
           "appid",
           "appsecret",
-          "serialnumber",
-          "powerLoadingThreshold",   
-          "socLoadingThreshold",    
-          "refreshTimerInterval" 
+          "serialnumber",   
+          "refreshTimerInterval", 
+          "logrequestdata"
       ]
   },
+  {
+    "type": "fieldset",
+    "expandable": true,
+    "title": "Alpha Trigger Settings",
+    "description":"Reaching this settings will open the sensor, mostly to trigger automation",        
+    "expanded": false,
+    "items": [    
+        "powerLoadingThreshold",   
+        "socLoadingThreshold"      
+    ]
+},
     {
       "type": "fieldset",
       "expandable": true,
