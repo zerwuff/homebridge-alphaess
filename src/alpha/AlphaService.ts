@@ -4,8 +4,11 @@ import crypto from 'crypto';
 import { AlphaLastPowerDataResponse } from './response/AlphaLastPowerDataResponse';
 import { ObjectMapper } from 'jackson-js';
 import { AlphaSettingsResponse } from './response/AlphaSettingsResponse';
-import { AlphaData } from '../interfaces';
+import { AlphaData, AlphaServiceEventListener } from '../interfaces';
 import { Utils } from '../util/Utils';
+import { listeners } from 'process';
+import { ServerStatus } from 'homebridge/lib/server';
+import { log } from 'console';
 
 const request = require('request');
 
@@ -21,8 +24,11 @@ export class AlphaService {
   private dailyMap: Map<number, AlphaData>;
   private utils: Utils;
   private lastClearDate: Date ;
+  private lastPowerListeners: Array <AlphaServiceEventListener<AlphaLastPowerDataResponse>>;
 
-  constructor(logger: Logging | undefined, appid: string | undefined, appsecret: string, logRequestDetails: boolean, url: string ) {
+  constructor(logger: Logging | undefined, appid: string | undefined,
+    appsecret: string, logRequestDetails: boolean, url: string,
+    refreshTimeinterval: number, serialNumber : string ) {
     this.logger = logger;
     this.appid = appid;
     this.appsecret = appsecret;
@@ -36,13 +42,43 @@ export class AlphaService {
     this.lastClearDate.setMinutes(0);
     this.lastClearDate.setMinutes(1);
     this.clearHistoricData();
+    this.lastPowerListeners = [];
+    // auto refresh statistics
+    setInterval(() => {
+      this.logger.debug('Running Timer to check trigger every  ' + refreshTimeinterval + ' ms ');
+      this.fetchAlphaEssData(serialNumber);
+    }, refreshTimeinterval);
+
   }
 
+  addListener(listener : AlphaServiceEventListener<AlphaLastPowerDataResponse>){
+    this.lastPowerListeners.push(listener);
+  }
 
   setLastLoadingStart(loadStart:Date ){
     this.lastLoadingStart = loadStart ;
   }
 
+  async fetchAlphaEssData(serialNumber: string) {
+    this.logger.debug('Get Last Power Data started for serial:' + serialNumber);
+
+    this.getLastPowerData(serialNumber).then(
+      detailData => {
+        if (detailData!==null && detailData.data!==null){
+          this.logger.debug('SOC:' + detailData.data.soc);
+          this.lastPowerListeners.forEach(powerListener => {
+            this.logger.debug('notify plugin: ' + powerListener.getName());
+            powerListener.onResponse(detailData);
+          });
+        }
+      },
+    ).catch(error => {
+      this.logger.error('Error: ' + error);
+      this.logger.error('Getting Last Power Data from Alpha Ess failed.');
+      return;
+    });
+
+  }
 
   // check if current loading of battery makes sense, and if so trigger it
   async checkAndEnableReloading(serialNumber:string, priceIsLow : boolean, numberOfMinutes:number,
@@ -77,7 +113,7 @@ export class AlphaService {
   // calculate loading settings: if currently loading
   async isBatteryCurrentlyLoadingCheckNet(serialNumber:string) : Promise<boolean> {
 
-    const alphaSettingsResponse = await this.getSettingsData(serialNumber).catch( () => {
+    const alphaSettingsResponse = await this.getSettingsData(serialNumber).catch( (error) => {
       throw new Error('could not fetch settings data to check if battery currently loading for serial number: ' + serialNumber);
     });
 
@@ -332,6 +368,8 @@ export class AlphaService {
           this.logMsg('Get Settings Response:' + JSON.stringify(body));
           return resolve(response);
         }
+        this.logMsg('Error Geting Settings : ' + response + ', error: ' + error );
+
         return reject(body);
       },
       );
@@ -379,6 +417,8 @@ export class AlphaService {
 
           return resolve(detailResponse);
         }
+
+        this.logger.error('error fetching getLastPoweData, error: '+ error);
         return reject(body);
       },
       );

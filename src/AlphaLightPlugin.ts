@@ -2,8 +2,10 @@
 import { HAP, API, AccessoryPlugin, PlatformConfig, Service, Logging, Topics } from 'homebridge';
 import { AlphaService } from './index';
 import { ImageRenderingService } from './index';
+import { AlphaServiceEventListener } from './interfaces';
+import { AlphaLastPowerDataResponse } from './alpha/response/AlphaLastPowerDataResponse';
 
-export class AlphaLightPlugin implements AccessoryPlugin {
+export class AlphaLightPlugin implements AccessoryPlugin, AlphaServiceEventListener<AlphaLastPowerDataResponse> {
 
   private alphaService: AlphaService;
   private informationService: Service;
@@ -14,74 +16,42 @@ export class AlphaLightPlugin implements AccessoryPlugin {
   private log: Logging;
   private name: string; // this attribute is required for registreing the accessoryplugin
 
-  private serialnumber: string;
-  private refreshTimerInterval: number; // timer milliseconds to check timer
-
   // alpha ess status variables
   private totalPower: number;
 
   // Alpha ESS Battery Percentage Plugin
-  constructor (log: Logging, config: PlatformConfig, api: API) {
+  constructor (log: Logging, config: PlatformConfig, api: API, alphaService: AlphaService) {
     this.hap = api.hap;
     this.log = log;
     this.totalPower = 0;
-    this.refreshTimerInterval = 10000;
     this.name= 'AlphaEssBatteryLightLevel';
 
-    log.debug('Alpha ESS Accessory Loaded');
+    log.debug('Alpha ESS Accessory Loaded: ' + this.getName())
+    ;
     this.alphaImageService = new ImageRenderingService();
     this.informationService = new this.hap.Service.AccessoryInformation()
-      .setCharacteristic(this.hap.Characteristic.Manufacturer, 'Alpha Ess Homebridge Light Level Plugin by Jens Zeidler')
+      .setCharacteristic(this.hap.Characteristic.Manufacturer, 'Alpha Ess Homebridge Plugin by Jens Zeidler')
       .setCharacteristic(this.hap.Characteristic.SerialNumber, config.serialnumber)
-      .setCharacteristic(this.hap.Characteristic.Model, 'Alpha ESS Battery Storage');
+      .setCharacteristic(this.hap.Characteristic.Model, this.getName());
 
     // create light sensor for current power
     this.service = new this.hap.Service.LightSensor(this.name);
     this.service.getCharacteristic(this.hap.Characteristic.CurrentAmbientLightLevel)
       .onGet(this.handleCurrentLightLevelGet.bind(this));
-
-
-    this.serialnumber = config.serialnumber;
-    this.alphaService = new AlphaService(this.log, config.appid, config.appsecret, config.logrequestdata, config.alphaUrl);
-
-    if (!config.serialnumber || !config.appid || !config.appsecret) {
-      this.log.error('Configuration was missing: either appid or appsecret not present');
-    }
-
-    if (!config.refreshTimerInterval ) {
-      this.log.error('refreshTimerInterval is not set, not refreshing trigger data ');
-    } else {
-      this.refreshTimerInterval = config.refreshTimerInterval + Math.floor(Math.random() * 10000) ;
-      // auto refresh statistics
-      setInterval(() => {
-        this.log.debug('Running Timer to check trigger every  ' + this.refreshTimerInterval + ' ms ');
-        this.fetchAlphaEssData(config.serialnumber);
-      }, this.refreshTimerInterval);
-    }
-
-    this.fetchAlphaEssData(config.serialnumber);
+    this.alphaService = alphaService;
+    this.alphaService.addListener(this);
   }
 
-  async fetchAlphaEssData(serialNumber: string) {
-    this.log.debug('fetch Alpha ESS Data -> fetch token');
+  getName(){
+    return this.name;
+  }
 
-    this.alphaService.getLastPowerData(serialNumber).then(
-      detailData => {
-        if (detailData!==null && detailData.data!==null){
-          this.log.debug('SOC: ' + detailData.data.soc);
-          const totalPower = this.alphaService.getTotalPower(detailData);
-          this.totalPower = (totalPower !== undefined && totalPower !== null) ? totalPower : 0;
-          if (this.totalPower !== undefined && this.totalPower !== null) {
-            this.service.getCharacteristic(this.hap.Characteristic.CurrentAmbientLightLevel).updateValue(this.totalPower);
-          }
-        }
-      },
-    ).catch(error => {
-      this.log.error(error);
-      this.log.error('Getting Detail Data from Alpha Ess failed ');
-      return;
-    });
-
+  onResponse(detailData: AlphaLastPowerDataResponse) {
+    const totalPower = this.alphaService.getTotalPower(detailData);
+    this.totalPower = (totalPower !== undefined && totalPower !== null) ? totalPower : 0;
+    if (this.totalPower !== undefined && this.totalPower !== null) {
+      this.service.getCharacteristic(this.hap.Characteristic.CurrentAmbientLightLevel).updateValue(this.totalPower);
+    }
   }
 
   getServices() {
@@ -91,13 +61,8 @@ export class AlphaLightPlugin implements AccessoryPlugin {
     ];
   }
 
-
-  handleSerialNumberGet() {
-    return this.serialnumber;
-  }
-
   identify(): void {
-    this.log.debug('Its me, Alpha light plugin');
+    this.log.debug('Its me:'+this.getName());
   }
 
 

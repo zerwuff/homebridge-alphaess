@@ -11,6 +11,10 @@ export class AlphaTrigger {
   }
 }
 
+export interface AlphaServiceEventListener<T> {
+  onResponse(response: T);
+  getName();
+}
 
 export class PriceTrigger {
   price: number;

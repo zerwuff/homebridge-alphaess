@@ -3,8 +3,10 @@ import { HAP, API, AccessoryPlugin, PlatformConfig, Service, Logging, Topics } f
 import { AlphaService } from './index';
 import { AlphaMqttService, MqttTopics } from './index';
 import { ImageRenderingService } from './index';
+import { AlphaServiceEventListener } from './interfaces';
+import { AlphaLastPowerDataResponse } from './alpha/response/AlphaLastPowerDataResponse';
 
-export class AlphaHumidityPlugin implements AccessoryPlugin {
+export class AlphaHumidityPlugin implements AccessoryPlugin, AlphaServiceEventListener<AlphaLastPowerDataResponse> {
 
   private alphaService: AlphaService;
   private informationService: Service;
@@ -26,13 +28,13 @@ export class AlphaHumidityPlugin implements AccessoryPlugin {
   private mqtt: AlphaMqttService;
 
   // Alpha ESS Battery Percentage Plugin
-  constructor (log: Logging, config: PlatformConfig, api: API) {
+  constructor (log: Logging, config: PlatformConfig, api: API, alphaService : AlphaService) {
     this.hap = api.hap;
     this.log = log;
     this.batteryLevel = 0;
     this.refreshTimerInterval = 10000;
     this.name= 'AlphaEssBatteryHumidity';
-
+    this.power_image_filename = config.power_image_filename;
     log.debug('Alpha ESS Accessory Loaded');
     this.alphaImageService = new ImageRenderingService();
     this.informationService = new this.hap.Service.AccessoryInformation()
@@ -40,33 +42,14 @@ export class AlphaHumidityPlugin implements AccessoryPlugin {
       .setCharacteristic(this.hap.Characteristic.SerialNumber, config.serialnumber)
       .setCharacteristic(this.hap.Characteristic.Model, 'Alpha ESS Battery Storage');
 
-
     this.service = new this.hap.Service.HumiditySensor(this.name);
 
     // create handlers for required characteristics
     this.service.getCharacteristic(this.hap.Characteristic.CurrentRelativeHumidity)
       .onGet(this.handleCurrentRelativeHumidityGet.bind(this));
 
-    this.serialnumber = config.serialnumber;
-    this.power_image_filename = config.power_image_filename;
-    this.alphaService = new AlphaService(this.log, config.appid, config.appsecret, config.logrequestdata, config.alphaUrl);
-
-    if (!config.serialnumber || !config.appid || !config.appsecret) {
-      this.log.error('Configuration was missing: either appid or appsecret not present');
-    }
-
-    if (!config.refreshTimerInterval ) {
-      this.log.error('refreshTimerInterval is not set, not refreshing trigger data ');
-    } else {
-      this.refreshTimerInterval = config.refreshTimerInterval + Math.floor(Math.random() * 10000) ;
-      // auto refresh statistics
-      setInterval(() => {
-        this.log.debug('Running Timer to check trigger every  ' + this.refreshTimerInterval + ' ms ');
-        this.fetchAlphaEssData(config.serialnumber);
-      }, this.refreshTimerInterval);
-    }
-
-    this.fetchAlphaEssData(config.serialnumber);
+    this.alphaService = alphaService;
+    alphaService.addListener(this);
 
     if (config.mqtt_url===undefined ){
       this.log.debug('mqtt_url is not set, not pushing anywhere');
@@ -77,36 +60,25 @@ export class AlphaHumidityPlugin implements AccessoryPlugin {
     }
   }
 
-  async fetchAlphaEssData(serialNumber: string) {
-    this.log.debug('fetch Alpha ESS Data -> fetch token');
+  getName(){
+    return this.name;
+  }
 
-    this.alphaService.getLastPowerData(serialNumber).then(
-      detailData => {
-        if (detailData!==null && detailData.data!==null){
-          this.log.debug('SOC: ' + detailData.data.soc);
-          this.batteryLevel = detailData.data.soc;
-          const totalPower = this.alphaService.getTotalPower(detailData);
-          if (this.mqtt !== undefined) {
-            this.mqtt.pushStatusMsg(totalPower, detailData.data.soc);
-          }
+  onResponse(detailData: AlphaLastPowerDataResponse) {
+    this.batteryLevel = detailData.data.soc;
+    const totalPower = this.alphaService.getTotalPower(detailData);
+    if (this.mqtt !== undefined) {
+      this.mqtt.pushStatusMsg(totalPower, detailData.data.soc);
+    }
 
-          if (this.hap !== undefined){
-            if (this.batteryLevel !== undefined && this.batteryLevel !== null) {
-              this.service.getCharacteristic(this.hap.Characteristic.CurrentRelativeHumidity).updateValue(this.batteryLevel);
-            }
-          }
-        }
-      },
-    ).catch(error => {
-      this.log.error(error);
-      this.log.error('Getting Detail Data from Alpha Ess failed ');
-      return;
-    });
+    if (this.hap !== undefined){
+      if (this.batteryLevel !== undefined && this.batteryLevel !== null) {
+        this.service.getCharacteristic(this.hap.Characteristic.CurrentRelativeHumidity).updateValue(this.batteryLevel);
+      }
+    }
 
     this.log.debug('Rendering Image');
-
-    await this.alphaImageService.renderImage(this.power_image_filename, this.alphaService.getDailyMap());
-
+    this.alphaImageService.renderImage(this.power_image_filename, this.alphaService.getDailyMap());
   }
 
 

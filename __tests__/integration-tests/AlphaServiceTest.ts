@@ -39,7 +39,7 @@ describe('Integration Test with Mock Server', () => {
       ctx.status = 200;
     });
 
-    const alphaService = new AlphaService(undefined, 'goodAppId', secret, logRequestData, mockServerUrl );
+    const alphaService = new AlphaService(undefined, 'goodAppId', secret, logRequestData, mockServerUrl, 1000, 'serialNumber' );
     const lastPowerData = await alphaService.getLastPowerData(serialNumber);
     expect(lastPowerData.data).toBeDefined();
     expect(lastPowerData.data.soc).toBeDefined();
@@ -138,7 +138,7 @@ describe('Integration Test with Mock Server', () => {
     });
 
     const minutes = 45 ;
-    const alphaService = new AlphaService(undefined, appid, secret, logRequestData, mockServerUrl );
+    const alphaService = new AlphaService(undefined, appid, secret, logRequestData, mockServerUrl, 1000, 'serialNumber');
 
     // when
     const batteryChargeResult = await alphaService.checkAndEnableReloading('serialNumber', true, minutes, 10, 20);
@@ -173,7 +173,7 @@ describe('Integration Test with Mock Server', () => {
       ctx.response.body= json;
     });
 
-    const alphaService = new AlphaService(undefined, appid, secret, logRequestData, mockServerUrl );
+    const alphaService = new AlphaService(undefined, appid, secret, logRequestData, mockServerUrl, 1000, 'serialNumber' );
 
     // when
     const batteryChargeResult = await alphaService.isBatteryCurrentlyLoadingCheckNet('checkBatteryLoadingOK');
@@ -208,7 +208,7 @@ describe('Integration Test with Mock Server', () => {
       ctx.response.body= json;
     });
 
-    const alphaService = new AlphaService(undefined, appid, secret, logRequestData, mockServerUrl );
+    const alphaService = new AlphaService(undefined, appid, secret, logRequestData, mockServerUrl, 1000, 'serialNumber');
 
     // when
     const batteryChargeResult = await alphaService.isBatteryCurrentlyLoadingCheckNet('blafasel');
@@ -242,7 +242,7 @@ describe('Integration Test with Mock Server', () => {
       ctx.response.body= json;
     });
 
-    const alphaService = new AlphaService(undefined, appid, secret, logRequestData, mockServerUrl );
+    const alphaService = new AlphaService(undefined, appid, secret, logRequestData, mockServerUrl, 1000, 'serialNumber');
 
     // when
     const batteryChargeResult = await alphaService.isBatteryCurrentlyLoadingCheckNet('blafasel');
@@ -259,31 +259,31 @@ describe('Integration Test with Mock Server', () => {
 
 
 test('test loading hours ', () => {
-  const alphaService = new AlphaService(undefined, appid, secret, logRequestData, '');
+  const alphaService = new AlphaService(undefined, appid, secret, logRequestData, '', 1000, 'serialNumber');
   const res = alphaService.getLoadingHourString(10, 16);
   expect(res).toBe('10:30');
 });
 
 test('test loading hours ', () => {
-  const alphaService = new AlphaService(undefined, appid, secret, logRequestData, '');
+  const alphaService = new AlphaService(undefined, appid, secret, logRequestData, '', 1000, 'serialNumber');
   const res = alphaService.getLoadingHourString(11, 36);
   expect(res).toBe('11:45');
 });
 
 test('test loading hours ', () => {
-  const alphaService = new AlphaService(undefined, appid, secret, logRequestData, '');
+  const alphaService = new AlphaService(undefined, appid, secret, logRequestData, '', 1000, 'serialNumber');
   const res = alphaService.getLoadingHourString(9, 45);
   expect(res).toBe('10:00');
 });
 
 test('test loading hours ', () => {
-  const alphaService = new AlphaService(undefined, appid, secret, logRequestData, '');
+  const alphaService = new AlphaService(undefined, appid, secret, logRequestData, '', 1000, 'serialNumber');
   const res = alphaService.getLoadingHourString(23, 55);
   expect(res).toBe('00:00');
 });
 
 test('test loading hours ', () => {
-  const alphaService = new AlphaService(undefined, appid, secret, logRequestData, '');
+  const alphaService = new AlphaService(undefined, appid, secret, logRequestData, '', 1000, 'serialNumber');
   const res = alphaService.getLoadingHourString(0, 5);
   expect(res).toBe('00:15');
 });
@@ -321,7 +321,7 @@ test('test image rendering alpha image', async () => {
 
 
 test('positive test: threshold of Detail Response exceeds config -> trigger value: true ', () => {
-  const alphaService = new AlphaService(undefined, '123', 'password', true, 'http://localhost:8080');
+  const alphaService = new AlphaService(undefined, '123', 'password', true, 'http://localhost:8080', 1000, 'serialNumber');
   const response = new AlphaLastPowerDataResponse();
   const data = new AlphaDataResponse();
   data.ppv = 750;
@@ -334,7 +334,7 @@ test('positive test: threshold of Detail Response exceeds config -> trigger valu
 
 test('negative test: threshold of Detail Response exceeds config -> trigger value: false  (due to battery) ', () => {
 
-  const alphaService = new AlphaService(undefined, '123', 'password', true, 'http://localhost:8080');
+  const alphaService = new AlphaService(undefined, '123', 'password', true, 'http://localhost:8080', 1000, 'serialNumber');
   const response = new AlphaLastPowerDataResponse();
   const data = new AlphaDataResponse();
   data.ppv = 750;
@@ -347,7 +347,7 @@ test('negative test: threshold of Detail Response exceeds config -> trigger valu
 
 test('negative test: threshold of Detail Response exceeds config -> trigger value: false  (due to power) ', () => {
 
-  const alphaService = new AlphaService(undefined, '123', 'password', true, 'http://localhost:8080');
+  const alphaService = new AlphaService(undefined, '123', 'password', true, 'http://localhost:8080', 1000, 'serialNumber');
   const response = new AlphaLastPowerDataResponse();
   const data = new AlphaDataResponse();
   data.ppv = 750;
@@ -360,7 +360,7 @@ test('negative test: threshold of Detail Response exceeds config -> trigger valu
 
 test('negative test: threshold of Detail Response exceeds config -> trigger value: false  (due to battery && power) ', () => {
 
-  const alphaService = new AlphaService(undefined, '123', 'password', true, 'http://localhost:8080');
+  const alphaService = new AlphaService(undefined, '123', 'password', true, 'http://localhost:8080', 1000, 'serialNumber');
   const response = new AlphaLastPowerDataResponse();
   const data = new AlphaDataResponse();
   data.ppv = 500;
@@ -373,7 +373,7 @@ test('negative test: threshold of Detail Response exceeds config -> trigger valu
 
 
 test('test enable loading if currently not loading, verify loading minutes (45)', async () => {
-  const alphaService = new AlphaService(undefined, '123', 'password', true, 'http://localhost:8080');
+  const alphaService = new AlphaService(undefined, '123', 'password', true, 'http://localhost:8080', 1000, 'serialNumber');
   const loadingMinutes = 45;
 
   const startedDate = new Date();
@@ -397,7 +397,7 @@ test('test enable loading if currently not loading, verify loading minutes (45)'
 
 
 test('test enable loading if currently not loading, verify loading minutes (90) ', async () => {
-  const alphaService = new AlphaService(undefined, '123', 'password', true, 'http://localhost:8080');
+  const alphaService = new AlphaService(undefined, '123', 'password', true, 'http://localhost:8080', 1000, 'serialNumber');
   const loadingMinutes = 90;
 
   const startedDate = new Date();
@@ -421,7 +421,7 @@ test('test enable loading if currently not loading, verify loading minutes (90) 
 
 
 test('test disable loading if when currently loading because time is up ', async () => {
-  const alphaService = new AlphaService(undefined, '123', 'password', true, 'http://localhost:8080');
+  const alphaService = new AlphaService(undefined, '123', 'password', true, 'http://localhost:8080', 1000, 'serialNumber');
   const minutesToLoadMaximum = 10;
 
   const dateBegin = new Date();
@@ -439,7 +439,7 @@ test('test disable loading if when currently loading because time is up ', async
 });
 
 test('test disable loading if its currently loading. stop loading because time expired', async () => {
-  const alphaService = new AlphaService(undefined, '123', 'password', true, 'http://localhost:8080');
+  const alphaService = new AlphaService(undefined, '123', 'password', true, 'http://localhost:8080', 1000, 'serialNumber');
   const minutesToLoadMaximum = 45;
   const dateBegin = new Date();
   dateBegin.setMinutes(new Date().getMinutes()-55);
@@ -456,7 +456,7 @@ test('test disable loading if its currently loading. stop loading because time e
 
 
 test('test disable loading if its currently loading. do not change settings, since loading via time not expired (already loading)', async () => {
-  const alphaService = new AlphaService(undefined, '123', 'password', true, 'http://localhost:8080');
+  const alphaService = new AlphaService(undefined, '123', 'password', true, 'http://localhost:8080', 1000, 'serialNumber');
   const loadingMinutes = 44; // loading minutes shall last 44 minutes
 
   const dateBegin = new Date();
