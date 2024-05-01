@@ -20,7 +20,7 @@ export class AlphaLoadPlugin implements AccessoryPlugin, AlphaServiceEventListen
   constructor (log: Logging, config: PlatformConfig, api: API, alphaService: AlphaService) {
     this.hap = api.hap;
     this.log = log;
-    this.load = 0;
+    this.load = 1;
     this.name= 'AlphaEssBatteryLoadPlugin';
     log.debug('Alpha ESS Accessory Loaded: ' + this.getName())
     ;
