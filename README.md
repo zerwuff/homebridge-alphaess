@@ -7,10 +7,11 @@ Connecting Alpha ESS OpenAPI Account with your homebridge and automate!
 
 <img src="Screen.png" width="800"/>
 
-This plugin connects the alpha ess open cloud api (https://open.alphaess.com/) to homebridge and provides 2 accessories:
- 
- - the alpha ess battery percentage as humidity sensor (0-100)% 
- - the alpha total string power (dc+ac) as light sensor (watts = lux) 
+This plugin connects the alpha ess open cloud api (https://open.alphaess.com/) to your homebridge and provides values from the Alpha ESS System as sensors:
+ - the current battery percentage (SOC) as humidity sensor (0-100)% 
+ - the current string power (dc+ac combined) as light sensor (watts = lux) 
+ - the current feed-in power as light sensor (watts = lux). negative - energy going into the net, positive fetching from the net
+ - the current consumed power as light sensor (watts = lux).  
  - a contact sensor that is triggered, when the following thresholds are met:
    - power poading threshold (the generated sun power), eg. 1500w 
    - soc threshold , eg. 10% 
