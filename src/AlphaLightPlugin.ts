@@ -35,6 +35,8 @@ export class AlphaLightPlugin implements AccessoryPlugin, AlphaServiceEventListe
     this.service = new this.hap.Service.LightSensor(this.name);
     this.service.getCharacteristic(this.hap.Characteristic.CurrentAmbientLightLevel)
       .onGet(this.handleCurrentLightLevelGet.bind(this));
+    this.service.getCharacteristic(this.hap.Characteristic.CurrentAmbientLightLevel).setProps({minValue:0});
+
     this.alphaService = alphaService;
     this.alphaService.addListener(this);
   }
