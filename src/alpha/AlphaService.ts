@@ -49,6 +49,11 @@ export class AlphaService {
       this.fetchAlphaEssData(serialNumber);
     }, refreshTimeinterval);
 
+    setTimeout( () => {
+      this.logger.debug('Fetch initial Data ');
+      this.fetchAlphaEssData(serialNumber);
+    }, 10000 );
+
   }
 
   addListener(listener : AlphaServiceEventListener<AlphaLastPowerDataResponse>){
