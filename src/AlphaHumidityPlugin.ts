@@ -47,8 +47,6 @@ export class AlphaHumidityPlugin extends BasePlugin {
 
   onResponse(detailData: AlphaLastPowerDataResponse) {
     const batteryLevel = detailData.data.soc;
-    this.setValue(batteryLevel);
-
     const totalPower = this.getAlphaService().getTotalPower(detailData);
 
     if (this.mqtt !== undefined) {
@@ -56,6 +54,7 @@ export class AlphaHumidityPlugin extends BasePlugin {
     }
 
     if (this.getService()!==null && batteryLevel !== undefined && batteryLevel !== null) {
+      this.setValue(batteryLevel);
       this.getCharacteristics().updateValue(batteryLevel);
     }
 

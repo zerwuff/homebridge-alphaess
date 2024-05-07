@@ -32,8 +32,8 @@ More features:
 
 # Releasing
 
- - npm version minor && npm publish
-
+ - 
+npm version minor && npm publish
 # Features 
 
  - Show Battery Percentage  (currently as as humidity sensor to enable percentage view)

@@ -20,6 +20,7 @@ export abstract class BasePlugin implements AccessoryPlugin, AlphaServiceEventLi
     this.hap = api.hap;
     this.log = log;
     this.name= name;
+    this.value = 0 ;
     log.debug('Alpha ESS Accessory Loaded: ' + this.getName());
     this.informationService = new this.hap.Service.AccessoryInformation()
       .setCharacteristic(this.hap.Characteristic.Manufacturer, MANUFACTURER)
@@ -27,7 +28,6 @@ export abstract class BasePlugin implements AccessoryPlugin, AlphaServiceEventLi
       .setCharacteristic(this.hap.Characteristic.Model, this.getName());
     this.alphaService = alphaService;
     this.alphaService.addListener(this);
-
     this.initServiceCharacteristics(this.hap);
   }
 

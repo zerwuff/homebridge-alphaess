@@ -21,7 +21,6 @@ export class AlphaLightPlugin extends BasePlugin{
   onResponse(detailData: AlphaLastPowerDataResponse) {
     const totalPower = this.getAlphaService().getTotalPower(detailData);
     this.setValue( (totalPower !== undefined && totalPower !== null) ? totalPower : 0);
-
     if (this.getValue() !== undefined && this.getValue() !== null) {
       this.getCharacteristics().updateValue(this.getValue());
     }
