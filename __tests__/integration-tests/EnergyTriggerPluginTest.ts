@@ -1,9 +1,8 @@
 import 'jest';
-
 import { AlphaService, EnergyTriggerPlugin, TibberService } from '../../src/index';
 import { Logging } from 'homebridge';
 import { PlatformConfig} from 'homebridge';
-import { Mock, Times, It, GetPropertyExpression, SetPropertyExpression } from 'moq.ts';
+import { Mock, Times, It, GetPropertyExpression, SetPropertyExpression, NewOperatorExpression } from 'moq.ts';
 import { API } from 'homebridge';
 import { PriceTrigger } from '../../src/interfaces';
 import { IPrice } from 'tibber-api/lib/src/models/IPrice';
@@ -12,48 +11,41 @@ import { AlphaDataResponse, AlphaLastPowerDataResponse } from '../../src/alpha/r
 import { Service } from 'hap-nodejs';
 
 
-class ContactSensorMock{
+const loging = new Mock<Logging>()
+  .setup( instance => instance.debug).returns(m => m).
+  setup(instance => instance.error).returns(m => m);
+
+
+class ContactSensorMoq{
   constructor(){
-    const a = 1;
+    undefined;
   }
 
   getCharacteristic(params: any){
-    return new ContactSensorMock();
+    return new ContactSensorMoq();
   }
 
   onGet(){
     return 1;
   }
 
-  updateValue(params: any) {
+  updateValue() {
     return 0;
   }
 }
-class AccessoryInformationMock {
 
+
+
+class AccessoryInformationMock {
   constructor(){
-    const a = 1;
+    undefined;
   }
 
-  setCharacteristic(params: any){
+  setCharacteristic(){
     return new AccessoryInformationMock() ;
   }
 }
 
-
-const loging = new Mock<Logging>()
-  .setup( instance => instance.debug).returns(m => m).
-  setup(instance => instance.error).returns(m => m);
-
-const contactSensorState = new Mock<any>()
-  .setup(instance => It.Is((expression: GetPropertyExpression) => expression.name === 'CONTACT_DETECTED')).returns(0)
-  .setup(instance => It.Is((expression: GetPropertyExpression) => expression.name === 'CONTACT_NOT_DETECTED')).returns(1);
-
-const characteristicsMock = new Mock<any>()
-  .setup(instance => It.Is((expression: GetPropertyExpression) => expression.name === 'SerialNumber')).returns('SerialNumber')
-  .setup(instance => It.Is((expression: GetPropertyExpression) => expression.name === 'Mode')).returns('Model')
-  .setup(instance => It.Is((expression: GetPropertyExpression) => expression.name === 'Manufacturer')).returns('Manufacturer')
-  .setup(instance => It.Is((expression: GetPropertyExpression) => expression.name === 'ContactSensorState')).returns(contactSensorState);
 
 const serviceMock = new Mock<any>()
   .setup(() => It.IsAny())
@@ -67,7 +59,7 @@ const serviceMock = new Mock<any>()
           return AccessoryInformationMock;
         }
         if (interaction.name==='ContactSensor'){
-          return ContactSensorMock;
+          return ContactSensorMoq;
         }
         if (interaction.name==='getCharacteristic'){
           return AccessoryInformationMock;
@@ -76,8 +68,20 @@ const serviceMock = new Mock<any>()
     }
   });
 
+
+const contactSensorState = new Mock<any>()
+  .setup(instance => It.Is((expression: GetPropertyExpression) => expression.name === 'CONTACT_DETECTED')).returns(0)
+  .setup(instance => It.Is((expression: GetPropertyExpression) => expression.name === 'CONTACT_NOT_DETECTED')).returns(1);
+
+
+const characteristicsMock = new Mock<any>()
+  .setup(instance => It.Is((expression: GetPropertyExpression) => expression.name === 'SerialNumber')).returns('SerialNumber')
+  .setup(instance => It.Is((expression: GetPropertyExpression) => expression.name === 'Mode')).returns('Model')
+  .setup(instance => It.Is((expression: GetPropertyExpression) => expression.name === 'Manufacturer')).returns('Manufacturer')
+  .setup(instance => It.Is((expression: GetPropertyExpression) => expression.name === 'ContactSensorState')).returns(contactSensorState);
+
 const hapMock = new Mock<Service>()
-  .setup((instance) => It.Is((expression: GetPropertyExpression) => expression.name === 'Service'))
+  .setup(instance => It.Is((expression: GetPropertyExpression) => expression.name === 'Service'))
   .returns(serviceMock.object())
   .setup(instance => It.Is((expression: GetPropertyExpression) => expression.name === 'Characteristic'))
   .returns(characteristicsMock.object())
@@ -89,6 +93,7 @@ const hapMock = new Mock<Service>()
 const api = new Mock<API>().
   setup(instance => It.Is((expression: GetPropertyExpression) => expression.name === 'hap')).returns(hapMock.object()).
   setup(instance => instance.version).returns(1);
+
 
 class PFConfig implements PlatformConfig{
   platform: string;

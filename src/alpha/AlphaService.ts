@@ -6,9 +6,6 @@ import { ObjectMapper } from 'jackson-js';
 import { AlphaSettingsResponse } from './response/AlphaSettingsResponse';
 import { AlphaData, AlphaServiceEventListener } from '../interfaces';
 import { Utils } from '../util/Utils';
-import { listeners } from 'process';
-import { ServerStatus } from 'homebridge/lib/server';
-import { log } from 'console';
 
 const request = require('request');
 
@@ -24,7 +21,7 @@ export class AlphaService {
   private dailyMap: Map<number, AlphaData>;
   private utils: Utils;
   private lastClearDate: Date ;
-  private lastPowerListeners: Array <AlphaServiceEventListener<AlphaLastPowerDataResponse>>;
+  private lastPowerListeners: Array <AlphaServiceEventListener<AlphaLastPowerDataResponse>> = [];
 
   constructor(logger: Logging | undefined, appid: string | undefined,
     appsecret: string, logRequestDetails: boolean, url: string,
@@ -55,6 +52,7 @@ export class AlphaService {
     }, 10000 );
 
   }
+
 
   addListener(listener : AlphaServiceEventListener<AlphaLastPowerDataResponse>){
     this.lastPowerListeners.push(listener);

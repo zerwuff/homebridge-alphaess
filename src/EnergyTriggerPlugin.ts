@@ -1,33 +1,25 @@
 
-import { HAP, API, AccessoryPlugin, Logging, PlatformConfig, Service } from 'homebridge';
+import { HAP, API, Characteristic, Logging, PlatformConfig } from 'homebridge';
 import { AlphaTrigger } from './index';
 import { ImageRenderingService } from './index';
 import { Utils } from './index';
 import { AlphaService } from './index';
 import { AlphaMqttService, MqttTopics } from './index';
 import { TibberService } from './index';
-import { AlphaServiceEventListener } from './interfaces';
 import { AlphaLastPowerDataResponse } from './alpha/response/AlphaLastPowerDataResponse';
+import { BasePlugin } from './BasePlugin';
+import { getHashes } from 'crypto';
 /**
  * This Plugin provides a homebridge trigger logic that can be used to control external devices.
  *
  */
-export class EnergyTriggerPlugin implements AccessoryPlugin, AlphaServiceEventListener<AlphaLastPowerDataResponse> {
+export class EnergyTriggerPlugin extends BasePlugin {
 
-  private alphaService: AlphaService;
-  private informationService: Service;
-  private service: Service;
-
-  private hap: HAP;
-  private log: Logging;
   private config: PlatformConfig;
-  private name: string; // REQUIRED !!
-  private refreshTimerInterval: number; // timer milliseconds to check timer
 
   private triggerTotal: boolean;
   private triggerAlpha : boolean;
   private triggerTibber: boolean;
-  private triggerReloadBattryTrigger : boolean;
   private triggerImageFilename: string;
   private socCurrent: number;
   private tibberThresholdSOC: number;// soc percentage to trigger tibber loading
@@ -43,17 +35,15 @@ export class EnergyTriggerPlugin implements AccessoryPlugin, AlphaServiceEventLi
   private tibberLoadingMinutes: number;
   private dailyLoadingFromNetReset : boolean;
 
+  // Alpha ESS Battery Light Total Power Plugin
   constructor (log: Logging, config: PlatformConfig, api: API, alphaService: AlphaService) {
-    this.hap = api.hap;
-    this.log = log;
-    this.refreshTimerInterval = 10000;
+    super(log, config, api, alphaService, 'EnergyTriggerPlugin' );
     this.alphaTriggerMap = new Map();
     this.socCurrent = -1;
     this.config = config;
     this.triggerAlpha = false;
     this.triggerTibber = false;
     this.utils = new Utils();
-    this.name= 'EnergyTriggerPlugin';
     this.lastClearDate = new Date();
     this.lastClearDate.setHours(0);
     this.lastClearDate.setMinutes(0);
@@ -64,28 +54,21 @@ export class EnergyTriggerPlugin implements AccessoryPlugin, AlphaServiceEventLi
     this.triggerAlpha = false;
     this.triggerTibber = false;
 
-    log.debug('EnergyTriggerPlugin plugin loaded');
-    this.setCharacteristics(this.hap, this.config);
-
     this.alphaImageService = new ImageRenderingService();
-    this.alphaService = alphaService;
-    this.alphaService.addListener(this);
-
-    this.log.debug(config.serialnumber);
     this.tibberLoadingMinutes = config.tibberLoadingMinutes;
     this.triggerImageFilename = config.triggerImageFilename;
     this.tibberThresholdSOC = config.tibberThresholdSOC;
 
     if (!config.tibberEnabled ) {
-      this.log.debug('Tibber API trigger is disabled');
+      this.getLOG().debug('Tibber API trigger is disabled');
     } else {
-      this.log.debug('Tibber API trigger is enabled');
+      this.getLOG().debug('Tibber API trigger is enabled');
       this.tibber = new TibberService(log, config.tibberAPIKey, config.tibberUrl, config.tibberThresholdEur,
         config.tibberLoadBatteryEnabled, config.tibberHomeId);
     }
 
     if (this.config.mqtt_url===undefined ){
-      this.log.debug('mqtt_url is not set, not pushing anywhere');
+      this.getLOG().debug('mqtt_url is not set, not pushing anywhere');
     } else{
       const topics = new MqttTopics();
       topics.mqtt_status_topic = config.mqtt_status_topic;
@@ -105,14 +88,6 @@ export class EnergyTriggerPlugin implements AccessoryPlugin, AlphaServiceEventLi
     this.calculateCombinedTriggers(this.config, alphaLastPowerDataResponse);
   }
 
-  getName(){
-    return this.name;
-  }
-
-  getAlphaService(){
-    return this.alphaService;
-  }
-
   getTibberService(){
     return this.tibber;
   }
@@ -125,18 +100,15 @@ export class EnergyTriggerPlugin implements AccessoryPlugin, AlphaServiceEventLi
     this.triggerTibber = triggerTibber;
   }
 
-  setCharacteristics(hap:HAP, config:PlatformConfig){
-    if (hap !== undefined){
-      this.informationService = new hap.Service.AccessoryInformation()
-        .setCharacteristic(this.hap.Characteristic.Manufacturer, 'EnergyTriggerPlugin by Jens Zeidler')
-        .setCharacteristic(this.hap.Characteristic.SerialNumber, config.serialnumber)
-        .setCharacteristic(this.hap.Characteristic.Model, 'Alpha ESS // Tibber combined Trigger Plugin');
-
-      this.service = new this.hap.Service.ContactSensor(config.name);
-
-      this.service.getCharacteristic(this.hap.Characteristic.ContactSensorState)
-        .onGet(this.handleContactSensorStateGet.bind(this));
+  initServiceCharacteristics(hap: HAP) {
+    if (hap!==undefined){
+      this.setService(new hap.Service.ContactSensor(this.getName()));
+      this.getCharacteristics().onGet(this.handleGet.bind(this));
     }
+  }
+
+  getCharacteristics(): Characteristic {
+    return this.getService().getCharacteristic(this.getHAP().Characteristic.ContactSensorState);
   }
 
   getTriggerTotal(){
@@ -146,28 +118,29 @@ export class EnergyTriggerPlugin implements AccessoryPlugin, AlphaServiceEventLi
   calculateCombinedTriggers(config: PlatformConfig, alphaLastPowerDataResponse: AlphaLastPowerDataResponse){
 
     this.calculateAlphaTrigger(config.serialnumber, alphaLastPowerDataResponse).catch(error => {
-      this.log(error);
+      this.getLOG().error(error);
     });
 
     this.triggerTotal = this.triggerAlpha || this.triggerTibber;
 
     if (config.tibberEnabled ) {
       this.calculateTibberTrigger(this.tibber).catch(error => {
-        this.log(error);
+        this.getLOG().error(error);
       });
     }
 
 
     this.triggerTotal = this.triggerAlpha || this.triggerTibber;
-    this.log.debug('Calculated triggers: alpa ess: '+ this.triggerAlpha + ' tibber: ' + this.triggerTibber +
+    this.getLOG().debug('Calculated triggers: alpa ess: '+ this.triggerAlpha + ' tibber: ' + this.triggerTibber +
             ' triggerTotal :'+this.triggerTotal);
 
+    this.setValue(this.getContactSensorState(this.triggerTotal));
+
     //refresh combined trigger
-    if (this.hap !== undefined){
-      this.handleContactSensorStateGet();
-      this.log.debug('Updating sensor status to: ' + this.triggerTotal);
+    if (this.getService() !== undefined){
+      this.getLOG().debug('Updating sensor status to: ' + this.triggerTotal);
       this.pushMqtt(this.triggerTotal);
-      this.service.getCharacteristic(this.hap.Characteristic.ContactSensorState).updateValue(this.getContactSensorState(this.triggerTotal));
+      this.getCharacteristics().updateValue(this.getContactSensorState(this.triggerTotal));
     }
 
     // render image
@@ -182,7 +155,7 @@ export class EnergyTriggerPlugin implements AccessoryPlugin, AlphaServiceEventLi
       this.alphaImageService.renderTriggerImage(this.triggerImageFilename, tibberMap,
         this.alphaTriggerMap, tibberPricePoint,
       ).catch(error => {
-        this.log.error('error rendering image: ', error);
+        this.getLOG().error('error rendering image: ', error);
       });
     }
   }
@@ -194,16 +167,16 @@ export class EnergyTriggerPlugin implements AccessoryPlugin, AlphaServiceEventLi
         then(result => {
           this.setTibberTrigger(result);
         }).catch(() => {
-          this.log.error('could not fetch trigger result ');
+          this.getLOG().error('could not fetch trigger result ');
         });
     } catch (err){
-      this.log.error('' + err);
+      this.getLOG().error('' + err);
     }
     return this.triggerTibber;
   }
 
   async calculateAlphaTrigger(serialNumber: string, alphaLastPowerDataResponse: AlphaLastPowerDataResponse) {
-    this.log.debug('calculateAlphaTrigger called.');
+    this.getLOG().debug('calculateAlphaTrigger called.');
     const priceIsLow = this.triggerTibber;
     const socBattery = this.socCurrent;
     const socBatteryThreshold = this.tibberThresholdSOC;
@@ -211,37 +184,37 @@ export class EnergyTriggerPlugin implements AccessoryPlugin, AlphaServiceEventLi
     // check battery reloading
 
     if (this.config.tibberEnabled && this.tibber.getTibberLoadingBatteryEnabled() ) {
-      this.log.debug('Check reloading of battery triggered');
-      this.alphaService.checkAndEnableReloading(
+      this.getLOG().debug('Check reloading of battery triggered');
+      this.getAlphaService().checkAndEnableReloading(
         serialNumber,
         priceIsLow,
         this.tibberLoadingMinutes,
         socBattery,
         socBatteryThreshold).then(
         () => {
-          this.log.debug('Check reloading if battery from net was done.');
+          this.getLOG().debug('Check reloading if battery from net was done.');
         },
       ) .catch(error => {
-        this.log.error('Error Checking Battery Loading via Tibber price trigger: ' + error);
+        this.getLOG().error('Error Checking Battery Loading via Tibber price trigger: ' + error);
         return;
       });
 
-      this.alphaService.isBatteryCurrentlyLoadingCheckNet(serialNumber).then(
+      this.getAlphaService().isBatteryCurrentlyLoadingCheckNet(serialNumber).then(
         batteryLoading => {
           this.isBatteryLoadingFromNet = batteryLoading;
-          this.log.debug('Loading Battery Status from Net:' + batteryLoading);
+          this.getLOG().debug('Loading Battery Status from Net:' + batteryLoading);
         }).
         catch(error => {
-          this.log.error('Error Checking Battery currently loading not possible' + error);
-          this.isBatteryLoadingFromNet = this.alphaService.isBatteryCurrentlyLoading();
+          this.getLOG().error('Error Checking Battery currently loading not possible' + error);
+          this.isBatteryLoadingFromNet = this.getAlphaService().isBatteryCurrentlyLoading();
           return;
         });
 
 
       if (this.tibber !== undefined){
         if (this.tibber.getIsTriggeredToday()===false && this.dailyLoadingFromNetReset === false ){
-          this.log.debug('no loading possible today, stop eventually existing loading');
-          this.alphaService.stopLoading(serialNumber);
+          this.getLOG().debug('no loading possible today, stop eventually existing loading');
+          this.getAlphaService().stopLoading(serialNumber);
           this.tibber.setIsTriggeredToday(undefined);
           this.dailyLoadingFromNetReset = true;
         }
@@ -253,7 +226,7 @@ export class EnergyTriggerPlugin implements AccessoryPlugin, AlphaServiceEventLi
     if (detailData!==null && detailData.data!==null && detailData.data!==undefined){
 
       this.setSocCurrent(detailData.data.soc);
-      this.triggerAlpha= this.alphaService.isTriggered(detailData, this.config.powerLoadingThreshold, this.config.socLoadingThreshold);
+      this.triggerAlpha= this.getAlphaService().isTriggered(detailData, this.config.powerLoadingThreshold, this.config.socLoadingThreshold);
 
       const now = new Date();
       const hours = now.getHours();
@@ -272,26 +245,18 @@ export class EnergyTriggerPlugin implements AccessoryPlugin, AlphaServiceEventLi
         this.lastClearDate = now;
       }
     } else {
-      this.log.error('Response from Alpha Ess did not contain any good information. Response was: ' + detailData);
+      this.getLOG().error('Response from Alpha Ess did not contain any good information. Response was: ' + detailData);
     }
 
   }
 
 
-
-  getServices() {
-    return [
-      this.informationService,
-      this.service,
-    ];
-  }
-
-  handleContactSensorStateGet() {
-    this.triggerTotal = this.triggerAlpha || this.triggerTibber;
-    this.log.debug('Trigger: alpha ess: '+ this.triggerAlpha + ' tibber: ' + this.triggerTibber + ' total:'+this.triggerTotal);
-    this.log.debug('Triggered GET ContactSensorState');
-    return this.getContactSensorState(this.triggerTotal);
-  }
+  // handleContactSensorStateGet() {
+  //  this.triggerTotal = this.triggerAlpha || this.triggerTibber;
+  // this.getLOG().debug('Trigger: alpha ess: '+ this.triggerAlpha + ' tibber: ' + this.triggerTibber + ' total:'+this.triggerTotal);
+  // this.getLOG().debug('Triggered GET ContactSensorState');
+  // return this.getContactSensorState(this.triggerTotal);
+  // }
 
   pushMqtt(triggerTotal: boolean){
     if (this.mqtt !== undefined) {
@@ -300,19 +265,12 @@ export class EnergyTriggerPlugin implements AccessoryPlugin, AlphaServiceEventLi
   }
 
   getContactSensorState(triggerTotal : boolean) {
-    if (this.hap !== undefined){
-      if (triggerTotal === false){
-        this.log.debug('trigger not fired -> status CONTACT_DETECTED');
-        return this.hap.Characteristic.ContactSensorState.CONTACT_DETECTED;
-      }
-      this.log.debug('trigger fired -> status CONTACT_NOT_DETECTED');
-      return this.hap.Characteristic.ContactSensorState.CONTACT_NOT_DETECTED;
+    if (triggerTotal === false){
+      this.getLOG().debug('trigger not fired -> status CONTACT_DETECTED');
+      return this.getHAP().Characteristic.ContactSensorState.CONTACT_DETECTED;
     }
-  }
-
-
-  identify(): void {
-    this.log.debug('Its me, Energy contact sensor trigger plugin');
+    this.getLOG().debug('trigger fired -> status CONTACT_NOT_DETECTED');
+    return this.getHAP().Characteristic.ContactSensorState.CONTACT_NOT_DETECTED;
   }
 
 

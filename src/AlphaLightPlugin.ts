@@ -1,71 +1,29 @@
 
-import { HAP, API, AccessoryPlugin, PlatformConfig, Service, Logging, Topics } from 'homebridge';
+import { HAP, API, PlatformConfig, Logging } from 'homebridge';
 import { AlphaService } from './index';
-import { AlphaServiceEventListener } from './interfaces';
 import { AlphaLastPowerDataResponse } from './alpha/response/AlphaLastPowerDataResponse';
-import { MANUFACTURER } from './settings';
+import { BasePlugin } from './BasePlugin';
 
-export class AlphaLightPlugin implements AccessoryPlugin, AlphaServiceEventListener<AlphaLastPowerDataResponse> {
-
-  private alphaService: AlphaService;
-  private informationService: Service;
-  private service: Service;
-
-  private hap: HAP ;
-  private log: Logging;
-  private name: string; // this attribute is required for registreing the accessoryplugin
-
-  // alpha ess status variables
-  private totalPower: number;
+export class AlphaLightPlugin extends BasePlugin{
 
   // Alpha ESS Battery Light Total Power Plugin
   constructor (log: Logging, config: PlatformConfig, api: API, alphaService: AlphaService) {
-    this.hap = api.hap;
-    this.log = log;
-    this.totalPower = 0;
-    this.name= 'AlphaEssTotalPowerPlugin';
-
-    log.debug('Alpha ESS Accessory Loaded: ' + this.getName());
-    this.informationService = new this.hap.Service.AccessoryInformation()
-      .setCharacteristic(this.hap.Characteristic.Manufacturer, MANUFACTURER)
-      .setCharacteristic(this.hap.Characteristic.SerialNumber, config.serialnumber)
-      .setCharacteristic(this.hap.Characteristic.Model, this.getName());
-
-    // create light sensor for current power
-    this.service = new this.hap.Service.LightSensor(this.name);
-    this.service.getCharacteristic(this.hap.Characteristic.CurrentAmbientLightLevel)
-      .onGet(this.handleCurrentLightLevelGet.bind(this));
-    this.service.getCharacteristic(this.hap.Characteristic.CurrentAmbientLightLevel).setProps({minValue:0});
-
-    this.alphaService = alphaService;
-    this.alphaService.addListener(this);
+    super(log, config, api, alphaService, 'AlphaEssTotalPowerPlugin' );
   }
 
-  getName(){
-    return this.name;
+  // create light sensor for current total power
+  initServiceCharacteristics(hap: HAP) {
+    this.setService(new hap.Service.LightSensor(this.getName()));
+    this.getCharacteristics().onGet(this.handleGet.bind(this));
+    this.getCharacteristics().setProps({minValue:0});
   }
 
   onResponse(detailData: AlphaLastPowerDataResponse) {
-    const totalPower = this.alphaService.getTotalPower(detailData);
-    this.totalPower = (totalPower !== undefined && totalPower !== null) ? totalPower : 0;
-    if (this.totalPower !== undefined && this.totalPower !== null) {
-      this.service.getCharacteristic(this.hap.Characteristic.CurrentAmbientLightLevel).updateValue(this.totalPower);
+    const totalPower = this.getAlphaService().getTotalPower(detailData);
+    this.setValue( (totalPower !== undefined && totalPower !== null) ? totalPower : 0);
+
+    if (this.getValue() !== undefined && this.getValue() !== null) {
+      this.getCharacteristics().updateValue(this.getValue());
     }
   }
-
-  getServices() {
-    return [
-      this.informationService,
-      this.service,
-    ];
-  }
-
-  identify(): void {
-    this.log.debug('Its me:'+this.getName());
-  }
-
-  handleCurrentLightLevelGet(){
-    return this.totalPower;
-  }
-
 }
