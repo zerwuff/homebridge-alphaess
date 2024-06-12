@@ -237,7 +237,10 @@
     "expanded": false,
     "items": [    
         "powerLoadingThreshold",   
-        "socLoadingThreshold"      
+        "powerLoadingThresholdSecondsUpper",
+        "powerLoadingThresholdSecondsLower",
+        "socLoadingThreshold"
+              
     ]
 },
     {
