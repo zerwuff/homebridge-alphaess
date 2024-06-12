@@ -2,7 +2,7 @@ import 'jest';
 import { MockServer } from 'jest-mock-server';
 
 import { AlphaService } from '../../src/alpha/AlphaService';
-import { AlphaData } from '../../src/interfaces';
+import { AlphaData, TriggerConfig, TriggerStatus } from '../../src/interfaces';
 import { AlphaLastPowerDataResponse, AlphaDataResponse,
   AlphaLastPowerDataResponseWithNullTestingOnly } from '../../src/alpha/response/AlphaLastPowerDataResponse';
 import { ImageRenderingService } from '../../src/alpha/ImageRenderingService';
@@ -318,22 +318,70 @@ test('test image rendering alpha image', async () => {
 
 
 
-
-
-test('positive test: threshold of Detail Response exceeds config -> trigger value: true ', () => {
+test('positive test: threshold of Detail Response exeeds value for first time  -> trigger value: true ', () => {
   const alphaService = new AlphaService(undefined, '123', 'password', true, 'http://localhost:8080', 1000, 'serialNumber');
   const response = new AlphaLastPowerDataResponse();
   const data = new AlphaDataResponse();
-  data.ppv = 750;
+  data.ppv = 1002;
+  data.soc=22;
+  response.data = data;
+
+  const started= null;
+  const stopped= null;
+  const config = new TriggerConfig(1000, 10, 20, 20);
+  const status = new TriggerStatus(started, stopped, false); // not trigggered before
+  const trigger = alphaService.isTriggered(response, config, status);
+  expect(trigger.status).toEqual(false);
+  expect(trigger.lastTriggerStop).toBeNull();
+  expect(trigger.lastTriggerStart).toBeDefined();
+});
+
+test('positive test: threshold of Detail Response exceeds timed config  -> trigger value: true ', () => {
+  const alphaService = new AlphaService(undefined, '123', 'password', true, 'http://localhost:8080', 1000, 'serialNumber');
+  const response = new AlphaLastPowerDataResponse();
+  const data = new AlphaDataResponse();
+  data.ppv = 1001;
+  data.soc=22;
+  response.data = data;
+
+  const started= new Date();
+  const stopped= new Date();
+  started.setSeconds(started.getSeconds()-22);
+  const config = new TriggerConfig(1000, 10, 20, 20);
+  const status = new TriggerStatus(started, stopped, false); // not trigggered before
+  const trigger = alphaService.isTriggered(response, config, status);
+  expect(trigger.status).toEqual(true);
+  expect(trigger.lastTriggerStop).toBeDefined();
+  expect(trigger.lastTriggerStart).toBeDefined();
+});
+
+
+
+test('positive test: threshold of Detail Response below power, but timer still running  -> trigger value: true ', () => {
+  const alphaService = new AlphaService(undefined, '123', 'password', true, 'http://localhost:8080', 1000, 'serialNumber');
+  const response = new AlphaLastPowerDataResponse();
+  const data = new AlphaDataResponse();
+  data.ppv = 998;
   data.soc=21;
   response.data = data;
 
-  const trigger = alphaService.isTriggered(response, 500, 20);
-  expect(trigger).toEqual(true);
+  const started= new Date();
+  const stopped= new Date();
+  stopped.setSeconds(stopped.getSeconds()-45);
+  const config = new TriggerConfig(1000, 55, 15, 20);
+  const status = new TriggerStatus(started, stopped, true); // not trigggered before
+  const trigger = alphaService.isTriggered(response, config, status);
+  expect(trigger.status).toEqual(true);
+  expect(trigger.lastTriggerStop).toBeDefined();
+  expect(trigger.lastTriggerStart).toBeDefined();
 });
 
-test('negative test: threshold of Detail Response exceeds config -> trigger value: false  (due to battery) ', () => {
 
+
+
+
+
+test('negative test: threshold of Detail Response below config -> trigger value: false (due to battery, exeeded waiting time ) ', () => {
   const alphaService = new AlphaService(undefined, '123', 'password', true, 'http://localhost:8080', 1000, 'serialNumber');
   const response = new AlphaLastPowerDataResponse();
   const data = new AlphaDataResponse();
@@ -341,22 +389,59 @@ test('negative test: threshold of Detail Response exceeds config -> trigger valu
   data.soc= 10;
   response.data = data; response.data = data;
 
-  const trigger = alphaService.isTriggered(response, 500, 20);
-  expect(trigger).toEqual(false);
+  const triggerConfig = new TriggerConfig(751, 10, 10, 11); // given limits
+  const start = new Date();
+  const stop = new Date();
+  stop.setSeconds(stop.getSeconds()-13);
+  const triggerStatus = new TriggerStatus(start, stop, true); // stopped 13 seconds before
+  const trigger = alphaService.isTriggered(response, triggerConfig, triggerStatus);
+  expect(trigger.status).toEqual(false);
+  expect(trigger.lastTriggerStart).toBeNull();
+  expect(trigger.lastTriggerStop).toBeNull();
+
 });
 
-test('negative test: threshold of Detail Response exceeds config -> trigger value: false  (due to power) ', () => {
-
+test('negative test: threshold of Detail Response exceeds config -> trigger value: false (low power and wait time reached) ', () => {
   const alphaService = new AlphaService(undefined, '123', 'password', true, 'http://localhost:8080', 1000, 'serialNumber');
   const response = new AlphaLastPowerDataResponse();
   const data = new AlphaDataResponse();
-  data.ppv = 750;
+  data.ppv = 498;
   data.soc=21;
   response.data = data;
 
-  const trigger = alphaService.isTriggered(response, 5000, 20);
-  expect(trigger).toEqual(false);
+  const triggerConfig = new TriggerConfig(500, 10, 10, 20);
+  const start = new Date();
+  const stop = new Date();
+  stop.setSeconds(stop.getSeconds()-14);
+  const triggerStatus = new TriggerStatus(start, stop, true); // stopped 11 seconds before
+  const trigger = alphaService.isTriggered(response, triggerConfig, triggerStatus);
+  expect(trigger.status).toEqual(false);
+  expect(trigger.lastTriggerStop).toBeNull();
+  expect(trigger.lastTriggerStart).toBeNull();
+
 });
+
+test('negative test: threshold of Detail Response exceeds config -> trigger value: true (low power, but wait time not reached) ', () => {
+  const alphaService = new AlphaService(undefined, '123', 'password', true, 'http://localhost:8080', 1000, 'serialNumber');
+  const response = new AlphaLastPowerDataResponse();
+  const data = new AlphaDataResponse();
+  data.ppv = 497;
+  data.soc=21;
+  response.data = data;
+
+  const triggerConfig = new TriggerConfig(501, 10, 10, 20);
+  const start = new Date();
+  const stop = new Date();
+  stop.setSeconds(stop.getSeconds()-2);
+  const triggerStatus = new TriggerStatus(start, stop, true); // stopped 11 seconds before
+  const trigger = alphaService.isTriggered(response, triggerConfig, triggerStatus);
+  expect(trigger.status).toEqual(true);
+  expect(trigger.lastTriggerStop).toBeDefined();
+  expect(trigger.lastTriggerStart).toBeDefined();
+});
+
+
+
 
 test('negative test: threshold of Detail Response exceeds config -> trigger value: false  (due to battery && power) ', () => {
 
@@ -364,10 +449,16 @@ test('negative test: threshold of Detail Response exceeds config -> trigger valu
   const response = new AlphaLastPowerDataResponse();
   const data = new AlphaDataResponse();
   data.ppv = 500;
-  data.soc=50;
+  data.soc=20;
   response.data = data;
-  const trigger = alphaService.isTriggered(response, 10000, 20);
-  expect(trigger).toEqual(false);
+
+  const triggerConfig = new TriggerConfig(501, 10, 10, 21);
+  const start = new Date();
+  const stop = new Date();
+  stop.setMinutes(stop.getSeconds()-11);
+  const triggerStatus = new TriggerStatus(start, stop, true); // stopped 11 seconds before
+  const trigger = alphaService.isTriggered(response, triggerConfig, triggerStatus);
+  expect(trigger.status).toEqual(false);
 });
 
 

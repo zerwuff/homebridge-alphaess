@@ -44,12 +44,27 @@
       },
 
       "powerLoadingThreshold": {
-        "title": "powerLoadingThreshold",
+        "title": "power threshold",
         "type": "integer",
-        "required": false,
+        "required": true,
         "default":1500,
         "description" : "The pv power threshold to enable the trigger"
       },
+      "powerLoadingThresholdSecondsLower": {
+        "title": "time threshold down -> up",
+        "type": "integer",
+        "required": true,
+        "default":30,
+        "description" : "The number of seconds of the power threshold required to trigger from down -> up"
+      },
+      "powerLoadingThresholdSecondsUpper": {
+        "title": "time threshold up -> down ",
+        "type": "integer",
+        "required": true,
+        "default":45,
+        "description" : "The number of seconds of the power threshold required to trigger from up -> down"
+      },
+
       "socLoadingThreshold": {
         "title": "socLoadingThreshold",
         "type": "integer",

@@ -217,7 +217,7 @@ test('test trigger tibber service via energy plugin -  expect stop battery loadi
 
 
   // when
-  await sut.calculateAlphaTrigger('1234', alphaLastPowerDataResp);
+  await sut.calculateAlphaTrigger(alphaLastPowerDataResp);
 
   // then no stopping loading
   tibberServiceMock.verify(instance => instance.isTriggered, Times.Never());
@@ -277,7 +277,7 @@ test('test trigger tibber service via energy plugin - expect not triggered', asy
   expect(result).toBeFalsy();
 
   // when
-  await sut.calculateAlphaTrigger('1234', alphaLastPowerDataResp);
+  await sut.calculateAlphaTrigger(alphaLastPowerDataResp);
   tibberServiceMock.setup(instance => instance.getIsTriggeredToday).mimics(tibberServiceOrigin);
 
   // then no stopping loading
