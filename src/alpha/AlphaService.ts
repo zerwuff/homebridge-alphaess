@@ -4,7 +4,7 @@ import crypto from 'crypto';
 import { AlphaLastPowerDataResponse } from './response/AlphaLastPowerDataResponse';
 import { ObjectMapper } from 'jackson-js';
 import { AlphaSettingsResponse } from './response/AlphaSettingsResponse';
-import { AlphaData, AlphaServiceEventListener } from '../interfaces';
+import { AlphaData, AlphaServiceEventListener, TriggerConfig, TriggerStatus } from '../interfaces';
 import { Utils } from '../util/Utils';
 
 const request = require('request');
@@ -460,7 +460,7 @@ export class AlphaService {
   }
 
   // calculate the trigger depending on power and socLoading
-  isTriggered(detailData:AlphaLastPowerDataResponse, powerLoadingThreshold:number, socLoadingThreshold: number): boolean {
+  isTriggered(detailData:AlphaLastPowerDataResponse, triggerConfig: TriggerConfig, triggerStatus: TriggerStatus): TriggerStatus {
     let trigger = false;
     const soc = detailData.data.soc;
     // power of all strings plus dc power = total energy from the sun into the system
@@ -472,24 +472,69 @@ export class AlphaService {
     this.logMsg('pBatt :' + detailData.data.pbat);
     this.logMsg('stringPowerTotal :' +stringPowerTotal );
 
-    if (stringPowerTotal > powerLoadingThreshold){
-      this.logMsg('Power total on the strings :' + stringPowerTotal + ' is over threshold:' +
-                powerLoadingThreshold + ' power trigger: true');
-      pvTrigger = true;
+    let secondsSinceLastStart = 0;
+    if (triggerStatus.lastTriggerStart !== null) {
+    // start calc loading time
+      secondsSinceLastStart = (new Date().getTime() - triggerStatus.lastTriggerStart.getTime()) / 1000;
+    }else {
+      // first loading start
+      if (stringPowerTotal > triggerConfig.powerLoadingThreshold) {
+        triggerStatus.lastTriggerStart = new Date();
+        triggerStatus.lastTriggerStop = null;
+      }
     }
-    if (soc >= socLoadingThreshold){
-      this.logMsg('Battery SOC:' + soc + ' is over threshold:' +socLoadingThreshold + ' soc trigger:true ');
+
+    let secondsSinceLastStop = 0;
+    if (triggerStatus.lastTriggerStop !== null) {
+      // calc stop time
+      secondsSinceLastStop = (new Date().getTime() - triggerStatus.lastTriggerStop.getTime()) / 1000;
+    } else {
+      if (stringPowerTotal < triggerConfig.powerLoadingThreshold) {
+        //first stop signal reached
+        triggerStatus.lastTriggerStop = new Date();
+        triggerStatus.lastTriggerStart = null;
+      }
+    }
+
+
+    if (stringPowerTotal > triggerConfig.powerLoadingThreshold &&
+      (( secondsSinceLastStart > triggerConfig.powerLoadingThresholdSecondsUpper ))) {
+      // start loading if not yet
+      this.logMsg('Power total on the strings :' + stringPowerTotal + ' is over threshold:' +
+           triggerConfig.powerLoadingThreshold + ' and '+ secondsSinceLastStart + ' seconds above timing limit:' +
+            triggerConfig.powerLoadingThresholdSecondsUpper + ', thus: power trigger: true');
+      pvTrigger = true;
+    } else if (stringPowerTotal < triggerConfig.powerLoadingThreshold) {
+      if ( secondsSinceLastStop < triggerConfig.powerLoadingThresholdSecondsLower) { // shall we still keep this thing open
+        this.logMsg('Power total on the strings :' + stringPowerTotal
+        +' is below threshold but we dont reach current wait time since last stop: '+ secondsSinceLastStop +' (required:' + triggerConfig.powerLoadingThresholdSecondsLower + ') so keep power trigger:true');
+        pvTrigger = true;
+        // still loading
+      } else {
+        // still stop loading because overtime
+        pvTrigger = false;
+        this.logMsg('Power total on the strings :' + stringPowerTotal + ' is above threshold, overtime ' + secondsSinceLastStop + ' above limit: ' + triggerConfig.powerLoadingThresholdSecondsLower +' thus: trigger:false');
+        triggerStatus.lastTriggerStart = null;
+        triggerStatus.lastTriggerStop = null;
+      }
+    }
+
+
+    if (soc >= triggerConfig.socLoadingThreshold){
+      this.logMsg('Battery SOC:' + soc + ' is over threshold:' +triggerConfig.socLoadingThreshold + ' soc trigger:true ');
       socTrigger = true;
     }
 
     if (socTrigger===true && pvTrigger===true){
       trigger = true ;
+    } else {
+      trigger = false;
     }
 
-    this.logMsg('Calculating trigger ->  powerLoadingThreshold: ' + powerLoadingThreshold + ' socLoadingThreshold:' +
-                socLoadingThreshold + ' resulting in trigger:'+ trigger);
-
-    return trigger;
+    this.logMsg('Calculating trigger ->  powerLoadingThresholdLower: '+ triggerConfig.powerLoadingThreshold + ' socLoadingThreshold:' +
+    triggerConfig.socLoadingThreshold + ' resulting in trigger:'+ trigger);
+    triggerStatus.status = trigger;
+    return triggerStatus;
   }
 
   private getSignature(authtimestamp):string {
