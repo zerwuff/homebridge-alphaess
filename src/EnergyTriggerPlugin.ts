@@ -36,7 +36,6 @@ export class EnergyTriggerPlugin extends BasePlugin {
   private dailyLoadingFromNetReset : boolean;
 
   private triggerConfig: TriggerConfig;
-  private triggerStatus : TriggerStatus;
 
   // Alpha ESS Battery Light Total Power Plugin
   constructor (log: Logging, config: PlatformConfig, api: API, alphaService: AlphaService) {
@@ -239,7 +238,7 @@ export class EnergyTriggerPlugin extends BasePlugin {
     if (detailData!==null && detailData.data!==null && detailData.data!==undefined){
 
       this.setSocCurrent(detailData.data.soc);
-      this.triggerAlpha = this.getAlphaService().isTriggered(detailData, this.triggerConfig, this.triggerStatus);
+      this.triggerAlpha = this.getAlphaService().isTriggered(detailData, this.triggerConfig, this.triggerAlpha);
 
       const now = new Date();
       const hours = now.getHours();
