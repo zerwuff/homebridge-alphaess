@@ -42,12 +42,12 @@ export class AlphaService {
     this.lastPowerListeners = [];
     // auto refresh statistics
     setInterval(() => {
-      this.logger.debug('Running Timer to check trigger every  ' + refreshTimeinterval + ' ms ');
+      this.logMsg('Running Timer to check trigger every  ' + refreshTimeinterval + ' ms ');
       this.fetchAlphaEssData(serialNumber);
     }, refreshTimeinterval);
 
     setTimeout( () => {
-      this.logger.debug('Fetch initial Data ');
+      this.logMsg('Fetch initial Data ');
       this.fetchAlphaEssData(serialNumber);
     }, 10000 );
 
@@ -515,7 +515,7 @@ export class AlphaService {
         pvTrigger = false;
         this.logMsg('Power total on the strings :' + stringPowerTotal + ' is above threshold, overtime ' + secondsSinceLastStop + ' above limit: ' + triggerConfig.powerLoadingThresholdSecondsLower +' thus: trigger:false');
         triggerStatus.lastTriggerStart = null;
-        triggerStatus.lastTriggerStop = null;
+        // do not set last trigger stop here, to remember the last stop
       }
     }
 
@@ -553,7 +553,7 @@ export class AlphaService {
   }
 
   private logMsg(message) {
-    if (this.logger !== undefined) {
+    if (this.logger !== undefined && this.logger !== null ) {
       this.logger.debug(message);
     } else {
       console.log('%s', message);

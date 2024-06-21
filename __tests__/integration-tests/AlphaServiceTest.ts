@@ -397,7 +397,7 @@ test('negative test: threshold of Detail Response below config -> trigger value:
   const trigger = alphaService.isTriggered(response, triggerConfig, triggerStatus);
   expect(trigger.status).toEqual(false);
   expect(trigger.lastTriggerStart).toBeNull();
-  expect(trigger.lastTriggerStop).toBeNull();
+  expect(trigger.lastTriggerStop).toBeDefined();
 
 });
 
@@ -415,9 +415,16 @@ test('negative test: threshold of Detail Response exceeds config -> trigger valu
   stop.setSeconds(stop.getSeconds()-14);
   const triggerStatus = new TriggerStatus(start, stop, true); // stopped 11 seconds before
   const trigger = alphaService.isTriggered(response, triggerConfig, triggerStatus);
+
+  // expect trigger status to be false, just set last trigger stop to be non - null, reminding us of last stop
   expect(trigger.status).toEqual(false);
-  expect(trigger.lastTriggerStop).toBeNull();
+  expect(trigger.lastTriggerStop).toBeDefined();
   expect(trigger.lastTriggerStart).toBeNull();
+
+  // next check, be sure to keep closed
+  const triggerR = alphaService.isTriggered(response, triggerConfig, triggerStatus);
+  expect(triggerR.status).toEqual(false);
+  expect(trigger.lastTriggerStop).toBeDefined();
 
 });
 
