@@ -244,7 +244,7 @@ export class EnergyTriggerPlugin extends BasePlugin {
       const hours = now.getHours();
       const min = now.getMinutes();
       const index = hours * 4 + Math.round(min/15);
-      this.alphaTriggerMap.set(index, new AlphaTrigger(this.triggerAlpha ? 1:0, this.isBatteryLoadingFromNet, new Date()));
+      this.alphaTriggerMap.set(index, new AlphaTrigger(this.triggerAlpha.status === true ? 1:0, this.isBatteryLoadingFromNet, new Date()));
 
       if (this.utils.isNewDate(now, this.lastClearDate)){
         // day switch, empty cache
