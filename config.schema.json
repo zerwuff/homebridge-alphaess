@@ -186,7 +186,7 @@
         "type": "integer",
         "default": 60,
         "required": false,
-        "description" :  "the battery SOC threshold that is required to trigger tibber loading. if below with price, loading is triggerd.",
+        "description" :  "the battery SOC threshold that is required to trigger tibber loading. if below with price, loading is triggerd.g",
         "condition": {
           "functionBody": "return model.tibberEnabled === true;"
         }
@@ -197,7 +197,7 @@
         "type": "number",
         "default":"0.010",
         "required": false,
-        "description" :  "the threshold in euro cents that is required to trigger tibber. if below with soc, loading is triggerd.",
+        "description" :  "the threshold in euro that is required to trigger tibber. if below with soc, loading is triggerd.",
         "condition": {
           "functionBody": "return model.tibberEnabled === true;"
         }
