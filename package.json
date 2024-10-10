@@ -2,7 +2,7 @@
   "private": false,
   "strictNullChecks": false,
   "name": "homebridge-alphaess",
-  "version": "2.122.0",
+  "version": "2.123.0",
   "description": "Homebridge Alpha ESS plugin",
   "license": "Apache License",
   "keywords": [
