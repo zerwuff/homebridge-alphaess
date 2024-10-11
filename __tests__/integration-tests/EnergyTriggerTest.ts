@@ -132,7 +132,7 @@ test('test trigger tibber service via energy plugin - expect triggered ', async 
     .setup( instance => instance.getLastPowerData). returns(() => alphaDetailResp )
     .setup( instance => instance.isBatteryCurrentlyLoading). returns(() => true );
 
-  const tibberServiceOrigin = new TibberService(loging.object(), 'apiKey', 'queryUrl', 0.2, false);
+  const tibberServiceOrigin = new TibberService(loging.object(), 'apiKey', 'queryUrl', 0.2, 200, false);
   tibberServiceOrigin.setLogger(loging.object());
 
   const tibberServiceMock = new Mock<TibberService>()
@@ -142,6 +142,7 @@ test('test trigger tibber service via energy plugin - expect triggered ', async 
     .setup(instance => instance.findLowestPrice).mimics(tibberServiceOrigin)
     .setup(instance => instance.getDailyMap).returns(() => new Map<number, PriceTrigger>)
     .setup(instance => instance.getLowestPriceHours).returns( () => 10)
+    .setup(instance => instance.getThresholdTotalEur).returns( () => 100)
     .setup(instance => instance.findCurrentPrice).returns( () => new Promise<number>((resolve => {
       resolve(10);
     })))
@@ -184,7 +185,7 @@ test('test trigger tibber service via energy plugin -  expect stop battery loadi
     .setup( instance => instance.checkAndEnableReloading). returns(() => new Promise<Map<string, undefined>>((resolve => undefined)))
     .setup( instance => instance.isBatteryCurrentlyLoading). returns(() => false)
     .setup( instance => instance.stopLoading). returns(() => new Promise<void>( resolve => undefined));
-  const tibberServiceOrigin = new TibberService(loging.object(), 'apiKey', 'queryUrl', 0.2, false);
+  const tibberServiceOrigin = new TibberService(loging.object(), 'apiKey', 'queryUrl', 0.2, 200, false);
   tibberServiceOrigin.setLogger(loging.object());
 
   const tibberServiceMock = new Mock<TibberService>()
@@ -237,7 +238,7 @@ test('test trigger tibber service via energy plugin - expect not triggered', asy
     .setup( instance => instance.getLastPowerData). returns(() => alphaDetailResp )
     .setup (instance => instance.isBatteryCurrentlyLoading).returns( () => true ) ;
 
-  const tibberServiceOrigin = new TibberService(loging.object(), 'apiKey', 'queryUrl', 0.5, false);
+  const tibberServiceOrigin = new TibberService(loging.object(), 'apiKey', 'queryUrl', 0.5, 1.0, false);
   tibberServiceOrigin.setLogger(loging.object());
 
   const tibberServiceMock = new Mock<TibberService>()
@@ -303,7 +304,7 @@ test('test trigger tibber service via energy plugin - expect triggered despite o
     .setup( instance => instance.isBatteryCurrentlyLoading). returns(() => true )
     .setup( instance => instance.getSettingsData). throws(() => new Error('Could not load data') );
 
-  const tibberServiceOrigin = new TibberService(loging.object(), 'apiKey', 'queryUrl', 0.2, false);
+  const tibberServiceOrigin = new TibberService(loging.object(), 'apiKey', 'queryUrl', 0.2, 100, false);
   tibberServiceOrigin.setLogger(loging.object());
 
   const tibberServiceMock = new Mock<TibberService>()
@@ -314,6 +315,7 @@ test('test trigger tibber service via energy plugin - expect triggered despite o
 
     .setup(instance => instance.getDailyMap).returns(() => new Map<number, PriceTrigger>)
     .setup(instance => instance.getLowestPriceHours).returns( () => 10)
+    .setup(instance => instance.getThresholdTotalEur).returns( () => 100)
     .setup(instance => instance.findCurrentPrice).returns( () => new Promise<number>((resolve => {
       resolve(10);
     })))

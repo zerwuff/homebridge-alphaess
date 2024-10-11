@@ -193,11 +193,22 @@
       },
     
       "tibberThresholdEur": {
-        "title": "Tibber Threshold in euro (trigger) ",
+        "title": "Tibber difference threshold in euro ",
         "type": "number",
-        "default":"0.010",
+        "default":"0.020",
         "required": false,
-        "description" :  "the threshold in euro that is required to trigger tibber. if below with soc, loading is triggerd.",
+        "description" :  "The diff to the lowest price that is acceptable to trigger tibber loading. eg. daily tibber minimum = 0.20 , this value = 0.02, trigger is fired at 0.22 ",
+        "condition": {
+          "functionBody": "return model.tibberEnabled === true;"
+        }
+      },
+
+      "tibberThresholdTotalEur": {
+        "title": "Tibber absolute threshold in euro ",
+        "type": "number",
+        "default":"0.30",
+        "required": false,
+        "description" :  "The absolute max price of tibber that is acceptable to trigger loading. This wins over tibber difference threshold. ",
         "condition": {
           "functionBody": "return model.tibberEnabled === true;"
         }
@@ -266,7 +277,8 @@
             "tibberLoadBatteryEnabled",
             "tibberLoadingMinutes",
             "tibberThresholdSOC",
-            "tibberThresholdEur"            
+            "tibberThresholdEur",
+            "tibberThresholdTotalEur"            
         ]
     }
   ]

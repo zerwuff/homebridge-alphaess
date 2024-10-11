@@ -12,9 +12,10 @@ export class TibberService {
   private lowestPriceHours: number ;
   private tibberLoadBatteryEnabled: boolean;
   private thresholdEur: number ;
+  private thresholdTotalEur: number;
   private triggerdToday: boolean;
 
-  constructor(logger:Logging, tibberApiKey:string, tibberQueryUrl:string, thresholdEur: number,
+  constructor(logger:Logging, tibberApiKey:string, tibberQueryUrl:string, thresholdEur: number, thresholdTotalEur: number,
     tibberLoadBatteryEnabled:boolean, tibberHomeId?: string){
     this.config = {
       // Endpoint configuration
@@ -36,6 +37,7 @@ export class TibberService {
     this.lowestPriceHours = undefined;
     this.tibberLoadBatteryEnabled = tibberLoadBatteryEnabled;
     this.triggerdToday = undefined;
+    this.thresholdTotalEur = thresholdTotalEur;
   }
 
   getLogger() : Logging{
@@ -181,6 +183,11 @@ export class TibberService {
     return this.thresholdEur;
   }
 
+  getThresholdTotalEur(){
+    return this.thresholdTotalEur;
+  }
+
+
   getIsTriggeredToday(){
     return this. triggerdToday;
   }
@@ -197,8 +204,10 @@ export class TibberService {
     }
     const diffToLowest = currentPrice - todaysLowestPrice;
     // diffToLowest is in acceptable range
-    this.getLogger().debug('lowest today: ' + todaysLowestPrice + ' current: ' + currentPrice + ' diffToLowest: ' + diffToLowest );
-    if (diffToLowest <= this.getThresholdEur() && (socBattery <= socLowerThreshold )) {
+    this.getLogger().debug('lowest today: ' + todaysLowestPrice + ' current: ' + currentPrice + ' diffToLowest: ' + diffToLowest +
+         'max thresholdTotalEur: ' + this.thresholdTotalEur );
+
+    if (diffToLowest <= this.getThresholdEur() && (socBattery <= socLowerThreshold ) && (currentPrice <= this.getThresholdTotalEur()) ) {
       this.getLogger().debug('trigger lowest price: true');
       return true;
     }
