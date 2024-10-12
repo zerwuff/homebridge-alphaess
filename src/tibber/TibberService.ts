@@ -68,7 +68,7 @@ export class TibberService {
 
   }
 
-  // get threshold that will trigger tibber
+  // get threshold that will trigger tibber (and displayed into the rendering)
   getPricePoint(): number {
     return this.pricePoint;
   }
@@ -142,7 +142,11 @@ export class TibberService {
           const min = now.getMinutes();
           const index = hours * 4 + Math.round(min/15);
           const currentIndex = hours * 4 + Math.round(min/15);
-          this.pricePoint = todaysLowestPrice + this.thresholdEur;
+          this.pricePoint = todaysLowestPrice + this.thresholdEur; // max price to allow trigger
+          if (this.pricePoint > this.thresholdTotalEur) {
+            this.pricePoint = this.thresholdTotalEur;
+          }
+
 
           this.getDailyMap().set(index, new PriceTrigger(currentPrice, isTriggered?1:0, new Date()));
           todaysEnergyPrices.forEach(hourlyprice => {
@@ -203,9 +207,10 @@ export class TibberService {
       return false;
     }
     const diffToLowest = currentPrice - todaysLowestPrice;
-    // diffToLowest is in acceptable range
+
+    // check if diffToLowest is in acceptable range
     this.getLogger().debug('lowest today: ' + todaysLowestPrice + ' current: ' + currentPrice + ' diffToLowest: ' + diffToLowest +
-         'max thresholdTotalEur: ' + this.thresholdTotalEur );
+         ' max thresholdTotalEur: ' + this.thresholdTotalEur );
 
     if (diffToLowest <= this.getThresholdEur() && (socBattery <= socLowerThreshold ) && (currentPrice <= this.getThresholdTotalEur()) ) {
       this.getLogger().debug('trigger lowest price: true');
