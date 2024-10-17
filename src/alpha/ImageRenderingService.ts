@@ -24,7 +24,7 @@ const colorTibberPricePointRed= '#f57542'; // orange
 export class ImageRenderingService{
 
   // render current Image from current values
-  async renderTriggerImage(fileName:string, tibberMap:Map<number, PriceTrigger>, alphaMap:Map<number, AlphaTrigger>, pricePoint:number): Promise<void> {
+  async renderTriggerImage(fileName:string, tibberMap:Map<number, PriceTrigger>, alphaMap:Map<number, AlphaTrigger>, maxPrice:number, diff:number, dayLowest:number): Promise<void> {
     if (fileName===undefined){
       console.error('filename is not defined - not rendering trigger image ');
       return;
@@ -42,10 +42,13 @@ export class ImageRenderingService{
     let triggerAlpha = 0;
     let triggerLoadingAlpha = false ;
 
+    const maxTriggerPrice = dayLowest + diff>= maxPrice ? maxPrice:dayLowest+diff ; // maximum allowed trigger Price
+
     while (index < IMAGE_INDEX_LENGHT ) { // 15 min intervall
       triggerAlpha = 0;
       triggerLoadingAlpha = false;
-      let entry = {time: runninDate.toISOString(), tibberColor: 'red', cnt: 0, triggerTibber:0, tibberPricePoint:pricePoint, triggerAlpha:triggerAlpha};
+
+      let entry = {time: runninDate.toISOString(), tibberColor: 'red', cnt: 0, triggerTibber:0, triggerAlpha:triggerAlpha};
 
       if (alphaMap.get(index)!==undefined){
         triggerAlpha = alphaMap.get(index).trigger;
@@ -56,25 +59,27 @@ export class ImageRenderingService{
         const priceCnt = tibberMap.get(index).price;
         const trigger = tibberMap.get(index).trigger;
         const date = tibberMap.get(index).date;
-        let tibberColor = priceCnt >= pricePoint?colorTibberPricePointRed:colorTibberPricePoint;
+        let tibberColor = priceCnt >= maxTriggerPrice?colorTibberPricePointRed:colorTibberPricePoint;
+
         if (triggerLoadingAlpha){
-          tibberColor = colorTibberPricePointAndLoading; // net loading
+          tibberColor = colorTibberPricePointAndLoading; // net loading and price point met
         }
         lastTibberEntry = tibberMap.get(index);
-        entry = {time: date.toISOString(), tibberColor:tibberColor, cnt: priceCnt, triggerTibber:trigger, tibberPricePoint: pricePoint, triggerAlpha:triggerAlpha};
-
+        entry = {time: date.toISOString(), tibberColor: tibberColor, cnt: priceCnt, triggerTibber:trigger, triggerAlpha:triggerAlpha};
+        // console.debug('entry id:' + index + 'color: ' + tibberColor + ' price: ' + priceCnt);
       }else{
         // use last tibber entry
         if (lastTibberEntry!==undefined){
-          let tibberColor = lastTibberEntry.price >= pricePoint?colorTibberPricePointRed:colorTibberPricePoint;
+          let tibberColor = lastTibberEntry.price >= maxTriggerPrice?colorTibberPricePointRed:colorTibberPricePoint;
+
           if (triggerLoadingAlpha){
             tibberColor = colorTibberPricePointAndLoading; // net loading
           }
-          entry = {time: runninDate.toISOString(), tibberColor:tibberColor, cnt: lastTibberEntry.price, tibberPricePoint: pricePoint, triggerTibber:lastTibberEntry.trigger,
+          entry = {time: runninDate.toISOString(), tibberColor:tibberColor, cnt: lastTibberEntry.price, triggerTibber:lastTibberEntry.trigger,
             triggerAlpha:triggerAlpha};
         } else {
           const tibberColor =colorTibberPricePoint;
-          entry = {time: runninDate.toISOString(), tibberColor:tibberColor, cnt: 0, triggerTibber:0, tibberPricePoint: pricePoint, triggerAlpha:triggerAlpha};
+          entry = {time: runninDate.toISOString(), tibberColor:tibberColor, cnt: 0, triggerTibber:0, triggerAlpha:triggerAlpha};
         }
       }
 
@@ -82,13 +87,13 @@ export class ImageRenderingService{
       runninDate.setMinutes(runninDate.getMinutes()+15);
       index++ ;
     }
-    return this.graphToImageTibber(fileName, values, pricePoint).catch(error => {
+    return this.graphToImageTibber(fileName, values, maxPrice, diff, dayLowest).catch(error => {
       console.error('Error occured during tibber image rendering', error);
     });
   }
 
   // render current Image from current values
-  async graphToImageTibber (fileName: string, values: object, limit:number ) {
+  async graphToImageTibber (fileName: string, values: object, maxPrice:number, diff:number, daylowest:number ) {
     const vlSpecTibber = {
       $schema: 'https://vega.github.io/schema/vega-lite/v5.json',
       width: width,
@@ -118,7 +123,10 @@ export class ImageRenderingService{
             defined: false,
             opacity: 0.7,
           },
-          title:'Tibber Price [ limit: ' + Math.round(limit*100) + ' Cents]',
+          title: 'Tibber max loading price: ' + Math.round(maxPrice*100) +',' +
+                 ' todays lowest price:' + Math.round(daylowest*100) + ',' +
+                 ' max diff:'+ Math.round(diff*100) +
+                 ' Cents',
           encoding: {
             color: {
               field: 'tibberColor',
@@ -152,10 +160,6 @@ export class ImageRenderingService{
             type: 'line',
             strokeWidth: 5,
             color:  colorTriggerTibber,
-            //color: {
-            // value: colorTriggerTibber,
-            //condition: {test: 'datum[\'triggerTibber\'] === 1 && datum[\'triggerAlpha\'] ===1 ', value: 'blue'},
-            //},
           },
           title:'Trigger Tibber',
           encoding: {
@@ -174,9 +178,6 @@ export class ImageRenderingService{
               values: [0, 1],
               type: 'quantitative',
             },
-          //  color: {
-            //  'condition': {'test': 'datum[\'triggerTibber\'] > 0', value:'black' }, value:colorTriggerTibber,
-            //},
           },
 
         },

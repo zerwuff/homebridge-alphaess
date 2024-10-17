@@ -156,15 +156,20 @@ export class EnergyTriggerPlugin extends BasePlugin {
 
     // render image
     let tibberMap = new Map();
-    let tibberPricePoint = -1 ;
+    let tibberMaxPrice = -1 ;
+    let tibberDiff = -1 ;
+    let tibberDayLowest = -1 ;
+
     if (this.tibber !== undefined){
       tibberMap = this.tibber.getDailyMap();
-      tibberPricePoint = this.tibber.getPricePoint();
+      tibberMaxPrice = this.tibber.getMaxPrice();
+      tibberDiff = this.tibber.getThresholdEur();
+      tibberDayLowest = this.tibber.getDailyLowest();
     }
 
     if (this.triggerImageFilename!==undefined){
       this.alphaImageService.renderTriggerImage(this.triggerImageFilename, tibberMap,
-        this.alphaTriggerMap, tibberPricePoint,
+        this.alphaTriggerMap, tibberMaxPrice, tibberDiff, tibberDayLowest,
       ).catch(error => {
         this.getLOG().error('error rendering image: ', error);
       });

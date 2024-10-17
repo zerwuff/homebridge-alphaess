@@ -8,12 +8,13 @@ export class TibberService {
   private dailyMap: Map<number, PriceTrigger>;
   private tibberHomeId: string ;
   private logger: Logging;
-  private pricePoint : number;
   private lowestPriceHours: number ;
+  private lowestPriceToday : number;
   private tibberLoadBatteryEnabled: boolean;
   private thresholdEur: number ;
   private thresholdTotalEur: number;
   private triggerdToday: boolean;
+
 
   constructor(logger:Logging, tibberApiKey:string, tibberQueryUrl:string, thresholdEur: number, thresholdTotalEur: number,
     tibberLoadBatteryEnabled:boolean, tibberHomeId?: string){
@@ -33,8 +34,8 @@ export class TibberService {
     this.dailyMap = new Map();
     this.tibberHomeId= tibberHomeId;
     this.logger = logger;
-    this.pricePoint = 0;
     this.lowestPriceHours = undefined;
+    this.lowestPriceToday = undefined;
     this.tibberLoadBatteryEnabled = tibberLoadBatteryEnabled;
     this.triggerdToday = undefined;
     this.thresholdTotalEur = thresholdTotalEur;
@@ -68,9 +69,19 @@ export class TibberService {
 
   }
 
-  // get threshold that will trigger tibber (and displayed into the rendering)
-  getPricePoint(): number {
-    return this.pricePoint;
+  // get maxium price allowed by configuration to load
+  getMaxPrice(): number {
+    return this.thresholdTotalEur;
+  }
+
+  // get diff price OK to load
+  getDiff(): number {
+    return this.thresholdEur;
+  }
+
+  // get daily lowest price
+  getDailyLowest(): number {
+    return this.lowestPriceToday;
   }
 
   // determine lowest next price for the curent day
@@ -142,11 +153,7 @@ export class TibberService {
           const min = now.getMinutes();
           const index = hours * 4 + Math.round(min/15);
           const currentIndex = hours * 4 + Math.round(min/15);
-          this.pricePoint = todaysLowestPrice + this.thresholdEur; // max price to allow trigger
-          if (this.pricePoint > this.thresholdTotalEur) {
-            this.pricePoint = this.thresholdTotalEur;
-          }
-
+          this.lowestPriceToday = todaysLowestPrice;
 
           this.getDailyMap().set(index, new PriceTrigger(currentPrice, isTriggered?1:0, new Date()));
           todaysEnergyPrices.forEach(hourlyprice => {

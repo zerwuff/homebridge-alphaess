@@ -153,6 +153,9 @@ test('test image rendering from tibber test data json', async () => {
 
   let cnt = 0;
 
+  const maxTibberPrice = 0.25 ;
+  const tibberDiff = 0.10 ;
+  const dayLowest = 0.19;
 
   while (cnt < 96 ) { // 15 min intervall
     cnt++ ;
@@ -174,7 +177,7 @@ test('test image rendering from tibber test data json', async () => {
     alphaMap.set(cnt, alphaEntry);
 
   }
-  const imageUrl = await imageService.renderTriggerImage('image_rendered_tibber.png', tibberMap, alphaMap, 0.5 );
+  const imageUrl = await imageService.renderTriggerImage('image_rendered_tibber.png', tibberMap, alphaMap, maxTibberPrice, tibberDiff, dayLowest );
 
   expect(imageUrl).toBeDefined();
 });
