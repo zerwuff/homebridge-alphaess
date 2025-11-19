@@ -181,6 +181,18 @@
         }
       },
     
+      "tibberCarLoadingMinutes": {
+        "title": "Tibber Car Loading Time (Minutes) ",
+        "type": "integer",
+        "default": 240,
+        "required": false,
+        "description" :  "When tibber triggers enabled, for how long should the trigger be true after the cheapest point ? E.G. cheapest point: 10 PM, plus that time in minutes sending of mqtt_trigger_message_true/false - to optimize car loading ",
+        "condition": {
+          "functionBody": "return model.tibberEnabled === true;"
+        }
+      },
+    
+
       "tibberThresholdSOC": {
         "title": "Tibber SOC Threshold",
         "type": "integer",
@@ -299,6 +311,7 @@
             "tibberAPIKey",
             "tibberLoadBatteryEnabled",
             "tibberLoadingMinutes",
+            "tibberCarLoadingMinutes",
             "tibberThresholdSOC",
             "tibberThresholdEur",
             "tibberThresholdTotalEur",

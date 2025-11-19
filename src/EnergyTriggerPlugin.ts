@@ -9,6 +9,7 @@ import { TibberService } from './index';
 import { AlphaLastPowerDataResponse } from './alpha/response/AlphaLastPowerDataResponse';
 import { BasePlugin } from './BasePlugin';
 import { TriggerConfig, TriggerStatus } from './interfaces';
+import { min } from 'date-fns';
 /**
  * This Plugin provides a homebridge trigger logic that can be used to control external devices.
  *
@@ -33,10 +34,16 @@ export class EnergyTriggerPlugin extends BasePlugin {
   private tibber: TibberService;
   private isBatteryLoadingFromNet = false;
   private tibberLoadingMinutes: number;
+
+  private tibberCarLoadingMinutes: number; // car loading time in minutes
+  private tibberCarLoadingStart: Date; // last car loading start
+
   private dailyLoadingFromNetReset : boolean;
   private disableBatteryUnloading : boolean; // battery unloading stopped during loading with tibber
 
   private triggerConfig: TriggerConfig;
+  private carLoadingStart: number;
+  private triggerCarLoading: boolean;
 
   // Alpha ESS Battery Light Total Power Plugin
   constructor (log: Logging, config: PlatformConfig, api: API, alphaService: AlphaService) {
@@ -55,9 +62,11 @@ export class EnergyTriggerPlugin extends BasePlugin {
     this.dailyLoadingFromNetReset = false;
     this.triggerTotal = false;
     this.triggerTibber = false;
-
+    this.triggerCarLoading = false;
+    this.carLoadingStart = undefined;
     this.alphaImageService = new ImageRenderingService();
     this.tibberLoadingMinutes = config.tibberLoadingMinutes;
+    this.tibberCarLoadingMinutes = config.tibberCarLoadingMinutes;
     this.triggerImageFilename = config.triggerImageFilename;
     this.tibberThresholdSOC = config.tibberThresholdSOC;
     this.disableBatteryUnloading = config.disableBatteryUnloading;
@@ -108,7 +117,38 @@ export class EnergyTriggerPlugin extends BasePlugin {
 
   setTibberTrigger(triggerTibber:boolean){
     this.triggerTibber = triggerTibber;
+    this.setCarLoading(triggerTibber);
   }
+
+  // set car loading / unloading
+  setCarLoading(tibberTrigger:boolean){
+    // first loading detected
+    this.getLOG().debug('Check Car Loading: received tibbertrigger: '+ tibberTrigger + ', car loading minutes: '
+            + this.tibberCarLoadingMinutes + ' do we had a carloadingstart already ? when: ' + this.carLoadingStart );
+
+    if (this.carLoadingStart === undefined && tibberTrigger === true ) {
+      // car loading = true, catch current loading time      this.tibberCarLoadingStart = new Date();
+      this.triggerCarLoading = true;
+      this.tibberCarLoadingStart = new Date();
+      this.getLOG().debug('Start Loading the car now!');
+
+    } else {
+      // are we running and need to stop loading
+      if (tibberTrigger===false && this.carLoadingStart!==undefined){
+        const minutesRunning = (new Date().getTime() - this.tibberCarLoadingStart.getTime()) / 60000;
+
+        // do we got enough loading
+        if (minutesRunning > this.tibberCarLoadingMinutes){
+          // stop loading
+          this.triggerCarLoading = false;
+          this.tibberCarLoadingStart = undefined;
+          this.getLOG().debug('Stop Loading the car');
+        }
+      }
+    }
+
+  }
+
 
   initServiceCharacteristics(hap: HAP) {
     if (hap!==undefined){
@@ -125,6 +165,7 @@ export class EnergyTriggerPlugin extends BasePlugin {
     return this.triggerTotal;
   }
 
+  // regularly alpha and tibber trigger to draw the map
   calculateCombinedTriggers(config: PlatformConfig, alphaLastPowerDataResp: AlphaLastPowerDataResponse){
 
     this.checkTibberLoading(config.serialnumber).catch(error => {
@@ -144,13 +185,14 @@ export class EnergyTriggerPlugin extends BasePlugin {
     }
 
 
-    this.triggerTotal = this.triggerAlpha.status || this.triggerTibber;
-    this.getLOG().debug('Calculated triggers: alpa ess: '+ this.triggerAlpha.status + ' tibber: ' + this.triggerTibber +
+    this.triggerTotal = this.triggerAlpha.status || this.triggerTibber || this.triggerCarLoading;
+    this.getLOG().debug('Calculated triggers: alpha ess: '+ this.triggerAlpha.status + ' tibber: '
+            + this.triggerTibber + ' carloading: ' + this.triggerCarLoading +
             ' triggerTotal :'+this.triggerTotal);
 
     this.setValue(this.getContactSensorState(this.triggerTotal));
 
-    //refresh combined trigger
+    //refresh combined trigger and send out message
     if (this.getService() !== undefined){
       this.getLOG().debug('Updating sensor status to: ' + this.triggerTotal);
       this.pushMqtt(this.triggerTotal);
@@ -194,6 +236,8 @@ export class EnergyTriggerPlugin extends BasePlugin {
     return this.triggerTibber;
   }
 
+  //  check if we need to trigger the loading of battery
+  //
   async checkTibberLoading(serialNumber: string) {
     const priceIsLow = this.triggerTibber;
     const socBattery = this.socCurrent;
